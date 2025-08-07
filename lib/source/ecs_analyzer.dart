@@ -385,6 +385,8 @@ final class ECSAnalysis {
         color = 'yellow';
       } else if (node.type.toString().contains('Event')) {
         color = 'green';
+      } else if (["InitializeSystem", "ExecuteSystem"].contains(node.type.toString())) {
+        color = 'red';
       } else {
         color = 'purple';
       }
@@ -441,6 +443,14 @@ class ECSAnalyzer {
   static final Map<Type, ECSNode> _nodes = {};
   static final Set<ECSEdge> _edges = {};
   static ECSAnalysis? _graph;
+  static final ECSNode _executeNode = ECSNode(
+    type: ExecuteSystem,
+    description: 'Execute',
+  );
+  static final ECSNode _initializeNode = ECSNode(
+    type: InitializeSystem,
+    description: 'Initialize',
+  );
 
   ECSAnalyzer._();
 
@@ -451,6 +461,9 @@ class ECSAnalyzer {
   /// Builds the cascade graph for the ECS system
   static ECSAnalysis analize(ECSManager manager) {
     _nodes.clear();
+    _nodes[_executeNode.type] = _executeNode;
+    _nodes[_initializeNode.type] = _initializeNode;
+
     _edges.clear();
 
     for (final feature in manager.features) {
@@ -470,7 +483,7 @@ class ECSAnalyzer {
       }
 
       for (final system in feature.initializeSystems) {
-        _createNodeForSystem(system);
+        _createNodeForInitializeSystem(system);
       }
 
       for (final system in feature.teardownSystems) {
@@ -482,7 +495,7 @@ class ECSAnalyzer {
       }
 
       for (final system in feature.executeSystems) {
-        _createNodeForSystem(system);
+        _createNodeForExecuteSystem(system);
       }
     }
 
@@ -553,6 +566,48 @@ class ECSAnalyzer {
       _edges.add(outgoingEdge);
 
       systemNode.outgoing.add(outgoingEdge);
+      entityNode.incoming.add(outgoingEdge);
+    }
+  }
+
+  static void _createNodeForInitializeSystem(InitializeSystem system) {
+    if (system.interactsWith.isEmpty) return;
+
+    for (final type in system.interactsWith) {
+      _createNodeForEntity(type);
+      final entityNode = _nodes[type];
+      if (entityNode == null) continue;
+
+      final outgoingEdge = ECSEdge(
+        from: _initializeNode,
+        to: entityNode,
+        type: system.runtimeType,
+      );
+
+      _edges.add(outgoingEdge);
+
+      _initializeNode.outgoing.add(outgoingEdge);
+      entityNode.incoming.add(outgoingEdge);
+    }
+  }
+
+  static void _createNodeForExecuteSystem(ExecuteSystem system) {
+    if (system.interactsWith.isEmpty) return;
+
+    for (final type in system.interactsWith) {
+      _createNodeForEntity(type);
+      final entityNode = _nodes[type];
+      if (entityNode == null) continue;
+
+      final outgoingEdge = ECSEdge(
+        from: _executeNode,
+        to: entityNode,
+        type: system.runtimeType,
+      );
+
+      _edges.add(outgoingEdge);
+
+      _executeNode.outgoing.add(outgoingEdge);
       entityNode.incoming.add(outgoingEdge);
     }
   }

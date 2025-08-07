@@ -13,7 +13,18 @@ sealed class ECSSystem {
   /// This is also used for debugging purposes to understand which entities
   /// are being processed by the system.
   @visibleForTesting
-  Set<Type> get interactsWith;
+  Set<Type> get interactsWith => const {};
+
+
+  /// Set of types that this system depends on.
+  /// 
+  /// This set should be overridden in subclasses to specify the types of 
+  /// entities that this system depends on.
+  /// 
+  /// This is used for debugging purposes to understand which entities
+  /// the system depends on.
+  @visibleForTesting
+  Set<Type> get dependsOn => const {};
 
   /// The parent feature of this system.
   ECSFeature? _parent;
@@ -105,6 +116,15 @@ abstract class TeardownSystem extends ECSSystem {
 abstract class ExecuteSystem extends ECSSystem {
   ExecuteSystem();
 
+  /// Whether the system should be executed or not.
+  /// 
+  /// This is used to determine whether the system should be executed on every 
+  /// frame.
+  /// 
+  /// If this is set to `false`, the system will not be executed on each frame.
+  @visibleForTesting
+  bool get executesIf => true;
+
   /// Execute logic for the system.
   @visibleForTesting
   void execute(Duration elapsed);
@@ -124,14 +144,13 @@ abstract class ReactiveSystem extends ECSSystem {
   /// This set should be overridden in subclasses to specify the types of 
   /// entities that this system reacts to.
   /// 
-  /// This is used to optimize the system's execution by filtering entities
+  /// This is used to optimize the system's reaction by filtering entities
   /// that are relevant to the system and avoid unnecessary processing.
   /// 
   /// This is also used for debugging purposes to understand which entities
   /// are being processed by the system.
   @visibleForTesting
   Set<Type> get reactsTo;
-
 
   /// Whether the system reacts to changes in entities.
   /// 

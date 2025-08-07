@@ -115,7 +115,9 @@ abstract class ECSFeature {
   @visibleForTesting
   void execute(Duration elapsed) {
     for (final system in _executeSystems) {
-      system.execute(elapsed);
+      if (system.executesIf) {
+        system.execute(elapsed);
+      }
     }
   }
 

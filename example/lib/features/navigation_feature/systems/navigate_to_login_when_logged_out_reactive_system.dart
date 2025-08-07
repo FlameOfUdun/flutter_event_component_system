@@ -21,7 +21,6 @@ final class NavigateToLoginWhenLoggedOutReactiveSystem extends ReactiveSystem {
   @override
   Set<Type> get interactsWith {
     return const {
-      AuthStateComponent,
       AppRouteComponent,
     };
   }

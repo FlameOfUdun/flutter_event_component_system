@@ -1,6 +1,6 @@
 {
-    "name": "flutter_event_flow_example",
-    "short_name": "flutter_event_flow_example",
+    "name": "flutter_ecs_example",
+    "short_name": "flutter_ecs_example",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

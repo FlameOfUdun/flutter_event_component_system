@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_event_component_system/flutter_event_component_system.dart';
 
 import 'features/navigation_feature/navigation_feature.dart';
+import 'features/timer_feature/timer_feature.dart';
 import 'features/user_auth_feature/user_auth_feature.dart';
 import 'pages/dashboard_page.dart';
 import 'pages/home_page.dart';
@@ -26,6 +27,7 @@ class _Application extends StatelessWidget {
             navigatorKey: navigatorKey,
           ),
           UserAuthFeature(manager),
+          TimerFeature(manager),
         };
       },
       child: MaterialApp(

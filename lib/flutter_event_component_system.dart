@@ -15,4 +15,4 @@ part 'widgets/ecs_scope.dart';
 part 'widgets/ecs_widget.dart';
 part 'widgets/ecs_builder.dart';
 
-part 'debug/ecs_inspector.dart';
+part 'widgets/ecs_inspector.dart';

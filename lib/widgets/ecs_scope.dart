@@ -26,6 +26,8 @@ final class ECSScope extends StatefulWidget {
 final class _ECSScopeState extends State<ECSScope> {
   final manager = ECSManager();
 
+  Duration duration = Duration.zero;
+
   @override
   void initState() {
     final features = widget.features(manager);
@@ -33,18 +35,19 @@ final class _ECSScopeState extends State<ECSScope> {
       manager.addFeature(feature);
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((Duration elapsed) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       manager.initialize();
-      _executeRecursively(elapsed);
+    });
+
+    WidgetsBinding.instance.addPersistentFrameCallback((Duration duration) {
+      final elapsed = duration - this.duration;
+      this.duration = duration;
+      manager.execute(elapsed);
+      
+      manager.cleanup();
     });
 
     super.initState();
-  }
-
-  void _executeRecursively(Duration elapsed) {
-    manager.execute(elapsed);
-    manager.cleanup();
-    WidgetsBinding.instance.addPostFrameCallback(_executeRecursively);
   }
 
   @override
