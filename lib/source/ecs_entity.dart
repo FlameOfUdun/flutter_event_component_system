@@ -96,8 +96,6 @@ abstract class ECSComponent<TValue> extends ECSEntity {
     TValue value, {
     bool notify = true,
   }) {
-    if (value == _value) return;
-
     _previous = _value;
     _value = value;
 

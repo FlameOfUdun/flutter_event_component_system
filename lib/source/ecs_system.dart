@@ -16,16 +16,6 @@ sealed class ECSSystem {
   Set<Type> get interactsWith => const {};
 
 
-  /// Set of types that this system depends on.
-  /// 
-  /// This set should be overridden in subclasses to specify the types of 
-  /// entities that this system depends on.
-  /// 
-  /// This is used for debugging purposes to understand which entities
-  /// the system depends on.
-  @visibleForTesting
-  Set<Type> get dependsOn => const {};
-
   /// The parent feature of this system.
   ECSFeature? _parent;
 
