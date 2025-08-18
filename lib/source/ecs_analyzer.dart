@@ -374,7 +374,7 @@ final class ECSAnalysis {
   String generateDotGraph() {
     final buffer = StringBuffer();
     buffer.writeln('digraph ECS_Cascade_Flow {');
-    buffer.writeln('  rankdir=TB;');
+    buffer.writeln('  rankdir=LR;');
     buffer.writeln('  node [shape=box];');
     buffer.writeln('');
 

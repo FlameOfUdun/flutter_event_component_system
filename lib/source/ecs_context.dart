@@ -34,22 +34,35 @@ final class ECSContext implements ECSEntityListener {
   @visibleForTesting
   var locked = false;
 
+  /// Set of commonly accessed entities by the ECS context.
+  @visibleForTesting
+  Set<ECSEntity> entities = {};
+
   @visibleForTesting
   ECSContext(this.manager, this.callback);
 
-  /// Unmodifiable set of features in the ECS context.
-  Set<ECSEntity> get entities {
-    return manager.entities;
+  /// Retrieves an entity of type [TEntity] from the ECS context.
+  /// 
+  /// This function will search the entities set first.
+  /// If the entity is not found, it will be fetched from the ECS manager and added
+  /// to the entities set. Otherwise, it will return the existing entity from the set.
+  TEntity _getEntity<TEntity extends ECSEntity>() {
+    for (final entity in entities) {
+      if (entity is TEntity) return entity;
+    }
+    final entity = manager.getEntity<TEntity>();
+    entities.add(entity);
+    return entity;
   }
 
   /// Gets an entity of type [TEntity] from the ECS manager.
   TEntity get<TEntity extends ECSEntity>() {
-    return manager.getEntity<TEntity>();
+    return _getEntity<TEntity>();
   }
 
   /// Watches an entity of type [TEntity] for changes.
   TEntity watch<TEntity extends ECSEntity>() {
-    final entity = manager.getEntity<TEntity>();
+    final entity = _getEntity<TEntity>();
     if (watchers.add(entity)) entity.addListener(this);
     return entity;
   }
@@ -62,7 +75,7 @@ final class ECSContext implements ECSEntityListener {
   /// 
   /// Callbacks are executed asynchronously and safe to use in the widget tree.
   void listen<TEntity extends ECSEntity>(void Function(TEntity entity) listener) {
-    final entity = manager.getEntity<TEntity>();
+    final entity = _getEntity<TEntity>();
     if (!listeners.containsKey(entity)) entity.addListener(this);
     listeners[entity] = () => listener(entity);
   }
@@ -80,6 +93,9 @@ final class ECSContext implements ECSEntityListener {
   @visibleForTesting
   void dispose() {
     disposed = true;
+
+    entities.clear();
+
     for (final entity in watchers) {
       entity.removeListener(this);
     }

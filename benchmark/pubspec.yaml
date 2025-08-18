@@ -1,0 +1,34 @@
+name: ecs_benchmark
+description: Performance benchmarks comparing ECS with Provider and Riverpod
+
+environment:
+  sdk: ^3.6.2
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management Libraries
+  flutter_event_component_system:
+    path: ../
+  provider: ^6.1.2
+  flutter_riverpod: ^2.5.1
+  
+  # Benchmarking and Testing
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_driver:
+    sdk: flutter
+  
+  # Utilities
+  collection: ^1.18.0
+  meta: ^1.15.0
+  
+dev_dependencies:
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

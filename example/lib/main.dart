@@ -9,6 +9,7 @@ import 'pages/home_page.dart';
 import 'pages/login_page.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(_Application());
 }
 
@@ -31,17 +32,23 @@ class _Application extends StatelessWidget {
         };
       },
       child: MaterialApp(
-        home: HomePage(),
         navigatorKey: navigatorKey,
         routes: {
+          '/': (context) => const HomePage(),
           '/dashboard': (context) => const DashboardPage(),
           '/login': (context) => const LoginPage(),
         },
         builder: (context, child) {
           return Row(
             children: [
-              Expanded(child: child ?? const SizedBox()),
-              Expanded(child: ECSInspector()),
+              Expanded(
+                child: child ?? const SizedBox.shrink(),
+              ),
+              Expanded(
+                child: MaterialApp(
+                  home: ECSInspector(),
+                ),
+              ),
             ],
           );
         },

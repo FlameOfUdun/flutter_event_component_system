@@ -12,9 +12,7 @@ sealed class ECSSystem {
   /// 
   /// This is also used for debugging purposes to understand which entities
   /// are being processed by the system.
-  @visibleForTesting
   Set<Type> get interactsWith => const {};
-
 
   /// The parent feature of this system.
   ECSFeature? _parent;
@@ -112,7 +110,6 @@ abstract class ExecuteSystem extends ECSSystem {
   /// frame.
   /// 
   /// If this is set to `false`, the system will not be executed on each frame.
-  @visibleForTesting
   bool get executesIf => true;
 
   /// Execute logic for the system.
@@ -139,7 +136,6 @@ abstract class ReactiveSystem extends ECSSystem {
   /// 
   /// This is also used for debugging purposes to understand which entities
   /// are being processed by the system.
-  @visibleForTesting
   Set<Type> get reactsTo;
 
   /// Whether the system reacts to changes in entities.
@@ -149,7 +145,6 @@ abstract class ReactiveSystem extends ECSSystem {
   /// 
   /// If this is set to `false`, the system will not be executed
   /// when an entity changes, even if it is being watched.
-  @visibleForTesting
   bool get reactsIf => true;
 
   @visibleForTesting
