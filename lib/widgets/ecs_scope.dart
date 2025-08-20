@@ -23,10 +23,12 @@ final class ECSScope extends StatefulWidget {
   }
 }
 
-final class _ECSScopeState extends State<ECSScope> {
+final class _ECSScopeState extends State<ECSScope> with SingleTickerProviderStateMixin {
   final manager = ECSManager();
 
-  Duration duration = Duration.zero;
+  late Ticker ticker;
+
+  var duration = Duration.zero;
 
   @override
   void initState() {
@@ -35,16 +37,16 @@ final class _ECSScopeState extends State<ECSScope> {
       manager.addFeature(feature);
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      manager.initialize();
-    });
-
-    WidgetsBinding.instance.addPersistentFrameCallback((Duration duration) {
+    ticker = createTicker((duration) {
       final elapsed = duration - this.duration;
       this.duration = duration;
       manager.execute(elapsed);
-      
       manager.cleanup();
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      manager.initialize();
+      ticker.start();
     });
 
     super.initState();
@@ -52,6 +54,7 @@ final class _ECSScopeState extends State<ECSScope> {
 
   @override
   void dispose() {
+    ticker.dispose();
     manager.teardown();
     super.dispose();
   }
