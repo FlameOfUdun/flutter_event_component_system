@@ -56,6 +56,8 @@ sealed class ECSEntity {
   }
 
   /// Builds a widget that represents this entity in the [ECSInspector].
+  ///
+  /// [context] is the build context in which the widget is built.
   Widget buildInspector(BuildContext context) {
     return Text('$runtimeType');
   }
@@ -88,22 +90,34 @@ abstract class ECSComponent<TValue> extends ECSEntity {
 
   /// Updates the component's value.
   ///
-  /// If [notify] is `true`, listeners will be notified of the change. Default is
-  /// `true`.
+  /// If [notify] is `true`, listeners will be notified of the change. Default 
+  /// is `true`.
   ///
-  /// If the value is the same as the current value, no change will be made.
+  /// If the [value] is equal to the current value, no change will be made 
+  /// unless [force] is `true`, then update will be applied anyways. Defaults is
+  /// `false`.
   void update(
     TValue value, {
     bool notify = true,
+    bool force = false,
   }) {
+    if (force == false) {
+      if (_value == value) {
+        return;
+      }
+    }
+
     _previous = _value;
     _value = value;
 
-    if (!notify) return;
-    notifyListeners();
+    if (notify) {
+      notifyListeners();
+    }
   }
 
-  /// Builds a string descriptor for the component's value.
+  /// Builds a string descriptor for the component's value in [ECSInspector].
+  ///
+  /// If the [value] is null, "null" will be returned.
   String buildDescriptor(TValue? value) {
     return value.toString();
   }
