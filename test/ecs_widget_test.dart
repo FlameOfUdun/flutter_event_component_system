@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_event_component_system/flutter_event_component_system.dart';
+import 'package:flutter_event_component_system/src/ecs_base.dart';
 
 class CounterComponent extends ECSComponent<int> {
   CounterComponent([super.value = 0]);
@@ -18,8 +18,8 @@ class WatchingTestWidget extends ECSWidget {
   const WatchingTestWidget({super.key});
 
   @override
-  Widget build(BuildContext context, ECSContext reference) {
-    final counter = reference.watch<CounterComponent>();
+  Widget build(BuildContext context, ECSContext ecs) {
+    final counter = ecs.watch<CounterComponent>();
     return Text('Counter: ${counter.value}');
   }
 }
@@ -33,8 +33,8 @@ class ListeningTestWidget extends ECSWidget {
   });
 
   @override
-  Widget build(BuildContext context, ECSContext reference) {
-    reference.listen<CounterComponent>(onCounterChanged);
+  Widget build(BuildContext context, ECSContext ecs) {
+    ecs.listen<CounterComponent>(onCounterChanged);
 
     return const Text('Listening Widget');
   }
@@ -49,9 +49,9 @@ class BuildCounterWidget extends ECSWidget {
   });
 
   @override
-  Widget build(BuildContext context, ECSContext reference) {
+  Widget build(BuildContext context, ECSContext ecs) {
     onBuild();
-    final counter = reference.watch<CounterComponent>();
+    final counter = ecs.watch<CounterComponent>();
     return Text('Counter: ${counter.value}');
   }
 }
@@ -67,12 +67,12 @@ class LifecycleTestWidget extends ECSWidget {
   });
 
   @override
-  Widget build(BuildContext context, ECSContext reference) {
+  Widget build(BuildContext context, ECSContext ecs) {
     if (onEnter != null) {
-      reference.onEnter(onEnter!);
+      ecs.onEnter(onEnter!);
     }
     if (onExit != null) {
-      reference.onExit(onExit!);
+      ecs.onExit(onExit!);
     }
     return const Text('Lifecycle Widget');
   }
@@ -82,9 +82,9 @@ class MultipleEntitiesTestWidget extends ECSWidget {
   const MultipleEntitiesTestWidget({super.key});
 
   @override
-  Widget build(BuildContext context, ECSContext reference) {
-    final counter = reference.watch<CounterComponent>();
-    final message = reference.watch<MessageComponent>();
+  Widget build(BuildContext context, ECSContext ecs) {
+    final counter = ecs.watch<CounterComponent>();
+    final message = ecs.watch<MessageComponent>();
     return Column(
       children: [
         Text('Counter: ${counter.value}'),

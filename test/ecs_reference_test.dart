@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_event_component_system/flutter_event_component_system.dart';
+import 'package:flutter_event_component_system/src/ecs_base.dart';
 
 // Test entities
 class TestCounterComponent extends ECSComponent<int> {
@@ -59,15 +59,15 @@ class TestECSWidget extends ECSWidget {
   });
 
   @override
-  Widget build(BuildContext context, ECSContext reference) {
-    onBuild?.call(reference);
+  Widget build(BuildContext context, ECSContext ecs) {
+    onBuild?.call(ecs);
 
     if (customBuilder != null) {
-      return customBuilder!(context, reference);
+      return customBuilder!(context, ecs);
     }
 
-    final counter = reference.watch<TestCounterComponent>();
-    final stringComponent = reference.get<TestStringComponent>();
+    final counter = ecs.watch<TestCounterComponent>();
+    final stringComponent = ecs.get<TestStringComponent>();
 
     return Column(
       children: [

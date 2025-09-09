@@ -1,4 +1,4 @@
-part of '../flutter_event_component_system.dart';
+part of '../ecs_base.dart';
 
 final class ECSNode {
   final Type type;

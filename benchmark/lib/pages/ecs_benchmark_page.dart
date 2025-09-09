@@ -38,7 +38,7 @@ class _MainContent extends ECSStatefulWidget {
   State<_MainContent> createState() => _MainContentState();
 }
 
-class _MainContentState extends ECSStatefulWidgetState<_MainContent> {
+class _MainContentState extends ECSState<_MainContent> {
   Completer<void>? completer;
 
   @override

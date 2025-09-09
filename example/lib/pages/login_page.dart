@@ -23,11 +23,11 @@ class _LoginButton extends ECSWidget {
   const _LoginButton();
 
   @override
-  Widget build(BuildContext context, ECSContext reference) {
-    final process = reference.watch<LoginProcessComponent>().value;
+  Widget build(BuildContext context, ECSContext ecs) {
+    final process = ecs.watch<LoginProcessComponent>().value;
 
     return ElevatedButton(
-      onPressed: process.isRunning ? null : reference.get<LoginEvent>().trigger,
+      onPressed: process.isRunning ? null : ecs.get<LoginEvent>().trigger,
       child: const Text('Login'),
     );
   }

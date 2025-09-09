@@ -1,4 +1,4 @@
-part of '../flutter_event_component_system.dart';
+part of '../ecs_base.dart';
 
 /// ECSFeature is a base class for creating features in the ECS system.
 ///

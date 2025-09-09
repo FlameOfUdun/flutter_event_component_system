@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_event_component_system/flutter_event_component_system.dart';
+import 'package:flutter_event_component_system/src/ecs_base.dart';
 
 class TestEvent extends ECSEvent {}
 

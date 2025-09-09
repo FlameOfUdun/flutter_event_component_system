@@ -1,4 +1,4 @@
-part of '../flutter_event_component_system.dart';
+part of '../ecs_base.dart';
 
 abstract class ECSWidget extends StatefulWidget {
   const ECSWidget({super.key});
@@ -50,10 +50,10 @@ abstract class ECSStatefulWidget extends StatefulWidget {
   const ECSStatefulWidget({super.key});
 
   @override
-  State<ECSStatefulWidget> createState();
+  ECSState<ECSStatefulWidget> createState();
 }
 
-abstract class ECSStatefulWidgetState<TWidget extends ECSStatefulWidget> extends State<TWidget> {
+abstract class ECSState<TWidget extends ECSStatefulWidget> extends State<TWidget> {
   ECSContext? _ecs;
 
   @protected

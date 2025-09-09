@@ -3,7 +3,7 @@ description: "A Flutter package for Event-Component-System state management"
 issueTracker: https://github.com/FlameOfUdun/flutter_event_component_system/issues
 repository: https://github.com/FlameOfUdun/flutter_event_component_system
 version: 0.0.1
-homepage:
+publish_to: none
 
 environment:
   sdk: ^3.6.2

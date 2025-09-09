@@ -1,4 +1,4 @@
-part of '../flutter_event_component_system.dart';
+part of '../ecs_base.dart';
 
 /// Interface for listening to changes in entities.
 abstract interface class ECSEntityListener {
