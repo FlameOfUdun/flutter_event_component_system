@@ -35,7 +35,7 @@ class _MainContent extends ECSStatefulWidget {
   const _MainContent();
 
   @override
-  State<_MainContent> createState() => _MainContentState();
+  ECSState<_MainContent> createState() => _MainContentState();
 }
 
 class _MainContentState extends ECSState<_MainContent> {
