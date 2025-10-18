@@ -111,7 +111,7 @@ final class _EntityChanged<TEntity extends ECSEntity> extends ECSLog {
 
   @override
   String get description {
-    final buffer = StringBuffer("[${entity.parent.runtimeType}.${entity.runtimeType}] ");
+    final buffer = StringBuffer("[${entity.feature.runtimeType}.${entity.runtimeType}] ");
     if (entity is ECSComponent) {
       final component = entity as ECSComponent;
       final previous = component.buildDescriptor(component.previous);
@@ -144,7 +144,7 @@ final class _SystemReacted<TSystem extends ReactiveSystem, TEvent extends ECSEnt
 
   @override
   String get description {
-    final buffer = StringBuffer('[${system.parent.runtimeType}.${system.runtimeType}] reacted to [${entity.parent.runtimeType}.${entity.runtimeType}] ');
+    final buffer = StringBuffer('[${system.feature.runtimeType}.${system.runtimeType}] reacted to [${entity.feature.runtimeType}.${entity.runtimeType}] ');
     if (entity is ECSComponent) {
       final component = entity as ECSComponent;
       final previous = component.buildDescriptor(component.previous);

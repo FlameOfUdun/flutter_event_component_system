@@ -105,9 +105,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) {
-              return {feature};
-            },
+            features: {feature},
             child: const WatchingTestWidget(),
           ),
         ),
@@ -133,9 +131,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) {
-              return {feature};
-            },
+            features: {feature},
             child: const MultipleEntitiesTestWidget(),
           ),
         ),
@@ -172,9 +168,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) {
-              return {feature};
-            },
+            features: {feature},
             child: ListeningTestWidget(
               onCounterChanged: (entity) {
                 listenerCallbackEntity = entity;
@@ -204,7 +198,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) => {TestFeature()},
+            features: {TestFeature()},
             child: LifecycleTestWidget(
               onEnter: () => onEnterCalled = true,
             ),
@@ -227,7 +221,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) => {TestFeature()},
+            features: {TestFeature()},
             child: StatefulBuilder(
               builder: (context, setState) {
                 return Column(
@@ -266,7 +260,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) => {TestFeature()},
+            features: {TestFeature()},
             child: LifecycleTestWidget(
               onEnter: () => onEnterCallCount++,
             ),
@@ -291,7 +285,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) => {TestFeature()},
+            features: {TestFeature()},
             child: StatefulBuilder(
               builder: (context, setState) {
                 return Column(
@@ -333,9 +327,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) {
-              return {feature};
-            },
+            features: {feature},
             child: BuildCounterWidget(
               onBuild: () => buildCount++,
             ),
@@ -368,9 +360,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) {
-              return {feature};
-            },
+            features: {feature},
             child: StatefulBuilder(
               builder: (context, setState) {
                 return Column(
@@ -417,9 +407,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) {
-              return {feature};
-            },
+            features: {feature},
             child: StatefulBuilder(
               builder: (context, setState) {
                 return Column(

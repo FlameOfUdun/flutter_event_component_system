@@ -2,15 +2,11 @@ part of '../ecs_base.dart';
 
 /// ECSFeature is a base class for creating features in the ECS system.
 final class ECSManager implements ECSEntityListener {
-  final Set<ECSFeature> _features = {};
-
+  /// Set of features in the ECS manager.
   @visibleForTesting
-  ECSManager();
+  final Set<ECSFeature> features = {};
 
-  /// Unmodifiable set of features in the ECS manager.
-  Set<ECSFeature> get features {
-    return Set.unmodifiable(_features);
-  }
+  ECSManager();
 
   /// Unmodifiable set of all entities across all features.
   Set<ECSEntity> get entities {
@@ -21,7 +17,8 @@ final class ECSManager implements ECSEntityListener {
   /// Add a feature to the ECS manager.
   @visibleForTesting
   void addFeature(ECSFeature feature) {
-    _features.add(feature);
+    feature.setManager(this);
+    features.add(feature);
 
     for (final entity in feature.entities) {
       entity.addListener(this);
@@ -75,33 +72,13 @@ final class ECSManager implements ECSEntityListener {
   /// Throws a [StateError] if the entity is not found.
   TEntity getEntity<TEntity extends ECSEntity>() {
     for (final feature in features) {
-      final entity = feature.getEntity<TEntity>();
-      if (entity != null) return entity;
+      try {
+        return feature.getEntity<TEntity>();
+      } catch (_) {
+        continue;
+      }
     }
 
     throw StateError("Entity of type $TEntity not found");
-  }
-
-  /// Gets an entity of type [TEntity] from a specific feature [TFeature].
-  ///
-  /// Throws a [StateError] if the feature or entity is not found.
-  TEntity getEntityFromFeature<TEntity extends ECSEntity, TFeature extends ECSFeature>() {
-    ECSFeature? feature;
-    for (final item in features) {
-      if (item is TFeature) {
-        feature = item;
-        break;
-      }
-    }
-    if (feature == null) {
-      throw StateError("Feature of type $TFeature not found");
-    }
-
-    final entity = feature.getEntity<TEntity>();
-    if (entity == null) {
-      throw StateError("Entity of type $TEntity not found in feature $TFeature");
-    }
-
-    return entity;
   }
 }

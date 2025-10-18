@@ -5,9 +5,7 @@ import '../components/timer_state_component.dart';
 import '../events/timer_reset_event.dart';
 
 final class ResetTimerReactiveSystem extends ReactiveSystem {
-  final ECSManager manager;
-
-  ResetTimerReactiveSystem(this.manager);
+  ResetTimerReactiveSystem();
 
   @override
   Set<Type> get reactsTo {
@@ -25,13 +23,13 @@ final class ResetTimerReactiveSystem extends ReactiveSystem {
 
   @override
   bool get reactsIf {
-    final state = manager.getEntity<TimerStateComponent>();
+    final state = feature.getEntity<TimerStateComponent>();
     return state.value == TimerState.stopped;
   }
 
   @override
   void react() {
-    final timer = manager.getEntity<TimerValueComponent>();
+    final timer = feature.getEntity<TimerValueComponent>();
     timer.update(Duration.zero);
   }
 }

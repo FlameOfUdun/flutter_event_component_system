@@ -9,7 +9,6 @@ class BenchmarkResult {
   final Duration duration;
   final Duration? stateUpdateDuration;
   final Duration? uiPropagationDuration;
-  final int memoryUsage;
   final int operations;
   final Map<String, dynamic> additionalMetrics;
 
@@ -19,21 +18,16 @@ class BenchmarkResult {
     required this.duration,
     this.stateUpdateDuration,
     this.uiPropagationDuration,
-    required this.memoryUsage,
     required this.operations,
     this.additionalMetrics = const {},
   });
 
   double get operationsPerSecond => operations / duration.inMicroseconds * 1000000;
   double get averageTimePerOperation => duration.inMicroseconds / operations;
-  
-  double? get stateUpdateOpsPerSecond => stateUpdateDuration != null 
-      ? operations / stateUpdateDuration!.inMicroseconds * 1000000 
-      : null;
-      
-  double? get uiPropagationOpsPerSecond => uiPropagationDuration != null 
-      ? operations / uiPropagationDuration!.inMicroseconds * 1000000 
-      : null;
+
+  double? get stateUpdateOpsPerSecond => stateUpdateDuration != null ? operations / stateUpdateDuration!.inMicroseconds * 1000000 : null;
+
+  double? get uiPropagationOpsPerSecond => uiPropagationDuration != null ? operations / uiPropagationDuration!.inMicroseconds * 1000000 : null;
 
   @override
   String toString() {
@@ -43,16 +37,15 @@ class BenchmarkResult {
         'impl: $implementation, '
         'total: ${duration.inMilliseconds}ms, '
         'ops/sec: ${operationsPerSecond.toStringAsFixed(2)}');
-    
+
     if (stateUpdateDuration != null) {
       buffer.write(', state: ${stateUpdateDuration!.inMilliseconds}ms');
     }
-    
+
     if (uiPropagationDuration != null) {
       buffer.write(', ui: ${uiPropagationDuration!.inMilliseconds}ms');
     }
-    
-    buffer.write(', memory: ${memoryUsage}KB)');
+
     return buffer.toString();
   }
 }
@@ -77,19 +70,16 @@ class BenchmarkRunner {
       await Future.delayed(const Duration(milliseconds: 100));
     }
 
-    final startMemory = _getMemoryUsage();
     final stopwatch = Stopwatch()..start();
 
     await test();
 
     stopwatch.stop();
-    final endMemory = _getMemoryUsage();
 
     final result = BenchmarkResult(
       testName: testName,
       implementation: implementation,
       duration: stopwatch.elapsed,
-      memoryUsage: endMemory - startMemory,
       operations: operations,
       additionalMetrics: additionalMetrics,
     );
@@ -112,17 +102,15 @@ class BenchmarkRunner {
       await Future.delayed(const Duration(milliseconds: 100));
     }
 
-    final startMemory = _getMemoryUsage();
     final totalStopwatch = Stopwatch()..start();
 
     // Measure state update time
     final stateUpdateDuration = await stateUpdateTest();
-    
+
     // Measure UI propagation time
     final uiPropagationDuration = await uiPropagationTest();
 
     totalStopwatch.stop();
-    final endMemory = _getMemoryUsage();
 
     final result = BenchmarkResult(
       testName: testName,
@@ -130,7 +118,6 @@ class BenchmarkRunner {
       duration: totalStopwatch.elapsed,
       stateUpdateDuration: stateUpdateDuration,
       uiPropagationDuration: uiPropagationDuration,
-      memoryUsage: endMemory - startMemory,
       operations: operations,
       additionalMetrics: additionalMetrics,
     );
@@ -203,29 +190,23 @@ class BenchmarkRunner {
     Duration? avgUiPropagationDuration;
 
     // Calculate averages for separate timings if available
-    final stateUpdateDurations = relevantResults
-        .where((r) => r.stateUpdateDuration != null)
-        .map((r) => r.stateUpdateDuration!.inMicroseconds)
-        .toList();
-    
+    final stateUpdateDurations =
+        relevantResults.where((r) => r.stateUpdateDuration != null).map((r) => r.stateUpdateDuration!.inMicroseconds).toList();
+
     if (stateUpdateDurations.isNotEmpty) {
       avgStateUpdateDuration = Duration(
         microseconds: (stateUpdateDurations.reduce((a, b) => a + b) / stateUpdateDurations.length).round(),
       );
     }
 
-    final uiPropagationDurations = relevantResults
-        .where((r) => r.uiPropagationDuration != null)
-        .map((r) => r.uiPropagationDuration!.inMicroseconds)
-        .toList();
-    
+    final uiPropagationDurations =
+        relevantResults.where((r) => r.uiPropagationDuration != null).map((r) => r.uiPropagationDuration!.inMicroseconds).toList();
+
     if (uiPropagationDurations.isNotEmpty) {
       avgUiPropagationDuration = Duration(
         microseconds: (uiPropagationDurations.reduce((a, b) => a + b) / uiPropagationDurations.length).round(),
       );
     }
-
-    final avgMemory = (relevantResults.map((r) => r.memoryUsage).reduce((a, b) => a + b) / relevantResults.length).round();
 
     final totalOperations = relevantResults.first.operations;
 
@@ -235,7 +216,6 @@ class BenchmarkRunner {
       duration: avgDuration,
       stateUpdateDuration: avgStateUpdateDuration,
       uiPropagationDuration: avgUiPropagationDuration,
-      memoryUsage: avgMemory,
       operations: totalOperations,
     );
   }
@@ -264,18 +244,17 @@ class BenchmarkRunner {
           buffer.writeln('  $impl:');
           buffer.writeln('    Total Duration: ${avgResult.duration.inMilliseconds}ms');
           buffer.writeln('    Ops/sec: ${avgResult.operationsPerSecond.toStringAsFixed(2)}');
-          
+
           if (avgResult.stateUpdateDuration != null) {
             buffer.writeln('    State Update: ${avgResult.stateUpdateDuration!.inMilliseconds}ms');
             buffer.writeln('    State Ops/sec: ${avgResult.stateUpdateOpsPerSecond!.toStringAsFixed(2)}');
           }
-          
+
           if (avgResult.uiPropagationDuration != null) {
             buffer.writeln('    UI Propagation: ${avgResult.uiPropagationDuration!.inMilliseconds}ms');
             buffer.writeln('    UI Ops/sec: ${avgResult.uiPropagationOpsPerSecond!.toStringAsFixed(2)}');
           }
-          
-          buffer.writeln('    Memory: ${avgResult.memoryUsage}KB');
+
         } catch (e) {
           buffer.writeln('  $impl: No average available');
         }
@@ -289,18 +268,6 @@ class BenchmarkRunner {
   /// Clear all results
   void clear() {
     _results.clear();
-  }
-
-  int _getMemoryUsage() {
-    if (kIsWeb) return 0;
-
-    try {
-      // Memory usage tracking is limited in Flutter/Dart
-      // This is a placeholder - real memory tracking would need platform channels
-      return 0;
-    } catch (e) {
-      return 0;
-    }
   }
 }
 

@@ -1,9 +1,7 @@
 part of '../navigation_feature.dart';
 
 final class NavigateToLoginWhenLoggedOutReactiveSystem extends ReactiveSystem {
-  final ECSManager manager;
-
-  NavigateToLoginWhenLoggedOutReactiveSystem(this.manager);
+  NavigateToLoginWhenLoggedOutReactiveSystem();
 
   @override
   Set<Type> get reactsTo {
@@ -14,7 +12,7 @@ final class NavigateToLoginWhenLoggedOutReactiveSystem extends ReactiveSystem {
 
   @override
   bool get reactsIf {
-    final authState = manager.getEntity<AuthStateComponent>().value;
+    final authState = feature.getEntity<AuthStateComponent>().value;
     return authState == AuthState.loggedOut;
   }
 
@@ -27,7 +25,7 @@ final class NavigateToLoginWhenLoggedOutReactiveSystem extends ReactiveSystem {
 
   @override
   void react() {
-    final routeComponent = manager.getEntity<AppRouteComponent>();
-    routeComponent.update(AppRoutes.login);
+    final routeComponent = feature.getEntity<AppRouteComponent>();
+    routeComponent.value = AppRoutes.login;
   }
 }

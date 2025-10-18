@@ -1,11 +1,9 @@
 part of '../navigation_feature.dart';
 
 final class NavigateToSelectedRouteReactiveSystem extends ReactiveSystem {
-  final ECSManager manager;
   final GlobalKey<NavigatorState> navigatorKey;
 
-  NavigateToSelectedRouteReactiveSystem(
-    this.manager, {
+  NavigateToSelectedRouteReactiveSystem({
     required this.navigatorKey,
   });
 
@@ -17,13 +15,8 @@ final class NavigateToSelectedRouteReactiveSystem extends ReactiveSystem {
   }
 
   @override
-  Set<Type> get interactsWith {
-    return const {};
-  }
-
-  @override
   void react() {
-    final appRoute = manager.getEntity<AppRouteComponent>().value;
+    final appRoute = feature.getEntity<AppRouteComponent>().value;
     navigatorKey.currentState?.pushReplacementNamed(appRoute.path);
   }
 }

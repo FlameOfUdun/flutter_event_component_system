@@ -7,14 +7,25 @@ import '../implementations/riverpod_implementation.dart';
 import '../models/benchmark_models.dart';
 import '../utilties/benchmark_runner.dart';
 
-class RiverpodBenchmarkPage extends ConsumerStatefulWidget {
+class RiverpodBenchmarkPage extends StatelessWidget {
   const RiverpodBenchmarkPage({super.key});
 
   @override
-  ConsumerState<RiverpodBenchmarkPage> createState() => _RiverpodBenchmarkPageState();
+  Widget build(BuildContext context) {
+    return ProviderScope(
+      child: _MainContent(),
+    );
+  }
 }
 
-class _RiverpodBenchmarkPageState extends ConsumerState<RiverpodBenchmarkPage> {
+class _MainContent extends ConsumerStatefulWidget {
+  const _MainContent();
+
+  @override
+  ConsumerState<_MainContent> createState() => _RiverpodBenchmarkPageState();
+}
+
+class _RiverpodBenchmarkPageState extends ConsumerState<_MainContent> {
   Completer<void>? completer;
 
   @override
@@ -40,13 +51,11 @@ class _RiverpodBenchmarkPageState extends ConsumerState<RiverpodBenchmarkPage> {
           children: [
             ElevatedButton(
               onPressed: () async {
-                print('Running Riverpod Benchmark (Basic)...');
                 await runCounterBenchmark();
                 await runProfileBenchmark();
                 await runTodoBenchmark();
-                print('Riverpod Benchmark (Basic) completed');
               },
-              child: const Text('Run Riverpod Benchmark (Basic)'),
+              child: const Text('Run Riverpod Benchmark'),
             ),
           ],
         ),
@@ -55,7 +64,7 @@ class _RiverpodBenchmarkPageState extends ConsumerState<RiverpodBenchmarkPage> {
   }
 
   Future<void> runCounterBenchmark() async {
-    print('Running Counter Benchmark...');
+    debugPrint('Running Counter Benchmark...');
 
     final counterNotifier = ref.read(counterProvider.notifier);
 
@@ -79,12 +88,11 @@ class _RiverpodBenchmarkPageState extends ConsumerState<RiverpodBenchmarkPage> {
       },
     );
 
-    final average = benchmarkRunner.getAverageResult('Counter Benchmark', 'Riverpod');
-    print('Counter Benchmark completed: $average');
+    debugPrint(benchmarkRunner.generateReport());
   }
 
   Future<void> runProfileBenchmark() async {
-    print('Running User Profile Benchmark...');
+    debugPrint('Running User Profile Benchmark...');
 
     final userNotifier = ref.read(userProfileProvider.notifier);
 
@@ -115,13 +123,12 @@ class _RiverpodBenchmarkPageState extends ConsumerState<RiverpodBenchmarkPage> {
         await completer!.future;
       },
     );
-    
-    final average = benchmarkRunner.getAverageResult('User Profile Benchmark', 'Riverpod');
-    print('User Profile Benchmark completed: $average');
+
+    debugPrint(benchmarkRunner.generateReport());
   }
 
   Future<void> runTodoBenchmark() async {
-    print('Running Todo Benchmark...');
+    debugPrint('Running Todo Benchmark...');
 
     final todoNotifier = ref.read(todoProvider.notifier);
 
@@ -149,8 +156,7 @@ class _RiverpodBenchmarkPageState extends ConsumerState<RiverpodBenchmarkPage> {
         await completer!.future;
       },
     );
-    
-    final average = benchmarkRunner.getAverageResult('Todo Benchmark', 'Riverpod');
-    print('Todo Benchmark completed: $average');
+
+    debugPrint(benchmarkRunner.generateReport());
   }
 }

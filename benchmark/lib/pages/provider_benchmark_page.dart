@@ -54,13 +54,11 @@ class _MainContentState extends State<_MainContent> {
             children: [
               ElevatedButton(
                 onPressed: () async {
-                  print('Running Provider Benchmark (Basic)...');
                   await runCounterBenchmark();
                   await runProfileBenchmark();
                   await runTodoBenchmark();
-                  print('Provider Benchmark (Basic) completed');
                 },
-                child: const Text('Run Provider Benchmark (Basic)'),
+                child: const Text('Run Provider Benchmark'),
               ),
             ],
           ),
@@ -70,7 +68,7 @@ class _MainContentState extends State<_MainContent> {
   }
 
   Future<void> runCounterBenchmark() async {
-    print('Running Counter Benchmark...');
+    debugPrint('Running Counter Benchmark...');
 
     final counterProvider = Provider.of<CounterProvider>(context, listen: false);
 
@@ -94,12 +92,11 @@ class _MainContentState extends State<_MainContent> {
       },
     );
 
-    final average = benchmarkRunner.getAverageResult('Counter Benchmark', 'Provider');
-    print('Counter Benchmark completed: $average');
+    debugPrint(benchmarkRunner.generateReport());
   }
 
   Future<void> runProfileBenchmark() async {
-    print('Running User Profile Benchmark...');
+    debugPrint('Running User Profile Benchmark...');
 
     final userProfileProvider = Provider.of<UserProfileProvider>(context, listen: false);
 
@@ -131,12 +128,11 @@ class _MainContentState extends State<_MainContent> {
       },
     );
 
-    final average = benchmarkRunner.getAverageResult('User Profile Benchmark', 'Provider');
-    print('User Profile Benchmark completed: $average');
+    debugPrint(benchmarkRunner.generateReport());
   }
 
   Future<void> runTodoBenchmark() async {
-    print('Running Todo Benchmark...');
+    debugPrint('Running Todo Benchmark...');
 
     final todoProvider = Provider.of<TodoProvider>(context, listen: false);
 
@@ -165,7 +161,6 @@ class _MainContentState extends State<_MainContent> {
       },
     );
 
-    final average = benchmarkRunner.getAverageResult('Todo Benchmark', 'Provider');
-    print('Todo Benchmark completed: $average');
+    debugPrint(benchmarkRunner.generateReport());
   }
 }

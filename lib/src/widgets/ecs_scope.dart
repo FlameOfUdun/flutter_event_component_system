@@ -1,13 +1,15 @@
 part of '../ecs_base.dart';
 
 final class ECSScope extends StatefulWidget {
-  final Set<ECSFeature> Function(ECSManager manager) features;
+  final Set<ECSFeature> features;
   final Widget child;
+  final bool useTicker;
 
   const ECSScope({
     super.key,
     required this.features,
     required this.child,
+    this.useTicker = false,
   });
 
   @override
@@ -26,35 +28,53 @@ final class ECSScope extends StatefulWidget {
 final class _ECSScopeState extends State<ECSScope> with SingleTickerProviderStateMixin {
   final manager = ECSManager();
 
-  late Ticker ticker;
-
+  Ticker? ticker;
   var duration = Duration.zero;
 
   @override
   void initState() {
-    final features = widget.features(manager);
-    for (final feature in features) {
+    for (final feature in widget.features) {
       manager.addFeature(feature);
     }
 
+    if (widget.useTicker) {
+      buildTicker();
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      manager.initialize();
+      ticker?.start();
+    });
+
+    super.initState();
+  }
+
+  void buildTicker() {
+    ticker?.stop();
     ticker = createTicker((duration) {
       final elapsed = duration - this.duration;
       this.duration = duration;
       manager.execute(elapsed);
       manager.cleanup();
     });
+  }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      manager.initialize();
-      ticker.start();
-    });
-
-    super.initState();
+  @override
+  void didUpdateWidget(covariant ECSScope oldWidget) {
+    if (oldWidget.useTicker != widget.useTicker) {
+      if (widget.useTicker) {
+        buildTicker();
+      } else {
+        ticker?.stop();
+        ticker = null;
+      }
+    }
+    super.didUpdateWidget(oldWidget);
   }
 
   @override
   void dispose() {
-    ticker.dispose();
+    ticker?.dispose();
     manager.teardown();
     super.dispose();
   }

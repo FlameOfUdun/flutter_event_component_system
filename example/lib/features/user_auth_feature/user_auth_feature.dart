@@ -17,7 +17,7 @@ part 'systems/login_user_reactive_system.dart';
 part 'systems/test_initialize_system.dart';
 
 final class UserAuthFeature extends ECSFeature {
-  UserAuthFeature(ECSManager manager) {
+  UserAuthFeature() {
     // Components
     addEntity(AuthStateComponent());
     addEntity(LoginCredentialsComponent());
@@ -30,9 +30,9 @@ final class UserAuthFeature extends ECSFeature {
     addEntity(ReloadUserEvent());
 
     // Systems
-    addSystem(ReloadUserReactiveSystem(manager));
-    addSystem(LogoutUserReactiveSystem(manager));
-    addSystem(LoginUserReactiveSystem(manager));
+    addSystem(ReloadUserReactiveSystem());
+    addSystem(LogoutUserReactiveSystem());
+    addSystem(LoginUserReactiveSystem());
     addSystem(TestInitializeSystem());
   }
 }

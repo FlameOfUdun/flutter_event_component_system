@@ -1,9 +1,7 @@
 part of '../user_auth_feature.dart';
 
 final class LoginUserReactiveSystem extends ReactiveSystem {
-  final ECSManager manager;
-
-  LoginUserReactiveSystem(this.manager);
+  LoginUserReactiveSystem();
 
   @override
   Set<Type> get reactsTo {
@@ -22,14 +20,14 @@ final class LoginUserReactiveSystem extends ReactiveSystem {
 
   @override
   void react() async {
-    manager.getEntity<LoginProcessComponent>().update(const LoginProcess.running());
+    feature.getEntity<LoginProcessComponent>().update(const LoginProcess.running());
 
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString('auth_state', AuthState.loggedIn.name);
     await Future.delayed(const Duration(seconds: 2));
 
-    manager.getEntity<LoginProcessComponent>().update(const LoginProcess.success('mock_token'));
+    feature.getEntity<LoginProcessComponent>().update(const LoginProcess.success('mock_token'));
 
-    manager.getEntity<AuthStateComponent>().update(AuthState.loggedIn);
+    feature.getEntity<AuthStateComponent>().update(AuthState.loggedIn);
   }
 }

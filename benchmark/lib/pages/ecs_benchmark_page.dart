@@ -13,14 +13,12 @@ class ECSBenchmarkPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ECSScope(
-      features: (manager) {
-        return {
-          CounterFeature(manager),
-          TodoFeature(manager),
-          LoadingFeature(manager),
-          UserProfileFeature(manager),
-        };
-      },
+      features: {
+          CounterFeature(),
+          TodoFeature(),
+          LoadingFeature(),
+          UserProfileFeature(),
+        },
       child: Scaffold(
         appBar: AppBar(
           title: const Text('ECS Benchmark'),
@@ -58,11 +56,11 @@ class _MainContentState extends ECSState<_MainContent> {
         children: [
           ElevatedButton(
             onPressed: () async {
-              print('Running ECS Benchmark (Basic)...');
+              debugPrint('Running ECS Benchmark (Basic)...');
               await runCounterBenchmark();
               await runProfileBenchmark();
               await runTodoBenchmark();
-              print('ECS Benchmark (Basic) completed');
+              debugPrint('ECS Benchmark (Basic) completed');
             },
             child: const Text('Run ECS Benchmark (Basic)'),
           ),
@@ -72,7 +70,7 @@ class _MainContentState extends ECSState<_MainContent> {
   }
 
   Future<void> runCounterBenchmark() async {
-    print('Running Counter Benchmark...');
+    debugPrint('Running Counter Benchmark...');
 
     final incrementEvent = ecs.get<IncrementEvent>();
     final decrementEvent = ecs.get<DecrementEvent>();
@@ -99,11 +97,11 @@ class _MainContentState extends ECSState<_MainContent> {
     );
 
     final average = benchmarkRunner.getAverageResult('Counter Benchmark', 'ECS');
-    print('Counter Benchmark completed: $average');
+    debugPrint('Counter Benchmark completed: $average');
   }
 
   Future<void> runProfileBenchmark() async {
-    print('Running User Profile Benchmark...');
+    debugPrint('Running User Profile Benchmark...');
 
     final updateEvent = ecs.get<UpdateUserEvent>();
     final loginEvent = ecs.get<LoginEvent>();
@@ -138,11 +136,11 @@ class _MainContentState extends ECSState<_MainContent> {
     );
     
     final average = benchmarkRunner.getAverageResult('User Profile Benchmark', 'ECS');
-    print('User Profile Benchmark completed: $average');
+    debugPrint('User Profile Benchmark completed: $average');
   }
 
   Future<void> runTodoBenchmark() async {
-    print('Running Todo Benchmark...');
+    debugPrint('Running Todo Benchmark...');
 
     final addEvent = ecs.get<AddTodoEvent>();
     final removeEvent = ecs.get<RemoveTodoEvent>();
@@ -174,6 +172,6 @@ class _MainContentState extends ECSState<_MainContent> {
     );
     
     final average = benchmarkRunner.getAverageResult('Todo Benchmark', 'ECS');
-    print('Todo Benchmark completed: $average');
+    debugPrint('Todo Benchmark completed: $average');
   }
 }

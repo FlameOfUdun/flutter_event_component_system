@@ -15,29 +15,18 @@ sealed class ECSSystem {
   Set<Type> get interactsWith => const {};
 
   /// The parent feature of this system.
-  ECSFeature? _parent;
+  @visibleForTesting
+  @protected
+  late ECSFeature feature;
 
   ECSSystem();
-
-  /// The parent feature of this system.
-  /// 
-  /// Throws a [StateError] if the system is not assigned to a feature.
-  ECSFeature get parent {
-    if (_parent == null) {
-      throw StateError('System is not assigned to a feature');
-    }
-    return _parent!;
-  }
 
   /// Sets the parent feature of this system.
   /// 
   /// Throws a [StateError] if the system is already assigned to a feature.
   @visibleForTesting
-  void setParent(ECSFeature parent) {
-    if (_parent != null) {
-      throw StateError('System is already assigned to a feature: $_parent');
-    }
-    _parent = parent;
+  void setFeature(ECSFeature feature) {
+    this.feature = feature;
   }
 }
 

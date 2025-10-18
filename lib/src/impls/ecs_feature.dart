@@ -5,48 +5,45 @@ part of '../ecs_base.dart';
 /// Features can contain entities and systems, and they provide a way to organize
 /// and manage different parts of the ECS architecture.
 abstract class ECSFeature {
-  final Set<ECSEntity> _entities = {};
-  final Set<InitializeSystem> _initializeSystems = {};
-  final Set<TeardownSystem> _teardownSystems = {};
-  final Set<CleanupSystem> _cleanupSystems = {};
-  final Set<ExecuteSystem> _executeSystems = {};
-  final Map<Type, Set<ReactiveSystem>> _reactiveSystems = {};
+  /// Set of entities in this feature.
+  @visibleForTesting
+  final Set<ECSEntity> entities = {};
+
+  /// Set of initialize systems in this feature.
+  @visibleForTesting
+  final Set<InitializeSystem> initializeSystems = {};
+
+  /// Set of teardown systems in this feature.
+  @visibleForTesting
+  final Set<TeardownSystem> teardownSystems = {};
+
+  /// Set of cleanup systems in this feature.
+  @visibleForTesting
+  final Set<CleanupSystem> cleanupSystems = {};
+
+  /// Set of execute systems in this feature.
+  @visibleForTesting
+  final Set<ExecuteSystem> executeSystems = {};
+
+  /// Map of reactive systems by entity type.
+  @visibleForTesting
+  final Map<Type, Set<ReactiveSystem>> reactiveSystems = {};
+
+  /// The manager that this feature is associated with.
+  @visibleForTesting
+  late ECSManager manager;
 
   ECSFeature();
-
-  /// Unmodifiable set of entities in this feature.
-  Set<ECSEntity> get entities {
-    return Set.unmodifiable(_entities);
-  }
-
-  /// Unmodifiable sets of initialize systems in this feature.
-  Set<InitializeSystem> get initializeSystems {
-    return Set.unmodifiable(_initializeSystems);
-  }
-
-  /// Unmodifiable sets of teardown systems in this feature.
-  Set<TeardownSystem> get teardownSystems {
-    return Set.unmodifiable(_teardownSystems);
-  }
-
-  /// Unmodifiable sets of reactive systems in this feature.
-  Set<CleanupSystem> get cleanupSystems {
-    return Set.unmodifiable(_cleanupSystems);
-  }
-
-  /// Unmodifiable sets of execute systems in this feature.
-  Set<ExecuteSystem> get executeSystems {
-    return Set.unmodifiable(_executeSystems);
-  }
-
-  /// Unmodifiable map of reactive systems by entity type.
-  Map<Type, Set<ReactiveSystem>> get reactiveSystems {
-    return Map.unmodifiable(_reactiveSystems);
-  }
 
   /// Number of systems in this feature.
   int get systemsCount {
     return initializeSystems.length + teardownSystems.length + reactiveSystems.length + cleanupSystems.length + executeSystems.length;
+  }
+
+  /// Sets the manager for this feature.
+  @visibleForTesting
+  void setManager(ECSManager manager) {
+    this.manager = manager;
   }
 
   /// Add an entity to this feature.
@@ -57,8 +54,8 @@ abstract class ECSFeature {
   @protected
   @visibleForTesting
   void addEntity(ECSEntity entitiy) {
-    entitiy.setParent(this);
-    _entities.add(entitiy);
+    entitiy.setFeature(this);
+    entities.add(entitiy);
   }
 
   /// Adds a system to this feature.
@@ -70,27 +67,27 @@ abstract class ECSFeature {
   @visibleForTesting
   void addSystem(ECSSystem system) {
     if (system is InitializeSystem) {
-      _initializeSystems.add(system);
+      initializeSystems.add(system);
     } else if (system is TeardownSystem) {
-      _teardownSystems.add(system);
+      teardownSystems.add(system);
     } else if (system is CleanupSystem) {
-      _cleanupSystems.add(system);
+      cleanupSystems.add(system);
     } else if (system is ExecuteSystem) {
-      _executeSystems.add(system);
+      executeSystems.add(system);
     } else if (system is ReactiveSystem) {
       for (final entity in system.reactsTo) {
-        _reactiveSystems.putIfAbsent(entity, () => {}).add(system);
+        reactiveSystems.putIfAbsent(entity, () => {}).add(system);
       }
     } else {
       throw ArgumentError('Unsupported system type: ${system.runtimeType}');
     }
-    system.setParent(this);
+    system.setFeature(this);
   }
 
   /// Initializes the features.
   @visibleForTesting
   void initialize() {
-    for (final system in _initializeSystems) {
+    for (final system in initializeSystems) {
       system.initialize();
     }
   }
@@ -98,7 +95,7 @@ abstract class ECSFeature {
   /// Tears down the features.
   @visibleForTesting
   void teardown() {
-    for (final system in _teardownSystems) {
+    for (final system in teardownSystems) {
       system.teardown();
     }
   }
@@ -106,7 +103,7 @@ abstract class ECSFeature {
   /// Cleans up the features.
   @visibleForTesting
   void cleanup() {
-    for (final system in _cleanupSystems) {
+    for (final system in cleanupSystems) {
       system.cleanup();
     }
   }
@@ -114,7 +111,7 @@ abstract class ECSFeature {
   /// Executes the features.
   @visibleForTesting
   void execute(Duration elapsed) {
-    for (final system in _executeSystems) {
+    for (final system in executeSystems) {
       if (system.executesIf) {
         system.execute(elapsed);
       }
@@ -136,11 +133,13 @@ abstract class ECSFeature {
   }
 
   /// Gets an entity of type [TEntity] from this feature if it exists.
-  @visibleForTesting
-  TEntity? getEntity<TEntity extends ECSEntity>() {
-    for (final item in _entities) {
-      if (item is TEntity) return item;
+  TEntity getEntity<TEntity extends ECSEntity>() {
+    for (final entity in entities) {
+      if (entity is TEntity) {
+        return entity;
+      }
     }
-    return null;
+
+    throw StateError("Entity of type $TEntity not found");
   }
 }

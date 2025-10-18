@@ -21,16 +21,13 @@ class _Application extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ECSScope(
-      features: (manager) {
-        return {
+      features: {
           NavigationFeature(
-            manager,
             navigatorKey: navigatorKey,
           ),
-          UserAuthFeature(manager),
-          TimerFeature(manager),
-        };
-      },
+          UserAuthFeature(),
+          TimerFeature(),
+        },
       child: MaterialApp(
         navigatorKey: navigatorKey,
         routes: {

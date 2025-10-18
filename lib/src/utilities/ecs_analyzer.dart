@@ -459,7 +459,9 @@ class ECSAnalyzer {
   }
 
   /// Builds the cascade graph for the ECS system
-  static ECSAnalysis analize(ECSManager manager) {
+  static ECSAnalysis analize(ECSManager manager, {
+    Set<Type> excludeFeatures = const {},
+  }) {
     _nodes.clear();
     _nodes[_executeNode.type] = _executeNode;
     _nodes[_initializeNode.type] = _initializeNode;
@@ -467,12 +469,20 @@ class ECSAnalyzer {
     _edges.clear();
 
     for (final feature in manager.features) {
+      if (excludeFeatures.contains(feature.runtimeType)) {
+        continue;
+      }
+
       for (final entity in feature.entities) {
         _createNodeForEntity(entity.runtimeType);
       }
     }
 
     for (final feature in manager.features) {
+      if (excludeFeatures.contains(feature.runtimeType)) {
+        continue;
+      }
+      
       for (final entry in feature.reactiveSystems.entries) {
         final triggerType = entry.key;
         final systems = entry.value;

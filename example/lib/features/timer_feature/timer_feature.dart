@@ -14,7 +14,7 @@ import 'systems/update_timer_execute_system.dart';
 export 'components/timer_value_component.dart';
 
 final class TimerFeature extends ECSFeature {
-  TimerFeature(ECSManager manager) {
+  TimerFeature() {
     addEntity(TimerValueComponent());
     addEntity(TimerStateComponent());
 
@@ -22,10 +22,10 @@ final class TimerFeature extends ECSFeature {
     addEntity(TimerStopEvent());
     addEntity(TimerResetEvent());
 
-    addSystem(ResetTimerReactiveSystem(manager));
-    addSystem(StartTimerReactiveSystem(manager));
-    addSystem(StopTimerReactiveSystem(manager));
-    addSystem(UpdateTimerExecuteSystem(manager));
-    addSystem(StartTimerInitializeSystem(manager));
+    addSystem(ResetTimerReactiveSystem());
+    addSystem(StartTimerReactiveSystem());
+    addSystem(StopTimerReactiveSystem());
+    addSystem(UpdateTimerExecuteSystem());
+    addSystem(StartTimerInitializeSystem());
   }
 }

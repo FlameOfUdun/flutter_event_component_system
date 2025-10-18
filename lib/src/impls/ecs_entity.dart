@@ -8,9 +8,13 @@ abstract interface class ECSEntityListener {
 
 /// Represents a base entity in the ECS system.
 sealed class ECSEntity {
-  final Set<ECSEntityListener> _listeners = {};
+  /// Set of listeners for this entity.
+  @visibleForTesting
+  final Set<ECSEntityListener> listeners = {};
 
-  ECSFeature? _parent;
+  /// The parent feature of this entity.
+  @visibleForTesting
+  late ECSFeature feature;
 
   ECSEntity();
 
@@ -18,41 +22,39 @@ sealed class ECSEntity {
   ///
   /// Throws a [StateError] if the parent is already set.
   @visibleForTesting
-  void setParent(ECSFeature parent) {
-    if (_parent != null) {
-      throw StateError('Parent is already set for this entity.');
-    }
-    _parent = parent;
-  }
-
-  /// The parent feature of this entity.
-  ECSFeature get parent {
-    if (_parent == null) {
-      throw StateError('Parent is not set for this entity.');
-    }
-    return _parent!;
-  }
-
-  /// Unmodifiable set of listeners for this entity.
-  Set<ECSEntityListener> get listeners {
-    return Set.unmodifiable(_listeners);
+  void setFeature(ECSFeature feature) {
+    this.feature = feature;
   }
 
   /// Adds a listener to this entity.
+  @visibleForTesting
   void addListener(ECSEntityListener listener) {
-    _listeners.add(listener);
+    listeners.add(listener);
   }
 
   /// Removes a listener from this entity.
+  @visibleForTesting
   void removeListener(ECSEntityListener listener) {
-    _listeners.remove(listener);
+    listeners.remove(listener);
   }
 
   @protected
   void notifyListeners() {
-    for (final listener in _listeners) {
+    for (final listener in listeners) {
       listener.onEntityChanged(this);
     }
+  }
+}
+
+/// Represents an event in the ECS system.
+/// 
+/// Events are specialized entities that can be triggered to notify listeners.
+abstract class ECSEvent extends ECSEntity {
+  ECSEvent();
+
+  /// Triggers the event, notifying all listeners.
+  void trigger() {
+    notifyListeners();
   }
 
   /// Builds a widget that represents this entity in the [ECSInspector].
@@ -63,21 +65,15 @@ sealed class ECSEntity {
   }
 }
 
-abstract class ECSEvent extends ECSEntity {
-  ECSEvent();
-
-  /// Triggers the event, notifying all listeners.
-  void trigger() {
-    notifyListeners();
-  }
-}
-
 /// Represents a component in the ECS system.
 ///
 /// Components are specialized entities that hold data and can be updated  and
 /// will notify listeners when their value changes.
 abstract class ECSComponent<TValue> extends ECSEntity {
+  /// The current value of the component.
   TValue _value;
+
+  /// The previous value of the component.
   TValue? _previous;
 
   ECSComponent(this._value);
@@ -90,10 +86,10 @@ abstract class ECSComponent<TValue> extends ECSEntity {
 
   /// Updates the component's value.
   ///
-  /// If [notify] is `true`, listeners will be notified of the change. Default 
+  /// If [notify] is `true`, listeners will be notified of the change. Default
   /// is `true`.
   ///
-  /// If the [value] is equal to the current value, no change will be made 
+  /// If the [value] is equal to the current value, no change will be made
   /// unless [force] is `true`, then update will be applied anyways. Defaults is
   /// `false`.
   void update(
@@ -115,6 +111,13 @@ abstract class ECSComponent<TValue> extends ECSEntity {
     }
   }
 
+  /// Fast setter for updating the component's value.
+  ///
+  /// This is equivalent to calling [update] with default parameters.
+  set value(TValue value) {
+    update(value);
+  }
+
   /// Builds a string descriptor for the component's value in [ECSInspector].
   ///
   /// If the [value] is null, "null" will be returned.
@@ -122,8 +125,10 @@ abstract class ECSComponent<TValue> extends ECSEntity {
     return value.toString();
   }
 
-  @override
-  Widget buildInspector(BuildContext context) {
+  /// Builds a widget that represents this entity in the [ECSInspector].
+  ///
+  /// [context] is the build context in which the widget is built.
+  Widget buildInspector(BuildContext context, TValue? value) {
     return Text(buildDescriptor(value));
   }
 }

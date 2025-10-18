@@ -35,13 +35,13 @@ final class _ECSInspectorState extends State<ECSInspector> {
         child: Column(
           children: [
             TabBar(
-            tabs: const [
-              Tab(text: 'Summary'),
-              Tab(text: 'Entities'),
-              Tab(text: 'Logs'),
-              Tab(text: 'Graph'),
-            ],
-          ),
+              tabs: const [
+                Tab(text: 'Summary'),
+                Tab(text: 'Entities'),
+                Tab(text: 'Logs'),
+                Tab(text: 'Graph'),
+              ],
+            ),
             Expanded(
               child: TabBarView(
                 physics: const NeverScrollableScrollPhysics(),
@@ -88,24 +88,9 @@ final class _EntitiesView extends StatefulWidget {
 }
 
 final class _EntitiesViewState extends State<_EntitiesView> {
-  final controller = TextEditingController();
-
+  String? search;
   String? type;
   String? feature;
-
-  @override
-  void initState() {
-    controller.addListener(() {
-      setState(() {});
-    });
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -114,19 +99,31 @@ final class _EntitiesViewState extends State<_EntitiesView> {
     final features = manager.features;
 
     final filtered = entities.where((entity) {
-      if (controller.text.isNotEmpty) {
-        final text = controller.text.toLowerCase();
-        final match = entity.toString().toLowerCase().contains(text);
-        if (!match) return false;
+      if (feature != null) {
+        if (entity.feature.runtimeType.toString() != feature!) {
+          return false;
+        }
       }
 
       if (type != null) {
-        if (type == 'event') return entity is ECSEvent;
-        if (type == 'component') return entity is ECSComponent;
+        if (type == 'event') {
+          if (entity is! ECSEvent) {
+            return false;
+          }
+        }
+        if (type == 'component') {
+          if (entity is! ECSComponent) {
+            return false;
+          }
+        }
       }
 
-      if (feature != null) {
-        return entity.parent.runtimeType.toString() == feature!;
+      if (search != null && search!.isNotEmpty) {
+        final searchTerm = search!.toLowerCase();
+        final entityName = entity.toString().toLowerCase();
+        if (!entityName.contains(searchTerm)) {
+          return false;
+        }
       }
 
       return true;
@@ -137,11 +134,104 @@ final class _EntitiesViewState extends State<_EntitiesView> {
       child: Column(
         spacing: 8,
         children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ExpansionTile(
+              collapsedBackgroundColor: Colors.grey.shade200,
+              backgroundColor: Colors.grey.shade200,
+              title: const Text("Filters"),
+              childrenPadding: const EdgeInsets.all(8.0),
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String?>(
+                        initialValue: feature,
+                        decoration: const InputDecoration(
+                          labelText: 'Feature',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Any'),
+                          ),
+                          for (final feature in features)
+                            DropdownMenuItem(
+                              value: feature.runtimeType.toString(),
+                              child: Text(feature.runtimeType.toString()),
+                            ),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            feature = value;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: DropdownButtonFormField<String?>(
+                        initialValue: type,
+                        decoration: const InputDecoration(
+                          labelText: 'Type',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: null,
+                            child: Text('Any'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'component',
+                            child: Text('Component'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'event',
+                            child: Text('Event'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            type = value;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    labelText: 'Search',
+                    border: const OutlineInputBorder(),
+                    suffix: IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        setState(() {
+                          search = null;
+                        });
+                      },
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      search = value;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: Builder(
               builder: (context) {
                 if (filtered.isEmpty) {
-                  return const Center(child: Text('No entities found'));
+                  return const Center(
+                      child: Text(
+                    'No entities found',
+                  ));
                 }
 
                 return ListView.separated(
@@ -154,70 +244,27 @@ final class _EntitiesViewState extends State<_EntitiesView> {
 
                     if (entity is ECSEvent) {
                       return ListTile(
-                        title: Text('${entity.parent.runtimeType}.${entity.runtimeType}'),
-                        trailing: IconButton(onPressed: entity.trigger, icon: const Icon(Icons.play_arrow)),
+                        title: Text('${entity.feature.runtimeType}.${entity.runtimeType}'),
+                        trailing: IconButton(
+                          onPressed: entity.trigger,
+                          icon: const Icon(Icons.play_arrow),
+                        ),
                       );
                     }
-                    return ExpansionTile(
-                      title: Text('${entity.parent.runtimeType}.${entity.runtimeType}'),
-                      childrenPadding: const EdgeInsets.all(8),
-                      expandedAlignment: Alignment.centerLeft,
-                      children: [entity.buildInspector(context)],
-                    );
+
+                    if (entity is ECSComponent) {
+                      return ExpansionTile(
+                        title: Text('${entity.feature.runtimeType}.${entity.runtimeType}'),
+                        childrenPadding: const EdgeInsets.all(8),
+                        expandedAlignment: Alignment.centerLeft,
+                        children: [entity.buildInspector(context, entity.value)],
+                      );
+                    }
+
+                    throw UnimplementedError('Unknown entity type: ${entity.runtimeType}');
                   },
                 );
               },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              spacing: 8,
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String?>(
-                    value: feature,
-                    decoration: const InputDecoration(labelText: 'Feature', border: OutlineInputBorder()),
-                    items: [
-                      const DropdownMenuItem(value: null, child: Text('All')),
-                      for (final feature in features)
-                        DropdownMenuItem(value: feature.runtimeType.toString(), child: Text(feature.runtimeType.toString())),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        feature = value;
-                      });
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: DropdownButtonFormField<String?>(
-                    value: type,
-                    decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
-                    items: const [
-                      DropdownMenuItem(value: null, child: Text('All')),
-                      DropdownMenuItem(value: 'event', child: Text('Event')),
-                      DropdownMenuItem(value: 'component', child: Text('Component')),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        type = value;
-                      });
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: TextFormField(
-                    controller: controller,
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      labelText: 'Search',
-                      border: const OutlineInputBorder(),
-                      suffix: IconButton(icon: const Icon(Icons.clear), onPressed: controller.clear),
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
         ],
@@ -234,31 +281,29 @@ final class _LogsView extends StatefulWidget {
 }
 
 final class _LogsViewState extends State<_LogsView> {
-  final controller = TextEditingController();
+  String? search;
   ECSLogLevel? level;
-
-  @override
-  void initState() {
-    controller.addListener(() {
-      setState(() {});
-    });
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final entries = ECSLogger.entries.reversed;
 
     final filtered = entries.where((entry) {
-      if (level != null && entry.level != level) return false;
-      if (controller.text.isEmpty) return true;
-      return entry.description.toLowerCase().contains(controller.text.toLowerCase());
+      if (level != null) {
+        if (entry.level != level) {
+          return false;
+        }
+      }
+
+      if (search != null) {
+        final searchTerm = search!.toLowerCase();
+        final description = entry.description.toLowerCase();
+        if (!description.contains(searchTerm)) {
+          return false;
+        }
+      }
+
+      return true;
     });
 
     return Material(
@@ -266,11 +311,84 @@ final class _LogsViewState extends State<_LogsView> {
       child: Column(
         spacing: 8,
         children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ExpansionTile(
+              collapsedBackgroundColor: Colors.grey.shade200,
+              backgroundColor: Colors.grey.shade200,
+              title: const Text("Logs Info"),
+              childrenPadding: const EdgeInsets.all(8.0),
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField(
+                        initialValue: level,
+                        decoration: const InputDecoration(
+                          labelText: 'Level',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: ECSLogLevel.values.map((level) {
+                          return DropdownMenuItem(
+                            value: level,
+                            child: Text(level.name.toUpperCase()),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            level = value;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4.0),
+                          ),
+                          minimumSize: const Size.fromHeight(55),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            ECSLogger.clear();
+                          });
+                        },
+                        child: const Text('Clear Logs'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 8.0,
+                    ),
+                    labelText: 'Search',
+                    border: const OutlineInputBorder(),
+                    suffix: IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        setState(() {
+                          search = null;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: Builder(
               builder: (context) {
                 if (filtered.isEmpty) {
-                  return const Center(child: Text('No logs found'));
+                  return const Center(
+                    child: Text('No logs found'),
+                  );
                 }
 
                 return ListView.separated(
@@ -283,7 +401,9 @@ final class _LogsViewState extends State<_LogsView> {
                       subtitle: Text(log.description),
                       childrenPadding: const EdgeInsets.all(8.0),
                       children: [
-                        const Row(children: [Text('Call Stack:')]),
+                        const Row(children: [
+                          Text('Call Stack:'),
+                        ]),
                         SelectableText(log.stack.toString()),
                       ],
                     );
@@ -293,49 +413,6 @@ final class _LogsViewState extends State<_LogsView> {
                   },
                 );
               },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              spacing: 8,
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField(
-                    value: level,
-                    decoration: const InputDecoration(labelText: 'Level', border: OutlineInputBorder()),
-                    items: ECSLogLevel.values.map((level) {
-                      return DropdownMenuItem(value: level, child: Text(level.name.toUpperCase()));
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        level = value;
-                      });
-                    },
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: TextFormField(
-                    controller: controller,
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      labelText: 'Search',
-                      border: const OutlineInputBorder(),
-                      suffix: IconButton(icon: const Icon(Icons.clear), onPressed: controller.clear),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      ECSLogger.clear();
-                    });
-                  },
-                  icon: const Icon(Icons.delete),
-                  tooltip: 'Clear Logs',
-                ),
-              ],
             ),
           ),
         ],
@@ -354,26 +431,71 @@ final class _GraphView extends StatefulWidget {
 final class _GraphViewState extends State<_GraphView> {
   InAppWebViewController? controller;
 
+  var excludeFeatures = <Type>{};
+
+  void analyse(ECSManager manager) {
+    final analysis = ECSAnalyzer.analize(
+      manager,
+      excludeFeatures: excludeFeatures,
+    );
+    final graph = analysis.generateDotGraph();
+    controller!.evaluateJavascript(
+      source: '''window.updateGraph(`${graph.replaceAll('`', '\\`')}`);''',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return InAppWebView(
-      initialFile: "packages/flutter_event_component_system/assets/ecs_graph.html",
-      initialSettings: InAppWebViewSettings(
-        javaScriptEnabled: true,
-        allowsInlineMediaPlayback: true,
+    final manager = ECSScope.of(context);
+    final features = manager.features;
+
+    return Material(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ExpansionTile(
+              collapsedBackgroundColor: Colors.grey.shade200,
+              backgroundColor: Colors.grey.shade200,
+              title: const Text("Filters"),
+              childrenPadding: const EdgeInsets.all(8.0),
+              children: List.generate(features.length, (index) {
+                final feature = features.elementAt(index);
+                return CheckboxListTile(
+                  value: !excludeFeatures.contains(feature.runtimeType),
+                  title: Text(feature.runtimeType.toString()),
+                  onChanged: (value) {
+                    setState(() {
+                      if (value == true) {
+                        excludeFeatures.remove(feature.runtimeType);
+                      } else {
+                        excludeFeatures.add(feature.runtimeType);
+                      }
+                      analyse(manager);
+                    });
+                  },
+                );
+              }),
+            ),
+          ),
+          Expanded(
+            child: InAppWebView(
+              initialFile: "packages/flutter_event_component_system/assets/ecs_graph.html",
+              initialSettings: InAppWebViewSettings(
+                javaScriptEnabled: true,
+                allowsInlineMediaPlayback: true,
+              ),
+              onWebViewCreated: (webViewController) {
+                controller = webViewController;
+              },
+              onLoadStop: (webViewController, url) {
+                controller = webViewController;
+                analyse(manager);
+              },
+            ),
+          ),
+        ],
       ),
-      onWebViewCreated: (webViewController) {
-        controller = webViewController;
-      },
-      onLoadStop: (webViewController, url) {
-        if (controller == null) return;
-        final manager = ECSScope.of(context);
-        final analysis = ECSAnalyzer.analize(manager);
-        final graph = analysis.generateDotGraph();
-        controller!.evaluateJavascript(source: '''
-      window.updateGraph(`${graph.replaceAll('`', '\\`')}`);
-    ''');
-      },
     );
   }
 }

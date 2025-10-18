@@ -109,7 +109,7 @@ void main() {
       final reactive = DummyReactiveSystem();
       feature.addSystem(reactive);
       manager.addFeature(feature);
-      feature.getEntity<DummyEvent>()!.trigger();
+      feature.getEntity<DummyEvent>().trigger();
       expect(reactive.reacted, isTrue);
     });
 
@@ -145,7 +145,7 @@ void main() {
       final manager = ECSManager();
       final feature = DummyFeature();
       manager.addFeature(feature);
-      final event = feature.getEntity<DummyEvent>()!;
+      final event = feature.getEntity<DummyEvent>();
       expect(() => manager.onEntityChanged(event), returnsNormally);
     });
 
@@ -153,7 +153,7 @@ void main() {
       final manager = ECSManager();
       final feature = DummyFeature();
       manager.addFeature(feature);
-      final component = feature.getEntity<DummyComponent>()!;
+      final component = feature.getEntity<DummyComponent>();
       expect(component.listeners, contains(manager));
     });
 
@@ -165,7 +165,7 @@ void main() {
       feature.addSystem(reactive1);
       feature.addSystem(reactive2);
       manager.addFeature(feature);
-      feature.getEntity<DummyEvent>()!.trigger();
+      feature.getEntity<DummyEvent>().trigger();
       expect(reactive1.reacted, isTrue);
       expect(reactive2.reacted, isTrue);
     });
@@ -180,13 +180,13 @@ void main() {
       manager.addFeature(feature);
       
       // Trigger event - only event reactive system should react
-      feature.getEntity<DummyEvent>()!.trigger();
+      feature.getEntity<DummyEvent>().trigger();
       expect(eventReactiveSystem.reacted, isTrue);
       expect(componentReactiveSystem.reacted, isFalse);
       
       // Reset and trigger component
       eventReactiveSystem.reacted = false;
-      feature.getEntity<DummyComponent>()!.update(42);
+      feature.getEntity<DummyComponent>().update(42);
       expect(eventReactiveSystem.reacted, isFalse);
       expect(componentReactiveSystem.reacted, isTrue);
     });
@@ -252,7 +252,7 @@ void main() {
       manager.addFeature(feature1);
       manager.addFeature(feature2);
       
-      feature1.getEntity<DummyEvent>()!.trigger();
+      feature1.getEntity<DummyEvent>().trigger();
       expect(reactive1.reacted, isTrue);
       expect(reactive2.reacted, isTrue);
     });

@@ -238,7 +238,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) => {feature},
+            features: {feature},
             child: TestECSWidget(
               onBuild: (reference) {
                 capturedReference = reference;
@@ -260,7 +260,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) => {feature},
+            features: {feature},
             child: TestECSWidget(),
           ),
         ),
@@ -270,7 +270,7 @@ void main() {
       expect(find.text('Counter: 0'), findsOneWidget);
 
       // Change the counter value
-      final counter = feature.getEntity<TestCounterComponent>()!;
+      final counter = feature.getEntity<TestCounterComponent>();
       counter.update(42);
 
       await tester.pump();
@@ -288,7 +288,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) => {feature},
+            features: {feature},
             child: TestECSWidget(
               customBuilder: (context, reference) {
                 reference.onEnter(() {
@@ -332,7 +332,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) => {feature},
+            features: {feature},
             child: TestECSWidget(
               customBuilder: (context, reference) {
                 reference.listen<TestCounterComponent>((entity) {
@@ -353,7 +353,7 @@ void main() {
       expect(listenerCallCount, equals(0));
 
       // Change the counter
-      final counter = feature.getEntity<TestCounterComponent>()!;
+      final counter = feature.getEntity<TestCounterComponent>();
       counter.update(25);
 
       await tester.pump();
@@ -369,14 +369,14 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) => {feature},
+            features: {feature},
             child: TestECSWidget(),
           ),
         ),
       );
 
       // Get reference to counter before disposal
-      final counter = feature.getEntity<TestCounterComponent>()!;
+      final counter = feature.getEntity<TestCounterComponent>();
 
       // Remove the widget (this should dispose the reference)
       await tester.pumpWidget(
@@ -403,7 +403,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
-            features: (manager) => {feature},
+            features: {feature},
             child: Column(
               children: [
                 TestECSWidget(
@@ -422,7 +422,7 @@ void main() {
       expect(find.text('Counter: 0'), findsNWidgets(2));
 
       // Change the counter
-      final counter = feature.getEntity<TestCounterComponent>()!;
+      final counter = feature.getEntity<TestCounterComponent>();
       counter.update(15);
 
       await tester.pump();

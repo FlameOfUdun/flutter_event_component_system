@@ -4,9 +4,7 @@ import '../components/timer_state_component.dart';
 import '../events/timer_stop_event.dart';
 
 final class StopTimerReactiveSystem extends ReactiveSystem {
-  final ECSManager manager;
-
-  StopTimerReactiveSystem(this.manager);
+  StopTimerReactiveSystem();
 
   @override
   Set<Type> get reactsTo {
@@ -24,13 +22,13 @@ final class StopTimerReactiveSystem extends ReactiveSystem {
 
   @override
   bool get reactsIf {
-    final state = manager.getEntity<TimerStateComponent>();
+    final state = feature.getEntity<TimerStateComponent>();
     return state.value == TimerState.running;
   }
 
   @override
   void react() {
-    final state = manager.getEntity<TimerStateComponent>();
+    final state = feature.getEntity<TimerStateComponent>();
     state.update(TimerState.stopped);
   }
 }

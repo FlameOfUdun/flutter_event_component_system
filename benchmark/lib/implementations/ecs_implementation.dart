@@ -5,16 +5,16 @@ import '../models/benchmark_models.dart';
 
 // Counter Feature
 class CounterFeature extends ECSFeature {
-  CounterFeature(ECSManager manager) {
+  CounterFeature() {
     addEntity(CounterComponent());
 
     addEntity(IncrementEvent());
     addEntity(DecrementEvent());
     addEntity(ResetCounterEvent());
 
-    addSystem(IncrementCounterSystem(manager));
-    addSystem(DecrementCounterSystem(manager));
-    addSystem(ResetCounterSystem(manager));
+    addSystem(IncrementCounterSystem());
+    addSystem(DecrementCounterSystem());
+    addSystem(ResetCounterSystem());
   }
 }
 
@@ -29,9 +29,9 @@ class DecrementEvent extends ECSEvent {}
 class ResetCounterEvent extends ECSEvent {}
 
 class IncrementCounterSystem extends ReactiveSystem {
-  final ECSManager manager;
+  
 
-  IncrementCounterSystem(this.manager);
+  IncrementCounterSystem();
 
   CounterComponent? counter;
 
@@ -40,15 +40,15 @@ class IncrementCounterSystem extends ReactiveSystem {
 
   @override
   void react() {
-    counter ??= manager.getEntity<CounterComponent>();
+    counter ??= feature.getEntity<CounterComponent>();
     counter!.update(counter!.value.increment());
   }
 }
 
 class DecrementCounterSystem extends ReactiveSystem {
-  final ECSManager manager;
+  
 
-  DecrementCounterSystem(this.manager);
+  DecrementCounterSystem();
 
   CounterComponent? counter;
 
@@ -57,15 +57,15 @@ class DecrementCounterSystem extends ReactiveSystem {
 
   @override
   void react() {
-    counter ??= manager.getEntity<CounterComponent>();
+    counter ??= feature.getEntity<CounterComponent>();
     counter!.update(counter!.value.decrement());
   }
 }
 
 class ResetCounterSystem extends ReactiveSystem {
-  final ECSManager manager;
+  
 
-  ResetCounterSystem(this.manager);
+  ResetCounterSystem();
 
   CounterComponent? counter;
 
@@ -74,14 +74,14 @@ class ResetCounterSystem extends ReactiveSystem {
 
   @override
   void react() {
-    counter ??= manager.getEntity<CounterComponent>();
+    counter ??= feature.getEntity<CounterComponent>();
     counter!.update(counter!.value.reset());
   }
 }
 
 // Todo Feature
 class TodoFeature extends ECSFeature {
-  TodoFeature(ECSManager manager) {
+  TodoFeature() {
     addEntity(TodoListComponent());
 
     addEntity(AddTodoEvent());
@@ -90,11 +90,11 @@ class TodoFeature extends ECSFeature {
     addEntity(SetFilterEvent());
     addEntity(ClearCompletedEvent());
 
-    addSystem(AddTodoSystem(manager));
-    addSystem(RemoveTodoSystem(manager));
-    addSystem(ToggleTodoSystem(manager));
-    addSystem(SetFilterSystem(manager));
-    addSystem(ClearCompletedSystem(manager));
+    addSystem(AddTodoSystem());
+    addSystem(RemoveTodoSystem());
+    addSystem(ToggleTodoSystem());
+    addSystem(SetFilterSystem());
+    addSystem(ClearCompletedSystem());
   }
 }
 
@@ -141,110 +141,110 @@ class SetFilterEvent extends ECSEvent {
 class ClearCompletedEvent extends ECSEvent {}
 
 class AddTodoSystem extends ReactiveSystem {
-  final ECSManager manager;
+  
 
   TodoListComponent? todoList;
   AddTodoEvent? addEvent;
 
-  AddTodoSystem(this.manager);
+  AddTodoSystem();
 
   @override
   Set<Type> get reactsTo => {AddTodoEvent};
 
   @override
   void react() {
-    todoList ??= manager.getEntity<TodoListComponent>();
-    addEvent ??= manager.getEntity<AddTodoEvent>();
+    todoList ??= feature.getEntity<TodoListComponent>();
+    addEvent ??= feature.getEntity<AddTodoEvent>();
     todoList!.update(todoList!.value.addItem(addEvent!.item!));
   }
 }
 
 class RemoveTodoSystem extends ReactiveSystem {
-  final ECSManager manager;
+  
 
   TodoListComponent? todoList;
   RemoveTodoEvent? removeEvent;
 
-  RemoveTodoSystem(this.manager);
+  RemoveTodoSystem();
 
   @override
   Set<Type> get reactsTo => {RemoveTodoEvent};
 
   @override
   void react() {
-    todoList ??= manager.getEntity<TodoListComponent>();
-    removeEvent ??= manager.getEntity<RemoveTodoEvent>();
+    todoList ??= feature.getEntity<TodoListComponent>();
+    removeEvent ??= feature.getEntity<RemoveTodoEvent>();
     todoList!.update(todoList!.value.removeItem(removeEvent!.id!));
   }
 }
 
 class ToggleTodoSystem extends ReactiveSystem {
-  final ECSManager manager;
+  
 
   TodoListComponent? todoList;
   ToggleTodoEvent? toggleEvent;
 
-  ToggleTodoSystem(this.manager);
+  ToggleTodoSystem();
 
   @override
   Set<Type> get reactsTo => {ToggleTodoEvent};
 
   @override
   void react() {
-    todoList ??= manager.getEntity<TodoListComponent>();
-    toggleEvent ??= manager.getEntity<ToggleTodoEvent>();
+    todoList ??= feature.getEntity<TodoListComponent>();
+    toggleEvent ??= feature.getEntity<ToggleTodoEvent>();
     todoList!.update(todoList!.value.toggleItem(toggleEvent!.id!));
   }
 }
 
 class SetFilterSystem extends ReactiveSystem {
-  final ECSManager manager;
+  
 
   TodoListComponent? todoList;
   SetFilterEvent? setFilterEvent;
 
-  SetFilterSystem(this.manager);
+  SetFilterSystem();
 
   @override
   Set<Type> get reactsTo => {SetFilterEvent};
 
   @override
   void react() {
-    todoList ??= manager.getEntity<TodoListComponent>();
-    setFilterEvent ??= manager.getEntity<SetFilterEvent>();
+    todoList ??= feature.getEntity<TodoListComponent>();
+    setFilterEvent ??= feature.getEntity<SetFilterEvent>();
     todoList!.update(todoList!.value.setFilter(setFilterEvent!.filter!));
   }
 }
 
 class ClearCompletedSystem extends ReactiveSystem {
-  final ECSManager manager;
+  
 
   TodoListComponent? todoList;
 
-  ClearCompletedSystem(this.manager);
+  ClearCompletedSystem();
 
   @override
   Set<Type> get reactsTo => {ClearCompletedEvent};
 
   @override
   void react() {
-    todoList ??= manager.getEntity<TodoListComponent>();
+    todoList ??= feature.getEntity<TodoListComponent>();
     todoList!.update(todoList!.value.clearCompleted());
   }
 }
 
 // User Profile Feature
 class UserProfileFeature extends ECSFeature {
-  UserProfileFeature(ECSManager manager) {
+  UserProfileFeature() {
     addEntity(UserProfileComponent());
     
     addEntity(UpdateUserEvent());
     addEntity(LoginEvent());
     addEntity(LogoutEvent());
 
-    addSystem(UpdateUserSystem(manager));
-    addSystem(LoginSystem(manager));
-    addSystem(LogoutSystem(manager));
+    addSystem(UpdateUserSystem());
+    addSystem(LoginSystem());
+    addSystem(LogoutSystem());
   }
 }
 
@@ -273,70 +273,70 @@ class LoginEvent extends ECSEvent {
 class LogoutEvent extends ECSEvent {}
 
 class UpdateUserSystem extends ReactiveSystem {
-  final ECSManager manager;
+  
 
   UserProfileComponent? userProfile;
   UpdateUserEvent? updateEvent;
 
-  UpdateUserSystem(this.manager);
+  UpdateUserSystem();
 
   @override
   Set<Type> get reactsTo => {UpdateUserEvent};
 
   @override
   void react() {
-    userProfile ??= manager.getEntity<UserProfileComponent>();
-    updateEvent ??= manager.getEntity<UpdateUserEvent>();
+    userProfile ??= feature.getEntity<UserProfileComponent>();
+    updateEvent ??= feature.getEntity<UpdateUserEvent>();
     userProfile!.update(updateEvent!.user);
   }
 }
 
 class LoginSystem extends ReactiveSystem {
-  final ECSManager manager;
+  
 
   UserProfileComponent? userProfile;
   LoginEvent? loginEvent;
 
-  LoginSystem(this.manager);
+  LoginSystem();
 
   @override
   Set<Type> get reactsTo => {LoginEvent};
 
   @override
   void react() {
-    userProfile ??= manager.getEntity<UserProfileComponent>();
-    loginEvent ??= manager.getEntity<LoginEvent>();
+    userProfile ??= feature.getEntity<UserProfileComponent>();
+    loginEvent ??= feature.getEntity<LoginEvent>();
     userProfile!.update(loginEvent!.user);
   }
 }
 
 class LogoutSystem extends ReactiveSystem {
-  final ECSManager manager;
+  
 
   UserProfileComponent? userProfile;
 
-  LogoutSystem(this.manager);
+  LogoutSystem();
 
   @override
   Set<Type> get reactsTo => {LogoutEvent};
 
   @override
   void react() {
-    userProfile ??= manager.getEntity<UserProfileComponent>();
+    userProfile ??= feature.getEntity<UserProfileComponent>();
     userProfile!.update(null);
   }
 }
 
 // Loading Feature
 class LoadingFeature extends ECSFeature {
-  LoadingFeature(ECSManager manager) {
+  LoadingFeature() {
     addEntity(LoadingComponent());
 
     addEntity(StartLoadingEvent());
     addEntity(StopLoadingEvent());
 
-    addSystem(StartLoadingSystem(manager));
-    addSystem(StopLoadingSystem(manager));
+    addSystem(StartLoadingSystem());
+    addSystem(StopLoadingSystem());
   }
 }
 
@@ -349,35 +349,35 @@ class StartLoadingEvent extends ECSEvent {}
 class StopLoadingEvent extends ECSEvent {}
 
 class StartLoadingSystem extends ReactiveSystem {
-  final ECSManager manager;
+  
 
   LoadingComponent? loading;
 
-  StartLoadingSystem(this.manager);
+  StartLoadingSystem();
 
   @override
   Set<Type> get reactsTo => {StartLoadingEvent};
 
   @override
   void react() {
-    loading ??= manager.getEntity<LoadingComponent>();
+    loading ??= feature.getEntity<LoadingComponent>();
     loading!.update(true);
   }
 }
 
 class StopLoadingSystem extends ReactiveSystem {
-  final ECSManager manager;
+  
 
   LoadingComponent? loading;
 
-  StopLoadingSystem(this.manager);
+  StopLoadingSystem();
 
   @override
   Set<Type> get reactsTo => {StopLoadingEvent};
 
   @override
   void react() {
-    loading ??= manager.getEntity<LoadingComponent>();
+    loading ??= feature.getEntity<LoadingComponent>();
     loading!.update(false);
   }
 }

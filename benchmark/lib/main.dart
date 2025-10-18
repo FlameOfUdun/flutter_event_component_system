@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'pages/ecs_benchmark_page.dart';
 import 'pages/provider_benchmark_page.dart';
@@ -7,11 +6,7 @@ import 'pages/riverpod_benchmark_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    ProviderScope(
-      child: const BenchmarkApp(),
-    ),
-  );
+  runApp(const BenchmarkApp());
 }
 
 class BenchmarkApp extends StatelessWidget {

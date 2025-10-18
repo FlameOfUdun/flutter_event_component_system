@@ -4,14 +4,12 @@ import '../components/timer_value_component.dart';
 import '../components/timer_state_component.dart';
 
 final class UpdateTimerExecuteSystem extends ExecuteSystem {
-  final ECSManager manager;
-
   TimerValueComponent? timer;
   TimerStateComponent? state;
 
   Duration? duration;
 
-  UpdateTimerExecuteSystem(this.manager);
+  UpdateTimerExecuteSystem();
 
   @override
   Set<Type> get interactsWith {
@@ -22,8 +20,8 @@ final class UpdateTimerExecuteSystem extends ExecuteSystem {
 
   @override
   bool get executesIf {
-    timer ??= manager.getEntity<TimerValueComponent>();
-    state ??= manager.getEntity<TimerStateComponent>();
+    timer ??= feature.getEntity<TimerValueComponent>();
+    state ??= feature.getEntity<TimerStateComponent>();
     return state!.value == TimerState.running;
   }
 
