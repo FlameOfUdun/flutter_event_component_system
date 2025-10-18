@@ -31,11 +31,13 @@ abstract class ECSFeature {
 
   /// The manager that this feature is associated with.
   @visibleForTesting
+  @protected
   late ECSManager manager;
 
   ECSFeature();
 
   /// Number of systems in this feature.
+  @visibleForTesting
   int get systemsCount {
     return initializeSystems.length + teardownSystems.length + reactiveSystems.length + cleanupSystems.length + executeSystems.length;
   }

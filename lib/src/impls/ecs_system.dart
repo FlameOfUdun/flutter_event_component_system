@@ -28,6 +28,11 @@ sealed class ECSSystem {
   void setFeature(ECSFeature feature) {
     this.feature = feature;
   }
+
+  /// The manager that this system is associated with.
+  @visibleForTesting
+  @protected
+  ECSManager get manager => feature.manager;
 }
 
 /// Base class for initialize systems.
