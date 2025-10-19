@@ -64,9 +64,7 @@ class IncrementEvent extends ECSEvent {
 ```dart
 // Systems define behavior and reactions
 class IncrementCounterSystem extends ReactiveSystem {
-  final ECSManager manager;
-  
-  IncrementCounterSystem(this.manager);
+  IncrementCounterSystem();
 
   @override
   Set<Type> get reactsTo => {IncrementEvent};
@@ -86,13 +84,13 @@ class IncrementCounterSystem extends ReactiveSystem {
 
 ```dart
 class CounterFeature extends ECSFeature {
-  CounterFeature(ECSManager manager) {
+  CounterFeature() {
     // Add components
     addEntity(CounterComponent());
     addEntity(IncrementEvent());
     
     // Add systems
-    addSystem(IncrementCounterSystem(manager));
+    addSystem(IncrementCounterSystem());
   }
 }
 ```
@@ -104,8 +102,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ECSScope(
-      features: (manager) => {
-        CounterFeature(manager),
+      features: {
+        CounterFeature(),
       },
       child: MaterialApp(
         home: CounterPage(),
@@ -165,7 +163,7 @@ Organize related entities and systems into cohesive modules:
 
 ```dart
 class UserAuthFeature extends ECSFeature {
-  UserAuthFeature(ECSManager manager) {
+  UserAuthFeature() {
     // Components
     addEntity(AuthStateComponent());
     addEntity(LoginCredentialsComponent());
@@ -175,8 +173,8 @@ class UserAuthFeature extends ECSFeature {
     addEntity(LogoutEvent());
     
     // Systems
-    addSystem(LoginUserReactiveSystem(manager));
-    addSystem(LogoutUserReactiveSystem(manager));
+    addSystem(LoginUserReactiveSystem());
+    addSystem(LogoutUserReactiveSystem());
   }
 }
 ```
@@ -308,9 +306,7 @@ Respond to entity changes:
 
 ```dart
 class ValidationSystem extends ReactiveSystem {
-  final ECSManager manager;
-  
-  ValidationSystem(this.manager);
+  ValidationSystem();
 
   @override
   Set<Type> get reactsTo => {FormDataComponent};
@@ -339,9 +335,7 @@ Continuous frame-based execution:
 
 ```dart
 class TimerSystem extends ExecuteSystem {
-  final ECSManager manager;
-  
-  TimerSystem(this.manager);
+  TimerSystem();
 
   @override
   Set<Type> get interactsWith => {TimerComponent};
@@ -509,9 +503,7 @@ class LogoutEvent extends ECSEvent {
 
 // Systems
 class LoginUserReactiveSystem extends ReactiveSystem {
-  final ECSManager manager;
-  
-  LoginUserReactiveSystem(this.manager);
+  LoginUserReactiveSystem();
 
   @override
   Set<Type> get reactsTo => {LoginEvent};
@@ -538,14 +530,14 @@ class LoginUserReactiveSystem extends ReactiveSystem {
 
 // Feature
 class UserAuthFeature extends ECSFeature {
-  UserAuthFeature(ECSManager manager) {
+  UserAuthFeature() {
     addEntity(AuthStateComponent());
     addEntity(LoginCredentialsComponent());
     addEntity(LoginEvent());
     addEntity(LogoutEvent());
     
-    addSystem(LoginUserReactiveSystem(manager));
-    addSystem(LogoutUserReactiveSystem(manager));
+    addSystem(LoginUserReactiveSystem());
+    addSystem(LogoutUserReactiveSystem());
   }
 }
 
@@ -649,7 +641,7 @@ test('component notifies listeners on change', () {
 test('reactive system processes events', () {
   final manager = ECSManager();
   final feature = TestFeature();
-  final system = TestReactiveSystem(manager);
+  final system = TestReactiveSystem();
   
   feature.addEntity(TestEvent());
   feature.addSystem(system);
@@ -683,7 +675,7 @@ test('feature manages entities and systems', () {
 testWidgets('ECS widget rebuilds on component change', (tester) async {
   await tester.pumpWidget(
     ECSScope(
-      features: (manager) => {TestFeature()},
+      features: {TestFeature()},
       child: TestECSWidget(),
     ),
   );
@@ -822,7 +814,7 @@ Provides ECS context to widget tree.
 
 ```dart
 ECSScope({
-  required Set<ECSFeature> Function(ECSManager) features,
+  required Set<ECSFeature> features,
   required Widget child,
 })
 ```
@@ -1177,7 +1169,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Issues**: [GitHub Issues](https://github.com/FlameOfUdun/flutter_event_component_system/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/FlameOfUdun/flutter_event_component_system/discussions)
-- **Documentation**: [API Documentation](https://pub.dev/documentation/flutter_event_component_system/latest/)
 
 ---
 
