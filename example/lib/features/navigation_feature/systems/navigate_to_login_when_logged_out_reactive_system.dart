@@ -12,7 +12,7 @@ final class NavigateToLoginWhenLoggedOutReactiveSystem extends ReactiveSystem {
 
   @override
   bool get reactsIf {
-    final authState = feature.getEntity<AuthStateComponent>().value;
+    final authState = manager.getEntity<AuthStateComponent>().value;
     return authState == AuthState.loggedOut;
   }
 
@@ -25,7 +25,7 @@ final class NavigateToLoginWhenLoggedOutReactiveSystem extends ReactiveSystem {
 
   @override
   void react() {
-    final routeComponent = feature.getEntity<AppRouteComponent>();
+    final routeComponent = manager.getEntity<AppRouteComponent>();
     routeComponent.value = AppRoutes.login;
   }
 }

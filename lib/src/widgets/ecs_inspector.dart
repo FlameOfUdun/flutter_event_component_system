@@ -243,12 +243,10 @@ final class _EntitiesViewState extends State<_EntitiesView> {
                     final entity = filtered.elementAt(index);
 
                     if (entity is ECSEvent) {
-                      return ListTile(
+                      return ExpansionTile(
                         title: Text('${entity.feature.runtimeType}.${entity.runtimeType}'),
-                        trailing: IconButton(
-                          onPressed: entity.trigger,
-                          icon: const Icon(Icons.play_arrow),
-                        ),
+                        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+                        children: [entity.buildInspector(context)],
                       );
                     }
 
@@ -257,6 +255,7 @@ final class _EntitiesViewState extends State<_EntitiesView> {
                         title: Text('${entity.feature.runtimeType}.${entity.runtimeType}'),
                         childrenPadding: const EdgeInsets.all(8),
                         expandedAlignment: Alignment.centerLeft,
+                        expandedCrossAxisAlignment: CrossAxisAlignment.start,
                         children: [entity.buildInspector(context, entity.value)],
                       );
                     }

@@ -14,6 +14,6 @@ final class StartTimerInitializeSystem extends InitializeSystem {
 
   @override
   void initialize() {
-    feature.getEntity<TimerStartEvent>().trigger();
+    manager.getEntity<TimerStartEvent>().trigger();
   }
 }

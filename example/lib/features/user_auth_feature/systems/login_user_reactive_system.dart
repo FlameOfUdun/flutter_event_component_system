@@ -20,14 +20,14 @@ final class LoginUserReactiveSystem extends ReactiveSystem {
 
   @override
   void react() async {
-    feature.getEntity<LoginProcessComponent>().update(const LoginProcess.running());
+    manager.getEntity<LoginProcessComponent>().update(const LoginProcess.running());
 
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString('auth_state', AuthState.loggedIn.name);
     await Future.delayed(const Duration(seconds: 2));
 
-    feature.getEntity<LoginProcessComponent>().update(const LoginProcess.success('mock_token'));
+    manager.getEntity<LoginProcessComponent>().update(const LoginProcess.success('mock_token'));
 
-    feature.getEntity<AuthStateComponent>().update(AuthState.loggedIn);
+    manager.getEntity<AuthStateComponent>().update(AuthState.loggedIn);
   }
 }

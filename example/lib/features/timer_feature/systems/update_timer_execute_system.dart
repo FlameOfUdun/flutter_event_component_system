@@ -20,8 +20,8 @@ final class UpdateTimerExecuteSystem extends ExecuteSystem {
 
   @override
   bool get executesIf {
-    timer ??= feature.getEntity<TimerValueComponent>();
-    state ??= feature.getEntity<TimerStateComponent>();
+    timer ??= manager.getEntity<TimerValueComponent>();
+    state ??= manager.getEntity<TimerStateComponent>();
     return state!.value == TimerState.running;
   }
 

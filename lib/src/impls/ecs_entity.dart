@@ -47,7 +47,7 @@ sealed class ECSEntity {
 }
 
 /// Represents an event in the ECS system.
-/// 
+///
 /// Events are specialized entities that can be triggered to notify listeners.
 abstract class ECSEvent extends ECSEntity {
   ECSEvent();
@@ -61,7 +61,10 @@ abstract class ECSEvent extends ECSEntity {
   ///
   /// [context] is the build context in which the widget is built.
   Widget buildInspector(BuildContext context) {
-    return Text('$runtimeType');
+    return ElevatedButton(
+      onPressed: trigger,
+      child: const Text('Trigger Event'),
+    );
   }
 }
 

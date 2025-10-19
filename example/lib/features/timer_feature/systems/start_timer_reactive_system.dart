@@ -22,13 +22,13 @@ final class StartTimerReactiveSystem extends ReactiveSystem {
 
   @override
   bool get reactsIf {
-    final state = feature.getEntity<TimerStateComponent>();
+    final state = manager.getEntity<TimerStateComponent>();
     return state.value == TimerState.stopped;
   }
 
   @override
   void react() {
-    final state = feature.getEntity<TimerStateComponent>();
+    final state = manager.getEntity<TimerStateComponent>();
     state.update(TimerState.running);
   }
 }

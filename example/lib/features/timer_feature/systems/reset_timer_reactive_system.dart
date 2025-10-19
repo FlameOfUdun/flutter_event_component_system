@@ -23,13 +23,13 @@ final class ResetTimerReactiveSystem extends ReactiveSystem {
 
   @override
   bool get reactsIf {
-    final state = feature.getEntity<TimerStateComponent>();
+    final state = manager.getEntity<TimerStateComponent>();
     return state.value == TimerState.stopped;
   }
 
   @override
   void react() {
-    final timer = feature.getEntity<TimerValueComponent>();
+    final timer = manager.getEntity<TimerValueComponent>();
     timer.update(Duration.zero);
   }
 }

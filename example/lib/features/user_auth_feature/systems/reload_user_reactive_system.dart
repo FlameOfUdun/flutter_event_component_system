@@ -22,6 +22,6 @@ final class ReloadUserReactiveSystem extends ReactiveSystem {
     final preferences = await SharedPreferences.getInstance();
     final value = preferences.getString('auth_state');
     final state = value == null ? AuthState.loggedOut : AuthState.values.byName(value);
-    feature.getEntity<AuthStateComponent>().update(state);
+    manager.getEntity<AuthStateComponent>().update(state);
   }
 }
