@@ -60,7 +60,12 @@ final class ECSManager implements ECSEntityListener {
   @override
   @visibleForTesting
   void onEntityChanged(ECSEntity entity) {
-    ECSLogger.logEntityChanged(entity);
+    ECSLogger.log(_EntityChanged(
+      time: DateTime.now(),
+      level: ECSLogLevel.info,
+      entity: entity,
+      stack: StackTrace.current,
+    ));
 
     for (final feature in features) {
       feature.react(entity);

@@ -4,12 +4,12 @@ final class ECSLogger {
   static final List<ECSLog> _entries = [];
 
   /// Maximum number of log entries to keep.
-  /// 
+  ///
   /// This can be adjusted based on the application's needs.
-  /// 
+  ///
   /// Default is set to 1000 entries.
-  /// 
-  /// if the number of entries exceeds this limit, the oldest entries will be 
+  ///
+  /// if the number of entries exceeds this limit, the oldest entries will be
   /// removed.
   static var maxEntries = 1000;
 
@@ -18,35 +18,26 @@ final class ECSLogger {
   /// Unmodifiable list of log entries.
   static List<ECSLog> get entries => List.unmodifiable(_entries);
 
-  /// Logs an entity change event.
-  @visibleForTesting
-  static void logEntityChanged(ECSEntity entity) {
-    log(_EntityChanged(
-      time: DateTime.now(),
-      level: ECSLogLevel.info,
-      entity: entity,
-      stack: StackTrace.current,
-    ));
-  }
-
-  /// Logs a system reaction to an entity change.
-  @visibleForTesting
-  static void logSystemReacted(ReactiveSystem system, ECSEntity event) {
-    log(_SystemReacted(
-      time: DateTime.now(),
-      level: ECSLogLevel.info,
-      system: system,
-      entity: event,
-      stack: StackTrace.current,
-    ));
-  }
-
   /// Logs a custom log entry.
   static void log(ECSLog log) {
     while (_entries.length >= maxEntries) {
       _entries.removeAt(0);
     }
     _entries.add(log);
+  }
+
+  /// Easy way to log debug messages.
+  /// 
+  /// This method only logs messages in debug mode.
+  static void debugPrint(String message) {
+    if (!kDebugMode) return;
+
+    log(DebugMessage(
+      time: DateTime.now(),
+      level: ECSLogLevel.debug,
+      message: message,
+      stack: StackTrace.current,
+    ));
   }
 
   /// Clears all log entries.
@@ -144,7 +135,8 @@ final class _SystemReacted<TSystem extends ReactiveSystem, TEvent extends ECSEnt
 
   @override
   String get description {
-    final buffer = StringBuffer('[${system.feature.runtimeType}.${system.runtimeType}] reacted to [${entity.feature.runtimeType}.${entity.runtimeType}] ');
+    final buffer =
+        StringBuffer('[${system.feature.runtimeType}.${system.runtimeType}] reacted to [${entity.feature.runtimeType}.${entity.runtimeType}] ');
     if (entity is ECSComponent) {
       final component = entity as ECSComponent;
       final previous = component.buildDescriptor(component.previous);
@@ -157,4 +149,19 @@ final class _SystemReacted<TSystem extends ReactiveSystem, TEvent extends ECSEnt
     }
     return buffer.toString();
   }
+}
+
+final class DebugMessage extends ECSLog {
+  /// The debug message.
+  final String message;
+
+  const DebugMessage({
+    required super.time,
+    required super.level,
+    required this.message,
+    required super.stack,
+  });
+
+  @override
+  String get description => message;
 }

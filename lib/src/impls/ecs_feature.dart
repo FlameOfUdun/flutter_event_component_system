@@ -128,7 +128,13 @@ abstract class ECSFeature {
 
     for (final system in systems) {
       if (system.reactsIf) {
-        ECSLogger.logSystemReacted(system, entity);
+        ECSLogger.log(_SystemReacted(
+          time: DateTime.now(),
+          level: ECSLogLevel.info,
+          system: system,
+          entity: entity,
+          stack: StackTrace.current,
+        ));
         system.react();
       }
     }
