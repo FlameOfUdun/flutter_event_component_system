@@ -142,9 +142,9 @@ void main() {
       expect(feature.systemsCount, 5);
     });
 
-    test('getEntity returns null for non-existent entity type', () {
+    test('getEntity throws StateError for non-existent entity type', () {
       final feature = TestFeature();
-      expect(feature.getEntity<DummyComponent>(), isNull);
+      expect(() => feature.getEntity<DummyComponent>(), throwsStateError);
     });
 
     test('multiple entities of same type returns first', () {
@@ -229,6 +229,32 @@ void main() {
       feature.addSystem(multiReactiveSystem);
       expect(feature.reactiveSystems[DummyEvent], contains(multiReactiveSystem));
       expect(feature.reactiveSystems[DummyComponent], contains(multiReactiveSystem));
+    });
+
+    test('removing feature removes all entities and the featue', () {
+      final manager = ECSManager();
+      final feature = TestFeature();
+      final component = DummyComponent();
+      final system = DummyReactiveSystem();
+      final event = DummyEvent();
+      feature.addEntity(component);
+      feature.addEntity(event);
+      feature.addSystem(system);
+
+      expect(manager.entities.length, 0);
+      expect(system.reacted, isFalse);
+
+      manager.addFeature(feature);
+
+      expect(manager.entities.length, 2);
+
+      manager.removeFeature(feature);
+
+      expect(manager.entities.length, 0);
+
+      event.trigger();
+
+      expect(system.reacted, isFalse);
     });
   });
 }

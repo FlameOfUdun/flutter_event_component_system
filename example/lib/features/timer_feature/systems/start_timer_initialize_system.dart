@@ -3,8 +3,6 @@ import 'package:flutter_event_component_system/flutter_event_component_system.da
 import '../events/timer_start_event.dart';
 
 final class StartTimerInitializeSystem extends InitializeSystem {
-  StartTimerInitializeSystem();
-
   @override
   Set<Type> get interactsWith {
     return const {
@@ -14,6 +12,6 @@ final class StartTimerInitializeSystem extends InitializeSystem {
 
   @override
   void initialize() {
-    manager.getEntity<TimerStartEvent>().trigger();
+    getEntity<TimerStartEvent>().trigger();
   }
 }

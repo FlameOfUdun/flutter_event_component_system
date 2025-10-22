@@ -3,11 +3,23 @@ import 'package:flutter_event_component_system/flutter_event_component_system.da
 
 import '../features/user_auth_feature/user_auth_feature.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends ECSWidget {
   const LoginPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ECSContext ecs) {
+    ecs.onEnter(() {
+      print('Entered Login Page ECS Context');
+    });
+
+    ecs.onExit(() {
+      print('Exited Login Page ECS Context');
+    });
+
+    ecs.listen<LoginProcessComponent>((component) {
+      print('Login Process Updated: isRunning=${component.value.isRunning}');
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Login'),

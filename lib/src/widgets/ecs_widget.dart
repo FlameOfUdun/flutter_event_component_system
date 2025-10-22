@@ -28,9 +28,8 @@ final class _ECSWidgetState extends State<ECSWidget> {
 
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ecs.initialize();
-    });
+    scheduleInitialize();
+    scheduleUnlock();
     super.initState();
   }
 
@@ -38,6 +37,18 @@ final class _ECSWidgetState extends State<ECSWidget> {
   void dispose() {
     ecs.dispose();
     super.dispose();
+  }
+
+  void scheduleInitialize() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ecs.initialize();
+    });
+  }
+
+  void scheduleUnlock() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ecs.unlock();
+    });
   }
 
   @override
@@ -69,10 +80,21 @@ abstract class ECSState<TWidget extends ECSStatefulWidget> extends State<TWidget
 
   @override
   void initState() {
+    scheduleInitialize();
+    scheduleUnlock();
+    super.initState();
+  }
+
+  void scheduleInitialize() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ecs.initialize();
     });
-    super.initState();
+  }
+
+  void scheduleUnlock() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ecs.unlock();
+    });
   }
 
   @override

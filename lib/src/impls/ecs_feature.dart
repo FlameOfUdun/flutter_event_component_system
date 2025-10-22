@@ -141,6 +141,8 @@ abstract class ECSFeature {
   }
 
   /// Gets an entity of type [TEntity] from this feature if it exists.
+  /// 
+  /// Throws a [StateError] if the entity is not found.
   TEntity getEntity<TEntity extends ECSEntity>() {
     for (final entity in entities) {
       if (entity is TEntity) {

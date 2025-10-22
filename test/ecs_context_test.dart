@@ -79,7 +79,7 @@ class TestECSWidget extends ECSWidget {
 }
 
 void main() {
-  group('ECSReference Tests', () {
+  group('ECSContext Tests', () {
     late ECSManager manager;
     late TestFeature feature;
     late ECSContext reference;
@@ -144,12 +144,12 @@ void main() {
 
       // Change first watched entity
       counter.update(3);
-      await Future.microtask(() {});
+      reference.unlock();
       expect(rebuildCount, equals(1));
 
       // Change second watched entity
       stringComponent.update('changed');
-      await Future.microtask(() {});
+      reference.unlock();
       expect(rebuildCount, equals(2));
     });
 
@@ -319,7 +319,7 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(onExitCalled, isTrue);
     });
@@ -485,7 +485,7 @@ void main() {
       // Verify reference is locked during build
       expect(reference.locked, isTrue);
 
-      await Future.microtask(() {});
+      reference.unlock();
 
       // Should only rebuild once despite multiple changes
       expect(rebuildCount, equals(1));

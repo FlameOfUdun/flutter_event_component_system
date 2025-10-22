@@ -9,8 +9,6 @@ final class UpdateTimerExecuteSystem extends ExecuteSystem {
 
   Duration? duration;
 
-  UpdateTimerExecuteSystem();
-
   @override
   Set<Type> get interactsWith {
     return const {
@@ -20,8 +18,8 @@ final class UpdateTimerExecuteSystem extends ExecuteSystem {
 
   @override
   bool get executesIf {
-    timer ??= manager.getEntity<TimerValueComponent>();
-    state ??= manager.getEntity<TimerStateComponent>();
+    timer ??= getEntity<TimerValueComponent>();
+    state ??= getEntity<TimerStateComponent>();
     return state!.value == TimerState.running;
   }
 

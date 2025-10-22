@@ -6,9 +6,11 @@ final class ECSManager implements ECSEntityListener {
   @visibleForTesting
   final Set<ECSFeature> features = {};
 
+  @visibleForTesting
   ECSManager();
 
   /// Unmodifiable set of all entities across all features.
+  @visibleForTesting
   Set<ECSEntity> get entities {
     final expanded = features.expand((feature) => feature.entities);
     return Set.unmodifiable(expanded);
@@ -23,6 +25,16 @@ final class ECSManager implements ECSEntityListener {
     for (final entity in feature.entities) {
       entity.addListener(this);
     }
+  }
+
+  /// Remove a feature from the ECS manager.
+  @visibleForTesting
+  void removeFeature(ECSFeature feature) {
+    for (final entity in feature.entities) {
+      entity.removeListener(this);
+    }
+
+    features.remove(feature);
   }
 
   /// Initialize all features in the ECS manager.
@@ -75,8 +87,21 @@ final class ECSManager implements ECSEntityListener {
   /// Gets an entity of type [TEntity] from all features.
   ///
   /// Throws a [StateError] if the entity is not found.
-  TEntity getEntity<TEntity extends ECSEntity>() {
-    for (final feature in features) {
+  /// 
+  /// Optional [excludeFeatures] can be provided to skip certain feature types during the search.
+  TEntity getEntity<TEntity extends ECSEntity>({
+    Set<Type>? excludeFeatures,
+  }) {
+    final filtered = features.where((feature) {
+      if (excludeFeatures != null ) {
+        if (excludeFeatures.contains(feature.runtimeType)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    for (final feature in filtered) {
       try {
         return feature.getEntity<TEntity>();
       } catch (_) {

@@ -1,8 +1,6 @@
 part of '../navigation_feature.dart';
 
 final class NavigateToDashboardWhenLoggedInReactiveSystem extends ReactiveSystem {
-  NavigateToDashboardWhenLoggedInReactiveSystem();
-
   @override
   Set<Type> get reactsTo {
     return const {
@@ -12,7 +10,7 @@ final class NavigateToDashboardWhenLoggedInReactiveSystem extends ReactiveSystem
 
   @override
   bool get reactsIf {
-    final authState = manager.getEntity<AuthStateComponent>().value;
+    final authState = getEntity<AuthStateComponent>().value;
     return authState == AuthState.loggedIn;
   }
 
@@ -25,7 +23,7 @@ final class NavigateToDashboardWhenLoggedInReactiveSystem extends ReactiveSystem
 
   @override
   void react() {
-    final routeComponent = manager.getEntity<AppRouteComponent>();
+    final routeComponent = getEntity<AppRouteComponent>();
     routeComponent.value = AppRoutes.dashboard;
   }
 }
