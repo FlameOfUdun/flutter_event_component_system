@@ -8,18 +8,6 @@ class LoginPage extends ECSWidget {
 
   @override
   Widget build(BuildContext context, ECSContext ecs) {
-    ecs.onEnter(() {
-      print('Entered Login Page ECS Context');
-    });
-
-    ecs.onExit(() {
-      print('Exited Login Page ECS Context');
-    });
-
-    ecs.listen<LoginProcessComponent>((component) {
-      print('Login Process Updated: isRunning=${component.value.isRunning}');
-    });
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Login'),
