@@ -1,0 +1,5 @@
+name: ecs_inspector
+version: 0.0.1
+issueTracker: <link_to_your_issue_tracker.com>
+materialIconCodePoint: '0xe0b1'
+requiresConnection: true

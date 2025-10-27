@@ -21,22 +21,27 @@ sealed class ECSSystem {
   /// The parent feature of this system.
   @visibleForTesting
   @protected
-  late ECSFeature feature;
+  ECSFeature? feature;
 
   ECSSystem();
 
-  /// Sets the parent feature of this system.
-  ///
-  /// Throws a [StateError] if the system is already assigned to a feature.
+  /// Indicates whether this system is active.
   @visibleForTesting
-  void setFeature(ECSFeature feature) {
+  @protected
+  bool get isAttached => feature != null;
+
+  /// Attaches this system to a feature.
+  @visibleForTesting
+  void attach(ECSFeature feature) {
     this.feature = feature;
   }
 
-  /// The manager that this system is associated with.
+  /// Logs a message to the ECS manager's logger.
   @visibleForTesting
   @protected
-  ECSManager get manager => feature.manager;
+  void log(String message, {ECSLogLevel level = ECSLogLevel.info}) {
+    feature?.manager?.log(message, level: level);
+  }
 
   /// Gets an entity of type [TEntity] from the ECS system.
   ///
@@ -51,12 +56,11 @@ sealed class ECSSystem {
     for (final entity in entities) {
       if (entity is TEntity) return entity;
     }
-
     TEntity entity;
     try {
-      entity = feature.getEntity<TEntity>();
+      entity = feature!.getEntity<TEntity>();
     } catch (_) {
-      entity = manager.getEntity<TEntity>(
+      entity = feature!.manager!.getEntity<TEntity>(
         excludeFeatures: {
           feature.runtimeType,
         },
@@ -95,6 +99,14 @@ abstract class InitializeSystem extends ECSSystem {
 /// and before the next frame is rendered.
 abstract class CleanupSystem extends ECSSystem {
   CleanupSystem();
+
+  /// Whether the system should be executed or not.
+  ///
+  /// This is used to determine whether the system should be executed on every
+  /// frame.
+  ///
+  /// If this is set to `false`, the system will not be executed on each frame.
+  bool get cleansIf => true;
 
   /// Cleanup logic for the system.
   @visibleForTesting
@@ -149,8 +161,10 @@ abstract class ExecuteSystem extends ECSSystem {
 ///
 /// The [react] method should be overridden in subclasses to perform the
 /// actual reaction logic.
-abstract class ReactiveSystem extends ECSSystem {
-  ReactiveSystem();
+abstract class ReactiveSystem extends ECSSystem implements ECSEntityListener {
+  /// Indicates whether this system is active.
+  @visibleForTesting
+  bool isActive = false;
 
   /// The set of entity types that this system reacts to.
   ///
@@ -172,6 +186,44 @@ abstract class ReactiveSystem extends ECSSystem {
   /// If this is set to `false`, the system will not be executed
   /// when an entity changes, even if it is being watched.
   bool get reactsIf => true;
+
+  /// Activates this system by adding listeners to the entities it reacts to.
+  ///
+  /// If the system is already active, this method does nothing.
+  @visibleForTesting
+  void activate() {
+    if (isActive) return;
+    for (final type in reactsTo) {
+      final entity = feature!.manager!.getEntityOfType(type);
+      entity.addListener(this);
+    }
+    isActive = true;
+  }
+
+  /// Deactivates this system by removing listeners from the entities it reacts to.
+  ///
+  /// If the system is not active, this method does nothing.
+  @visibleForTesting
+  void deactivate() {
+    if (!isActive) return;
+    for (final type in reactsTo) {
+      final entity = feature!.manager!.getEntityOfType(type);
+      entity.removeListener(this);
+    }
+    isActive = false;
+  }
+
+  @override
+  void onEntityChanged(ECSEntity entity) {
+    if (reactsIf) {
+      if (entity is ECSComponent) {
+        log('${feature.runtimeType}.$runtimeType reacted to changes in ${entity.feature.runtimeType}.${entity.runtimeType}');
+      } else {
+        log('${feature.runtimeType}.$runtimeType reacted to trigger of ${entity.runtimeType}');
+      }
+      react();
+    }
+  }
 
   @visibleForTesting
   void react();

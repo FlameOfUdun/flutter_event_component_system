@@ -139,12 +139,9 @@ final class ECSContext implements ECSEntityListener {
     if (locked) return;
     locked = true;
     callback();
-  }
-
-  /// Unlocks the ECS context for rebuilding.
-  @visibleForTesting
-  void unlock() {
-    locked = false;
+    Future.microtask(() {
+      locked = false;
+    });
   }
 
   /// Callback for when entring the ECS context.

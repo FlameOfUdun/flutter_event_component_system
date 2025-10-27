@@ -14,15 +14,18 @@ sealed class ECSEntity {
 
   /// The parent feature of this entity.
   @visibleForTesting
-  late ECSFeature feature;
+  ECSFeature? feature;
 
   ECSEntity();
 
-  /// Sets the parent feature of this entity.
-  ///
-  /// Throws a [StateError] if the parent is already set.
+  /// Indicates whether this entity is active (i.e., has a parent feature).
   @visibleForTesting
-  void setFeature(ECSFeature feature) {
+  @protected
+  bool get isAttached => feature != null;
+
+  /// Attaches this entity to a feature.
+  @visibleForTesting
+  void attach(ECSFeature feature) {
     this.feature = feature;
   }
 
@@ -44,27 +47,37 @@ sealed class ECSEntity {
       listener.onEntityChanged(this);
     }
   }
+
+  /// Logs a message to the ECS manager's logging system.
+  @protected
+  @visibleForTesting
+  void log(String message, {ECSLogLevel level = ECSLogLevel.info}) {
+    feature?.manager?.log(message, level: level);
+  }
 }
 
 /// Represents an event in the ECS system.
 ///
 /// Events are specialized entities that can be triggered to notify listeners.
 abstract class ECSEvent extends ECSEntity {
+  /// The last triggered timestamp of the event.
+  DateTime? _triggeredAt;
+
   ECSEvent();
+
+  /// The last triggered timestamp of the event, or null if never triggered.
+  DateTime? get triggeredAt => _triggeredAt;
 
   /// Triggers the event, notifying all listeners.
   void trigger() {
+    _triggeredAt = DateTime.now();
     notifyListeners();
   }
 
-  /// Builds a widget that represents this entity in the [ECSInspector].
-  ///
-  /// [context] is the build context in which the widget is built.
-  Widget buildInspector(BuildContext context) {
-    return ElevatedButton(
-      onPressed: trigger,
-      child: const Text('Trigger Event'),
-    );
+  @override
+  void notifyListeners() {
+    log('$runtimeType triggered');
+    super.notifyListeners();
   }
 }
 
@@ -79,6 +92,9 @@ abstract class ECSComponent<TValue> extends ECSEntity {
   /// The previous value of the component.
   TValue? _previous;
 
+  /// The last updated timestamp of the component.
+  DateTime? _updatedAt;
+
   ECSComponent(this._value);
 
   /// The current value of the component.
@@ -86,6 +102,9 @@ abstract class ECSComponent<TValue> extends ECSEntity {
 
   /// The previous value of the component, or null if never set.
   TValue? get previous => _previous;
+
+  /// The last updated timestamp of the component, or null if never updated.
+  DateTime? get updatedAt => _updatedAt;
 
   /// Updates the component's value.
   ///
@@ -105,10 +124,9 @@ abstract class ECSComponent<TValue> extends ECSEntity {
         return;
       }
     }
-
     _previous = _value;
     _value = value;
-
+    _updatedAt = DateTime.now();
     if (notify) {
       notifyListeners();
     }
@@ -122,16 +140,13 @@ abstract class ECSComponent<TValue> extends ECSEntity {
   }
 
   /// Builds a string descriptor for the component's value in [ECSInspector].
-  ///
-  /// If the [value] is null, "null" will be returned.
-  String buildDescriptor(TValue? value) {
+  String describe(TValue? value) {
     return value.toString();
   }
 
-  /// Builds a widget that represents this entity in the [ECSInspector].
-  ///
-  /// [context] is the build context in which the widget is built.
-  Widget buildInspector(BuildContext context, TValue? value) {
-    return Text(buildDescriptor(value));
+  @override
+  void notifyListeners() {
+    log('${feature.runtimeType}.$runtimeType updated from ${describe(_previous)} to ${describe(_value)}');
+    super.notifyListeners();
   }
 }

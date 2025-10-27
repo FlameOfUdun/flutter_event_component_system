@@ -1,5 +1,6 @@
 part of '../ecs_base.dart';
 
+/// Base class for ECS widgets.
 abstract class ECSWidget extends StatefulWidget {
   const ECSWidget({super.key});
 
@@ -28,8 +29,9 @@ final class _ECSWidgetState extends State<ECSWidget> {
 
   @override
   void initState() {
-    scheduleInitialize();
-    scheduleUnlock();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ecs.initialize();
+    });
     super.initState();
   }
 
@@ -39,24 +41,13 @@ final class _ECSWidgetState extends State<ECSWidget> {
     super.dispose();
   }
 
-  void scheduleInitialize() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ecs.initialize();
-    });
-  }
-
-  void scheduleUnlock() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ecs.unlock();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return widget.build(context, ecs);
   }
 }
 
+/// Base class for stateful ECS widgets.
 abstract class ECSStatefulWidget extends StatefulWidget {
   const ECSStatefulWidget({super.key});
 
@@ -80,26 +71,31 @@ abstract class ECSState<TWidget extends ECSStatefulWidget> extends State<TWidget
 
   @override
   void initState() {
-    scheduleInitialize();
-    scheduleUnlock();
-    super.initState();
-  }
-
-  void scheduleInitialize() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ecs.initialize();
     });
-  }
-
-  void scheduleUnlock() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ecs.unlock();
-    });
+    super.initState();
   }
 
   @override
   void dispose() {
     ecs.dispose();
     super.dispose();
+  }
+}
+
+/// A widget that builds itself based on the ECS context.
+final class ECSBuilder extends ECSWidget {
+  /// The builder function that creates the widget tree based on the ECS context.
+  final Widget Function(BuildContext context, ECSContext ecs) builder;
+
+  const ECSBuilder({
+    super.key,
+    required this.builder,
+  });
+
+  @override
+  Widget build(BuildContext context, ECSContext ecs) {
+    return builder(context, ecs);
   }
 }

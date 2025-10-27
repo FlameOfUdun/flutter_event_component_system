@@ -27,14 +27,21 @@ abstract class ECSFeature {
 
   /// Map of reactive systems by entity type.
   @visibleForTesting
-  final Map<Type, Set<ReactiveSystem>> reactiveSystems = {};
+  final Set<ReactiveSystem> reactiveSystems = {};
 
   /// The manager that this feature is associated with.
   @visibleForTesting
   @protected
-  late ECSManager manager;
+  ECSManager? manager;
+
+  /// Indicates whether this feature is active.
+  @visibleForTesting
+  bool isActive = false;
 
   ECSFeature();
+
+  /// Indicates whether this feature is attached to a manager.
+  bool get isAttached => manager != null;
 
   /// Number of systems in this feature.
   @visibleForTesting
@@ -42,9 +49,9 @@ abstract class ECSFeature {
     return initializeSystems.length + teardownSystems.length + reactiveSystems.length + cleanupSystems.length + executeSystems.length;
   }
 
-  /// Sets the manager for this feature.
+  /// Attaches this feature to an ECS manager.
   @visibleForTesting
-  void setManager(ECSManager manager) {
+  void attach(ECSManager manager) {
     this.manager = manager;
   }
 
@@ -53,11 +60,13 @@ abstract class ECSFeature {
   /// This method is protected and should be used by subclasses to add entities.
   ///
   /// If the entity is already added, it will not be added again.
+  ///
+  /// Throws a [StateError] if the feature is already active.
   @protected
   @visibleForTesting
   void addEntity(ECSEntity entitiy) {
-    entitiy.setFeature(this);
     entities.add(entitiy);
+    entitiy.attach(this);
   }
 
   /// Adds a system to this feature.
@@ -65,6 +74,8 @@ abstract class ECSFeature {
   /// This method is protected and should be used by subclasses to add systems.
   ///
   /// If the system is already added, it will not be added again.
+  ///
+  /// Throws a [StateError] if the feature is already active.
   @protected
   @visibleForTesting
   void addSystem(ECSSystem system) {
@@ -77,16 +88,36 @@ abstract class ECSFeature {
     } else if (system is ExecuteSystem) {
       executeSystems.add(system);
     } else if (system is ReactiveSystem) {
-      for (final entity in system.reactsTo) {
-        reactiveSystems.putIfAbsent(entity, () => {}).add(system);
-      }
+      reactiveSystems.add(system);
     } else {
-      throw ArgumentError('Unsupported system type: ${system.runtimeType}');
+      throw ArgumentError("System of type ${system.runtimeType} is not supported");
     }
-    system.setFeature(this);
+    system.attach(this);
   }
 
-  /// Initializes the features.
+  /// Activates all systems in this feature.
+  @visibleForTesting
+  void activate() {
+    if (isActive) return;
+    for (final system in reactiveSystems) {
+      system.activate();
+    }
+    isActive = true;
+  }
+
+  /// Deactivates all systems in this feature.
+  @visibleForTesting
+  void deactivate() {
+    if (!isActive) return;
+    for (final system in reactiveSystems) {
+      system.deactivate();
+    }
+    isActive = false;
+  }
+
+  /// Triggers all the initialize systems in this feature.
+  ///
+  /// Throws a [StateError] if the feature is not active.
   @visibleForTesting
   void initialize() {
     for (final system in initializeSystems) {
@@ -94,7 +125,7 @@ abstract class ECSFeature {
     }
   }
 
-  /// Tears down the features.
+  /// Triggers all the teardown systems in this feature.
   @visibleForTesting
   void teardown() {
     for (final system in teardownSystems) {
@@ -102,11 +133,13 @@ abstract class ECSFeature {
     }
   }
 
-  /// Cleans up the features.
+  /// Triggers all the cleanup systems in this feature.
   @visibleForTesting
   void cleanup() {
     for (final system in cleanupSystems) {
-      system.cleanup();
+      if (system.cleansIf) {
+        system.cleanup();
+      }
     }
   }
 
@@ -120,28 +153,8 @@ abstract class ECSFeature {
     }
   }
 
-  /// Reacts to an entity change.
-  @visibleForTesting
-  void react(ECSEntity entity) {
-    final systems = reactiveSystems[entity.runtimeType];
-    if (systems == null || systems.isEmpty) return;
-
-    for (final system in systems) {
-      if (system.reactsIf) {
-        ECSLogger.log(_SystemReacted(
-          time: DateTime.now(),
-          level: ECSLogLevel.info,
-          system: system,
-          entity: entity,
-          stack: StackTrace.current,
-        ));
-        system.react();
-      }
-    }
-  }
-
   /// Gets an entity of type [TEntity] from this feature if it exists.
-  /// 
+  ///
   /// Throws a [StateError] if the entity is not found.
   TEntity getEntity<TEntity extends ECSEntity>() {
     for (final entity in entities) {
@@ -149,7 +162,19 @@ abstract class ECSFeature {
         return entity;
       }
     }
-
     throw StateError("Entity of type $TEntity not found");
+  }
+
+  /// Gets an entity of the specified [type].
+  ///
+  /// Throws a [StateError] if the entity is not found.
+  @visibleForTesting
+  ECSEntity getEntityOfType(Type type) {
+    for (final entity in entities) {
+      if (entity.runtimeType == type) {
+        return entity;
+      }
+    }
+    throw StateError("Entity of type $type not found");
   }
 }

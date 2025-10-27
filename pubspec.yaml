@@ -12,12 +12,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_inappwebview: ^6.1.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_event_component_system_inspector:
+    path: ./inspector
 
 flutter:
   uses-material-design: true

@@ -17,23 +17,17 @@ final class ECSScope extends StatefulWidget {
   /// The child widget to be rendered within this ECS scope.
   final Widget child;
 
-  /// Whether to use a ticker to drive the ECS execution loop.
-  ///
-  /// If true, a ticker will be created and started to call the execute and
-  /// cleanup methods of the features at each tick. Default is false.
-  final bool useTicker;
-
   const ECSScope({
     super.key,
     required this.features,
     required this.child,
-    this.useTicker = false,
   });
 
   @override
   @protected
   State<ECSScope> createState() => _ECSScopeState();
 
+  /// Gets the ECS manager from the nearest ECSScope ancestor.
   static ECSManager of(BuildContext context) {
     final manager = maybeOf(context);
     if (manager == null) {
@@ -42,15 +36,24 @@ final class ECSScope extends StatefulWidget {
     return manager;
   }
 
+  /// Gets the ECS manager from the nearest ECSScope ancestor, or null if not found.
   static ECSManager? maybeOf(BuildContext context) {
     return context.findAncestorStateOfType<_ECSScopeState>()?.manager;
   }
 }
 
 final class _ECSScopeState extends State<ECSScope> with SingleTickerProviderStateMixin {
+  /// The ECS manager for this scope.
   ECSManager? manager;
+
+  /// Ticker for driving the ECS execution loop.
   Ticker? ticker;
+
+  /// Duration tracker for ticker elapsed time calculation.
   Duration duration = Duration.zero;
+
+  /// Whether this scope is the primary ECS scope.
+  bool isPrimary = false;
 
   @override
   void initState() {
@@ -58,30 +61,29 @@ final class _ECSScopeState extends State<ECSScope> with SingleTickerProviderStat
       for (final feature in widget.features) {
         feature.initialize();
       }
-
-      if (widget.useTicker) {
-        startTicker();
+      if (isPrimary) {
+        if (manager!.hasExecuteOrCleanup) {
+          startTicker();
+        }
       }
     });
-
     super.initState();
   }
 
+  /// Calculates the elapsed duration since the last call.
   Duration calculateElapsed(Duration duration) {
     final elapsed = duration - this.duration;
     this.duration = duration;
     return elapsed;
   }
 
+  /// Starts the ticker to drive the ECS execution loop.
   void startTicker() {
-    ticker?.stop();
     ticker = createTicker((duration) {
       final elapsed = calculateElapsed(duration);
-
       for (final feature in widget.features) {
         feature.execute(elapsed);
       }
-
       for (final feature in widget.features) {
         feature.cleanup();
       }
@@ -89,49 +91,54 @@ final class _ECSScopeState extends State<ECSScope> with SingleTickerProviderStat
     ticker!.start();
   }
 
-  void stopTicker() {
-    ticker?.stop();
-    ticker = null;
-  }
-
-  @override
-  void didUpdateWidget(covariant ECSScope oldWidget) {
-    if (oldWidget.useTicker != widget.useTicker) {
-      if (widget.useTicker) {
-        startTicker();
-      } else {
-        stopTicker();
-      }
-    }
-    
-    super.didUpdateWidget(oldWidget);
-  }
-
   @override
   void dispose() {
-    stopTicker();
-
+    ticker?.stop();
     for (final feature in widget.features) {
       feature.teardown();
     }
-
+    for (final feature in widget.features) {
+      feature.deactivate();
+    }
     for (final feature in widget.features) {
       manager!.removeFeature(feature);
     }
-
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     if (manager == null) {
-      manager = ECSScope.maybeOf(context) ?? ECSManager();
-      
+      final inherited = ECSScope.maybeOf(context);
+      if (inherited == null) {
+        manager = ECSManager();
+        isPrimary = true;
+        registerDevtools(manager!);
+      } else {
+        manager = inherited;
+        isPrimary = false;
+      }
       for (final feature in widget.features) {
         manager!.addFeature(feature);
+      }
+      for (final feature in widget.features) {
+        feature.activate();
       }
     }
 
     return widget.child;
   }
+}
+
+var _devtoolsRegistered = false;
+
+/// Registers DevTools extensions for ECS inspection.
+void registerDevtools(ECSManager manager) {
+  if (_devtoolsRegistered) return;
+  developer.registerExtension('ext.ecs.requestManagerData', (method, parameters) async {
+    final data = ECSManagerData.fromManager(manager).toJson();
+    final encoded = jsonEncode(data);
+    return developer.ServiceExtensionResponse.result(encoded);
+  });
+  _devtoolsRegistered = true;
 }

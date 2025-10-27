@@ -47,7 +47,7 @@ class TestReactiveSystem extends ReactiveSystem {
   }
 }
 
-// Test widget that uses ECSReference
+// Test widget that uses ECSContext
 class TestECSWidget extends ECSWidget {
   final Function(ECSContext)? onBuild;
   final Widget Function(BuildContext, ECSContext)? customBuilder;
@@ -144,12 +144,12 @@ void main() {
 
       // Change first watched entity
       counter.update(3);
-      reference.unlock();
+      await Future.microtask(() {});
       expect(rebuildCount, equals(1));
 
       // Change second watched entity
       stringComponent.update('changed');
-      reference.unlock();
+      await Future.microtask(() {});
       expect(rebuildCount, equals(2));
     });
 
@@ -215,12 +215,12 @@ void main() {
       final counter = reference.watch<TestCounterComponent>();
 
       // Verify listener is added
-      expect(counter.listeners.length, equals(2));
+      expect(counter.listeners.length, equals(1));
 
       reference.dispose();
 
       // Verify listener is removed
-      expect(counter.listeners.length, equals(1));
+      expect(counter.listeners.length, equals(0));
     });
 
     test('should handle disposed state correctly', () {
@@ -231,7 +231,7 @@ void main() {
   });
 
   group('ECSWidget Integration Tests', () {
-    testWidgets('should build with ECSReference', (WidgetTester tester) async {
+    testWidgets('should build with ECSContext', (WidgetTester tester) async {
       final feature = TestFeature();
       ECSContext? capturedReference;
 
@@ -247,6 +247,8 @@ void main() {
           ),
         ),
       );
+
+      await tester.pumpAndSettle();
 
       expect(capturedReference, isNotNull);
       expect(capturedReference!.manager, isA<ECSManager>());
@@ -485,7 +487,7 @@ void main() {
       // Verify reference is locked during build
       expect(reference.locked, isTrue);
 
-      reference.unlock();
+      await Future.microtask(() {});
 
       // Should only rebuild once despite multiple changes
       expect(rebuildCount, equals(1));

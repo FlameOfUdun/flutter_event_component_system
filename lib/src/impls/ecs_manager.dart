@@ -1,7 +1,7 @@
 part of '../ecs_base.dart';
 
 /// ECSFeature is a base class for creating features in the ECS system.
-final class ECSManager implements ECSEntityListener {
+final class ECSManager with ECSLogger {
   /// Set of features in the ECS manager.
   @visibleForTesting
   final Set<ECSFeature> features = {};
@@ -16,84 +16,47 @@ final class ECSManager implements ECSEntityListener {
     return Set.unmodifiable(expanded);
   }
 
+  /// Whether any feature has execute or cleanup systems.
+  bool get hasExecuteOrCleanup {
+    for (final feature in features) {
+      if (feature.executeSystems.isNotEmpty) {
+        return true;
+      }
+      if (feature.cleanupSystems.isNotEmpty) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// Add a feature to the ECS manager.
   @visibleForTesting
   void addFeature(ECSFeature feature) {
-    feature.setManager(this);
+    feature.attach(this);
     features.add(feature);
-
-    for (final entity in feature.entities) {
-      entity.addListener(this);
-    }
   }
 
   /// Remove a feature from the ECS manager.
+  /// 
+  /// Removed feature will be deactivated.
   @visibleForTesting
   void removeFeature(ECSFeature feature) {
-    for (final entity in feature.entities) {
-      entity.removeListener(this);
-    }
-
     features.remove(feature);
   }
 
-  /// Initialize all features in the ECS manager.
-  @visibleForTesting
-  void initialize() {
-    for (final feature in features) {
-      feature.initialize();
-    }
-  }
-
-  /// Teardown all features in the ECS manager.
-  @visibleForTesting
-  void teardown() {
-    for (final feature in features) {
-      feature.teardown();
-    }
-  }
-
-  /// Execute all features in the ECS manager.
-  @visibleForTesting
-  void execute(Duration duration) {
-    for (final feature in features) {
-      feature.execute(duration);
-    }
-  }
-
-  /// Cleanup all features in the ECS manager.
-  @visibleForTesting
-  void cleanup() {
-    for (final feature in features) {
-      feature.cleanup();
-    }
-  }
-
-  @override
-  @visibleForTesting
-  void onEntityChanged(ECSEntity entity) {
-    ECSLogger.log(_EntityChanged(
-      time: DateTime.now(),
-      level: ECSLogLevel.info,
-      entity: entity,
-      stack: StackTrace.current,
-    ));
-
-    for (final feature in features) {
-      feature.react(entity);
-    }
-  }
 
   /// Gets an entity of type [TEntity] from all features.
   ///
   /// Throws a [StateError] if the entity is not found.
-  /// 
+  ///
   /// Optional [excludeFeatures] can be provided to skip certain feature types during the search.
+  /// 
+  /// Throws a [StateError] if the entity of type [TEntity] is not found.
   TEntity getEntity<TEntity extends ECSEntity>({
     Set<Type>? excludeFeatures,
   }) {
     final filtered = features.where((feature) {
-      if (excludeFeatures != null ) {
+      if (excludeFeatures != null) {
         if (excludeFeatures.contains(feature.runtimeType)) {
           return false;
         }
@@ -110,5 +73,21 @@ final class ECSManager implements ECSEntityListener {
     }
 
     throw StateError("Entity of type $TEntity not found");
+  }
+
+  /// Gets an entity of the specified [type] from all features.
+  /// 
+  /// Throws a [StateError] if the entity of the specified [type] is not found.
+  @visibleForTesting
+  ECSEntity getEntityOfType(Type type) {
+    for (final feature in features) {
+      try {
+        return feature.getEntityOfType(type);
+      } catch (_) {
+        continue;
+      }
+    }
+
+    throw StateError("Entity of type $type not found");
   }
 }

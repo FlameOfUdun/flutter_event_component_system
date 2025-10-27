@@ -89,26 +89,13 @@ void main() {
       expect(() => manager.getEntity<DummyComponent>(), throwsStateError);
     });
 
-    test('initialize, teardown, execute, cleanup call feature methods', () {
-      final manager = ECSManager();
-      final feature = AnotherDummyFeature();
-      manager.addFeature(feature);
-      manager.initialize();
-      expect(feature.initialized, isTrue);
-      manager.teardown();
-      expect(feature.tornDown, isTrue);
-      manager.cleanup();
-      expect(feature.cleaned, isTrue);
-      manager.execute(Duration.zero);
-      expect(feature.executed, isTrue);
-    });
-
     test('onEntityChanged triggers reactive systems', () {
       final manager = ECSManager();
       final feature = DummyFeature();
       final reactive = DummyReactiveSystem();
       feature.addSystem(reactive);
       manager.addFeature(feature);
+      feature.activate();
       feature.getEntity<DummyEvent>().trigger();
       expect(reactive.reacted, isTrue);
     });
@@ -133,30 +120,6 @@ void main() {
       expect(entity, anyOf(feature1.getEntity<DummyComponent>(), feature2.getEntity<DummyComponent>()));
     });
 
-    test('calling methods on empty manager does not throw', () {
-      final manager = ECSManager();
-      expect(() => manager.initialize(), returnsNormally);
-      expect(() => manager.teardown(), returnsNormally);
-      expect(() => manager.cleanup(), returnsNormally);
-      expect(() => manager.execute(Duration.zero), returnsNormally);
-    });
-
-    test('onEntityChanged with no reactive systems does not throw', () {
-      final manager = ECSManager();
-      final feature = DummyFeature();
-      manager.addFeature(feature);
-      final event = feature.getEntity<DummyEvent>();
-      expect(() => manager.onEntityChanged(event), returnsNormally);
-    });
-
-    test('manager is registered as listener for all entities', () {
-      final manager = ECSManager();
-      final feature = DummyFeature();
-      manager.addFeature(feature);
-      final component = feature.getEntity<DummyComponent>();
-      expect(component.listeners, contains(manager));
-    });
-
     test('multiple reactive systems for same entity type are triggered', () {
       final manager = ECSManager();
       final feature = DummyFeature();
@@ -165,6 +128,7 @@ void main() {
       feature.addSystem(reactive1);
       feature.addSystem(reactive2);
       manager.addFeature(feature);
+      feature.activate();
       feature.getEntity<DummyEvent>().trigger();
       expect(reactive1.reacted, isTrue);
       expect(reactive2.reacted, isTrue);
@@ -178,12 +142,13 @@ void main() {
       feature.addSystem(eventReactiveSystem);
       feature.addSystem(componentReactiveSystem);
       manager.addFeature(feature);
-      
+      feature.activate();
+
       // Trigger event - only event reactive system should react
       feature.getEntity<DummyEvent>().trigger();
       expect(eventReactiveSystem.reacted, isTrue);
       expect(componentReactiveSystem.reacted, isFalse);
-      
+
       // Reset and trigger component
       eventReactiveSystem.reacted = false;
       feature.getEntity<DummyComponent>().update(42);
@@ -197,7 +162,7 @@ void main() {
       final feature2 = AnotherDummyFeature();
       manager.addFeature(feature1);
       manager.addFeature(feature2);
-      
+
       final allEntities = manager.entities;
       expect(allEntities.whereType<DummyComponent>().length, 1);
       expect(allEntities.whereType<DummyEvent>().length, 1);
@@ -210,34 +175,9 @@ void main() {
       final feature2 = DummyFeature();
       manager.addFeature(feature1);
       manager.addFeature(feature2);
-      
+
       final component = manager.getEntity<DummyComponent>();
       expect(component, equals(feature1.getEntity<DummyComponent>()));
-    });
-
-    test('lifecycle methods handle multiple features correctly', () {
-      final manager = ECSManager();
-      final feature1 = AnotherDummyFeature();
-      final feature2 = AnotherDummyFeature();
-      manager.addFeature(feature1);
-      manager.addFeature(feature2);
-      
-      manager.initialize();
-      expect(feature1.initialized, isTrue);
-      expect(feature2.initialized, isTrue);
-      
-      manager.teardown();
-      expect(feature1.tornDown, isTrue);
-      expect(feature2.tornDown, isTrue);
-      
-      manager.cleanup();
-      expect(feature1.cleaned, isTrue);
-      expect(feature2.cleaned, isTrue);
-      
-      final duration = Duration(milliseconds: 100);
-      manager.execute(duration);
-      expect(feature1.executed, isTrue);
-      expect(feature2.executed, isTrue);
     });
 
     test('entity change triggers systems across all features', () {
@@ -246,33 +186,24 @@ void main() {
       final feature2 = AnotherDummyFeature();
       final reactive1 = DummyReactiveSystem();
       final reactive2 = DummyReactiveSystem();
-      
+
       feature1.addSystem(reactive1);
       feature2.addSystem(reactive2);
       manager.addFeature(feature1);
       manager.addFeature(feature2);
-      
+      feature1.activate();
+      feature2.activate();
+
       feature1.getEntity<DummyEvent>().trigger();
       expect(reactive1.reacted, isTrue);
       expect(reactive2.reacted, isTrue);
-    });
-
-    test('error handling for malformed features', () {
-      final manager = ECSManager();
-      final emptyFeature = AnotherDummyFeature();
-      manager.addFeature(emptyFeature);
-      
-      expect(() => manager.initialize(), returnsNormally);
-      expect(() => manager.teardown(), returnsNormally);
-      expect(() => manager.cleanup(), returnsNormally);
-      expect(() => manager.execute(Duration.zero), returnsNormally);
     });
 
     test('features property returns unmodifiable set', () {
       final manager = ECSManager();
       final feature = DummyFeature();
       manager.addFeature(feature);
-      
+
       final features = manager.features;
       expect(features, contains(feature));
       expect(features.length, 1);

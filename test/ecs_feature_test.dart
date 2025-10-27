@@ -89,7 +89,7 @@ void main() {
       expect(feature.teardownSystems, contains(teardown));
       expect(feature.cleanupSystems, contains(cleanup));
       expect(feature.executeSystems, contains(execute));
-      expect(feature.reactiveSystems[DummyEvent], contains(reactive));
+      expect(feature.reactiveSystems, contains(reactive));
     });
 
     test('initialize calls all InitializeSystems', () {
@@ -129,7 +129,7 @@ void main() {
       final feature = TestFeature();
       final reactive = DummyReactiveSystem();
       feature.addSystem(reactive);
-      expect(feature.reactiveSystems[DummyEvent], contains(reactive));
+      expect(feature.reactiveSystems, contains(reactive));
     });
 
     test('systemsCount returns correct total', () {
@@ -174,9 +174,9 @@ void main() {
       final reactive2 = DummyReactiveSystem();
       feature.addSystem(reactive1);
       feature.addSystem(reactive2);
-      expect(feature.reactiveSystems[DummyEvent]?.length, 2);
-      expect(feature.reactiveSystems[DummyEvent], contains(reactive1));
-      expect(feature.reactiveSystems[DummyEvent], contains(reactive2));
+      expect(feature.reactiveSystems.length, 2);
+      expect(feature.reactiveSystems, contains(reactive1));
+      expect(feature.reactiveSystems, contains(reactive2));
     });
 
     test('lifecycle methods work with multiple systems', () {
@@ -227,8 +227,8 @@ void main() {
       final feature = TestFeature();
       final multiReactiveSystem = MultiReactiveSystem();
       feature.addSystem(multiReactiveSystem);
-      expect(feature.reactiveSystems[DummyEvent], contains(multiReactiveSystem));
-      expect(feature.reactiveSystems[DummyComponent], contains(multiReactiveSystem));
+      expect(feature.reactiveSystems, contains(multiReactiveSystem));
+      expect(feature.reactiveSystems, contains(multiReactiveSystem));
     });
 
     test('removing feature removes all entities and the featue', () {
