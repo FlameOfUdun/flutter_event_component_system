@@ -51,23 +51,21 @@ final class _LogsViewState extends State<ECSLogViewer> {
   }
 
   List<ECSLogData> get logs {
-    final logs = data?.logs;
-    if (logs == null) return [];
-    if (clearedAt == null) return logs;
-    return logs.where((log) => log.time.isAfter(clearedAt!)).toList();
-  }
+    var logs = data?.logs ?? [];
+    if (clearedAt != null) {
+      logs = logs.where((log) => log.time.isAfter(clearedAt!)).toList();
+    }
 
-  List<ECSLogData> get filtered {
-    return logs.where((entry) {
+    return logs.where((log) {
       if (level != null) {
-        if (entry.level != level) {
+        if (log.level != level) {
           return false;
         }
       }
       if (search != null) {
-        final searchTerm = search!.toLowerCase();
-        final description = entry.message.toLowerCase();
-        if (!description.contains(searchTerm)) {
+        final term = search!.toLowerCase();
+        final message = log.message.toLowerCase();
+        if (!message.contains(term)) {
           return false;
         }
       }
@@ -147,14 +145,14 @@ final class _LogsViewState extends State<ECSLogViewer> {
           Expanded(
             child: Builder(
               builder: (context) {
-                if (filtered.isEmpty) {
+                if (logs.isEmpty) {
                   return const Center(child: Text('No logs found'));
                 }
                 return ListView.separated(
                   reverse: true,
-                  itemCount: filtered.length,
+                  itemCount: logs.length,
                   itemBuilder: (context, index) {
-                    final log = filtered.elementAt(index);
+                    final log = logs.elementAt(index);
                     return ExpansionTile(
                       title: Text('${log.level.toUpperCase()} - ${log.time}'),
                       subtitle: Text(log.message),

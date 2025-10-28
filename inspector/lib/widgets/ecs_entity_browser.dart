@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/ecs_entity_data.dart';
@@ -11,6 +13,8 @@ final class ECSEntityBrowser extends StatefulWidget {
 }
 
 final class _ECSEntityBrowserState extends State<ECSEntityBrowser> {
+  late final Timer timer;
+
   String? search;
   String? type;
   String? feature;
@@ -18,10 +22,16 @@ final class _ECSEntityBrowserState extends State<ECSEntityBrowser> {
 
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    timer = Timer.periodic(const Duration(seconds: 1), (_) {
       refresh();
     });
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    timer.cancel();
+    super.dispose();
   }
 
   void refresh() async {
@@ -88,7 +98,7 @@ final class _ECSEntityBrowserState extends State<ECSEntityBrowser> {
                         items: [
                           const DropdownMenuItem(value: null, child: Text('Any')),
                           for (final feature in features)
-                            DropdownMenuItem(value: feature.runtimeType.toString(), child: Text(feature.runtimeType.toString())),
+                            DropdownMenuItem(value: feature, child: Text(feature)),
                         ],
                         onChanged: (value) {
                           setState(() {
@@ -156,16 +166,11 @@ final class _ECSEntityBrowserState extends State<ECSEntityBrowser> {
                     final entity = filtered.elementAt(index);
 
                     if (entity.isEvent) {
-                      return ListTile(
-                        title: Text('${entity.feature}.${entity.name}'),
-                      );
+                      return ListTile(title: Text('${entity.feature}.${entity.name}'));
                     }
 
                     if (entity.isComponent) {
-                      return ListTile(
-                        title: Text('${entity.feature}.${entity.name}'),
-                        subtitle: Text('Value: ${entity.value ?? '--'}'),
-                      );
+                      return ListTile(title: Text('${entity.feature}.${entity.name}'), subtitle: Text('Value: ${entity.value ?? '--'}'));
                     }
 
                     throw UnimplementedError('Unknown entity type: ${entity.runtimeType}');
