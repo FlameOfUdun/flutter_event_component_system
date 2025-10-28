@@ -117,6 +117,7 @@ final class _LogsViewState extends State<ECSLogViewer> {
                         onPressed: () {
                           setState(() {
                             logs.clear();
+                            clearedAt = DateTime.now();
                           });
                         },
                         child: const Text('Clear Logs'),
