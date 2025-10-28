@@ -4,7 +4,7 @@ class UserDataComponent extends ECSComponent<User?> {
   UserDataComponent() : super(null);
 
   @override
-  String buildDescriptor(User? value) {
+  String describe(User? value) {
     if (value == null) {
       return 'No User Data';
     } else {

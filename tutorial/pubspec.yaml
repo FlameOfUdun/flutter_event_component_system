@@ -12,7 +12,7 @@ dependencies:
   flutter_event_component_system:
     git: 
       url: https://github.com/FlameOfUdun/flutter_event_component_system.git
-      ref: main
+      ref: develop
 
 dev_dependencies:
   flutter_test:

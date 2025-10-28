@@ -4,7 +4,7 @@ class LoadingStateComponent extends ECSComponent<LoadingState> {
   LoadingStateComponent() : super(LoadingState.idle);
 
   @override
-  String buildDescriptor(LoadingState? value) {
+  String describe(LoadingState? value) {
     return 'LoadingState: ${value?.name}';
   }
 }

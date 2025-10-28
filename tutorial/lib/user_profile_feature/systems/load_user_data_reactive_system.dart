@@ -18,18 +18,18 @@ class LoadUserDataReactiveSystem extends ReactiveSystem {
 
   @override
   bool get reactsIf {
-    final loadEvent = manager.getEntity<LoadUserEvent>();
-    final loadingState = manager.getEntity<LoadingStateComponent>();
+    final loadEvent = getEntity<LoadUserEvent>();
+    final loadingState = getEntity<LoadingStateComponent>();
     return loadEvent.userId != null && loadingState.value != LoadingState.running;
   }
 
   @override
   void react() async {
     // Retrieve necessary entities
-    final loadEvent = manager.getEntity<LoadUserEvent>();
-    final loadingState = manager.getEntity<LoadingStateComponent>();
-    final loadingError = manager.getEntity<LoadingErrorComponent>();
-    final userData = manager.getEntity<UserDataComponent>();
+    final loadEvent = getEntity<LoadUserEvent>();
+    final loadingState = getEntity<LoadingStateComponent>();
+    final loadingError = getEntity<LoadingErrorComponent>();
+    final userData = getEntity<UserDataComponent>();
 
     // Extract userId from the load event
     final userId = loadEvent.userId!;
