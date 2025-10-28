@@ -52,6 +52,8 @@ sealed class ECSSystem {
   ///
   /// Throws a [StateError] if the entity is not found in both the parent feature
   /// and the ECS manager.
+  @visibleForTesting
+  @protected
   TEntity getEntity<TEntity extends ECSEntity>() {
     for (final entity in entities) {
       if (entity is TEntity) return entity;
@@ -214,6 +216,7 @@ abstract class ReactiveSystem extends ECSSystem implements ECSEntityListener {
   }
 
   @override
+  @visibleForTesting
   void onEntityChanged(ECSEntity entity) {
     if (reactsIf) {
       if (entity is ECSComponent) {
