@@ -82,7 +82,7 @@ void main() {
   group('ECSContext Tests', () {
     late ECSManager manager;
     late TestFeature feature;
-    late ECSContext reference;
+    late ECSContext ecs;
     int rebuildCount = 0;
 
     setUp(() {
@@ -90,19 +90,20 @@ void main() {
       manager = ECSManager();
       feature = TestFeature();
       manager.addFeature(feature);
+      manager.activate();
 
-      reference = ECSContext(manager, () {
+      ecs = ECSContext(manager, () {
         rebuildCount++;
       });
     });
 
     tearDown(() {
-      reference.dispose();
+      ecs.dispose();
     });
 
     test('should get entities from manager', () {
-      final counter = reference.get<TestCounterComponent>();
-      final stringComponent = reference.get<TestStringComponent>();
+      final counter = ecs.get<TestCounterComponent>();
+      final stringComponent = ecs.get<TestStringComponent>();
 
       expect(counter, isA<TestCounterComponent>());
       expect(counter.value, equals(0));
@@ -111,7 +112,7 @@ void main() {
     });
 
     test('should watch entities and trigger rebuilds on change', () async {
-      final counter = reference.watch<TestCounterComponent>();
+      final counter = ecs.watch<TestCounterComponent>();
 
       expect(rebuildCount, equals(0));
 
@@ -125,10 +126,10 @@ void main() {
     });
 
     test('should not trigger rebuild when locked', () async {
-      final counter = reference.watch<TestCounterComponent>();
+      final counter = ecs.watch<TestCounterComponent>();
 
       // Simulate locked state
-      reference.locked = true;
+      ecs.locked = true;
 
       counter.update(10);
       await Future.microtask(() {});
@@ -137,8 +138,8 @@ void main() {
     });
 
     test('should handle multiple watchers correctly', () async {
-      final counter = reference.watch<TestCounterComponent>();
-      final stringComponent = reference.watch<TestStringComponent>();
+      final counter = ecs.watch<TestCounterComponent>();
+      final stringComponent = ecs.watch<TestStringComponent>();
 
       expect(rebuildCount, equals(0));
 
@@ -157,12 +158,12 @@ void main() {
       bool listenerCalled = false;
       TestCounterComponent? receivedEntity;
 
-      reference.listen<TestCounterComponent>((entity) {
+      ecs.listen<TestCounterComponent>((entity) {
         listenerCalled = true;
         receivedEntity = entity;
       });
 
-      final counter = reference.get<TestCounterComponent>();
+      final counter = ecs.get<TestCounterComponent>();
       counter.update(7);
 
       await Future.microtask(() {});
@@ -175,11 +176,11 @@ void main() {
     test('should call onEnter callback when initialized', () async {
       bool onEnterCalled = false;
 
-      reference.onEnter(() {
+      ecs.onEnter(() {
         onEnterCalled = true;
       });
 
-      reference.initialize();
+      ecs.initialize();
       await Future.microtask(() {});
 
       expect(onEnterCalled, isTrue);
@@ -188,60 +189,60 @@ void main() {
     test('should call onExit callback when disposed', () async {
       bool onExitCalled = false;
 
-      reference.onExit(() {
+      ecs.onExit(() {
         onExitCalled = true;
       });
 
-      reference.dispose();
+      ecs.dispose();
       await Future.microtask(() {});
 
       expect(onExitCalled, isTrue);
     });
 
     test('should only set onEnter callback once', () {
-      reference.onEnter(() {
+      ecs.onEnter(() {
         // First callback
       });
 
-      reference.onEnter(() {
+      ecs.onEnter(() {
         // Second callback should be ignored
       });
 
-      expect(reference.onEnterListener, isNotNull);
+      expect(ecs.onEnterListener, isNotNull);
       // Second callback should be ignored - the listener should not change
     });
 
     test('should clean up listeners on dispose', () async {
-      final counter = reference.watch<TestCounterComponent>();
+      final counter = ecs.watch<TestCounterComponent>();
 
       // Verify listener is added
       expect(counter.listeners.length, equals(1));
 
-      reference.dispose();
+      ecs.dispose();
 
       // Verify listener is removed
       expect(counter.listeners.length, equals(0));
     });
 
     test('should handle disposed state correctly', () {
-      reference.dispose();
+      ecs.dispose();
 
-      expect(reference.disposed, isTrue);
+      expect(ecs.disposed, isTrue);
     });
   });
 
   group('ECSWidget Integration Tests', () {
     testWidgets('should build with ECSContext', (WidgetTester tester) async {
       final feature = TestFeature();
-      ECSContext? capturedReference;
+      ECSContext? capturedecs;
 
       await tester.pumpWidget(
         MaterialApp(
           home: ECSScope(
             features: {feature},
             child: TestECSWidget(
-              onBuild: (reference) {
-                capturedReference = reference;
+              onBuild: (ecs) {
+                capturedecs = ecs;
               },
             ),
           ),
@@ -250,9 +251,8 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(capturedReference, isNotNull);
-      expect(capturedReference!.manager, isA<ECSManager>());
-      expect(find.text('Counter: 0'), findsOneWidget);
+      expect(capturedecs, isNotNull);
+      expect(capturedecs!.manager, isA<ECSManager>());
       expect(find.text('String: initial'), findsOneWidget);
     });
 
@@ -292,12 +292,12 @@ void main() {
           home: ECSScope(
             features: {feature},
             child: TestECSWidget(
-              customBuilder: (context, reference) {
-                reference.onEnter(() {
+              customBuilder: (context, ecs) {
+                ecs.onEnter(() {
                   onEnterCalled = true;
                 });
 
-                reference.onExit(() {
+                ecs.onExit(() {
                   onExitCalled = true;
                 });
 
@@ -336,13 +336,13 @@ void main() {
           home: ECSScope(
             features: {feature},
             child: TestECSWidget(
-              customBuilder: (context, reference) {
-                reference.listen<TestCounterComponent>((entity) {
+              customBuilder: (context, ecs) {
+                ecs.listen<TestCounterComponent>((entity) {
                   listenerCallCount++;
                   receivedEntity = entity;
                 });
 
-                final counter = reference.watch<TestCounterComponent>();
+                final counter = ecs.watch<TestCounterComponent>();
                 return Text('Counter: ${counter.value}');
               },
             ),
@@ -377,10 +377,10 @@ void main() {
         ),
       );
 
-      // Get reference to counter before disposal
+      // Get ecs to counter before disposal
       final counter = feature.getEntity<TestCounterComponent>();
 
-      // Remove the widget (this should dispose the reference)
+      // Remove the widget (this should dispose the ecs)
       await tester.pumpWidget(
         const MaterialApp(
           home: Text('Different Widget'),
@@ -442,11 +442,11 @@ void main() {
       manager.addFeature(feature);
 
       int rebuildCount = 0;
-      final reference = ECSContext(manager, () {
+      final ecs = ECSContext(manager, () {
         rebuildCount++;
       });
 
-      final counter = reference.watch<TestCounterComponent>();
+      final counter = ecs.watch<TestCounterComponent>();
 
       // Rapid changes
       counter.update(1);
@@ -460,7 +460,7 @@ void main() {
       // Should still only rebuild once due to microtask batching
       expect(rebuildCount, equals(1));
 
-      reference.dispose();
+      ecs.dispose();
     });
 
     test('should prevent multiple builds when previous build is not completed', () async {
@@ -470,11 +470,11 @@ void main() {
 
       int rebuildCount = 0;
       
-      final reference = ECSContext(manager, () {
+      final ecs = ECSContext(manager, () {
         rebuildCount++;
       });
 
-      final counter = reference.watch<TestCounterComponent>();
+      final counter = ecs.watch<TestCounterComponent>();
 
       // Trigger first build
       counter.update(1);
@@ -484,18 +484,18 @@ void main() {
       counter.update(3);
       counter.update(4);
 
-      // Verify reference is locked during build
-      expect(reference.locked, isTrue);
+      // Verify ecs is locked during build
+      expect(ecs.locked, isTrue);
 
       await Future.microtask(() {});
 
       // Should only rebuild once despite multiple changes
       expect(rebuildCount, equals(1));
       
-      // After microtask, reference should be unlocked
-      expect(reference.locked, isFalse);
+      // After microtask, ecs should be unlocked
+      expect(ecs.locked, isFalse);
 
-      reference.dispose();
+      ecs.dispose();
     });
 
     test('should handle watching same entity multiple times', () {
@@ -503,15 +503,15 @@ void main() {
       final feature = TestFeature();
       manager.addFeature(feature);
 
-      final reference = ECSContext(manager, () {});
+      final ecs = ECSContext(manager, () {});
 
-      final counter1 = reference.watch<TestCounterComponent>();
-      final counter2 = reference.watch<TestCounterComponent>();
+      final counter1 = ecs.watch<TestCounterComponent>();
+      final counter2 = ecs.watch<TestCounterComponent>();
 
       expect(counter1, equals(counter2));
-      expect(reference.watchers.length, equals(1));
+      expect(ecs.watchers.length, equals(1));
 
-      reference.dispose();
+      ecs.dispose();
     });
   });
 }

@@ -3,4 +3,4 @@ documentation: https://docs.flutter.dev/tools/devtools/extensions#configure-exte
 extensions:
   - shared_preferences: false
   - flutter_event_component_system_devtools_extension: true
-  - ecs_inspector: false
+  - ecs_inspector: true

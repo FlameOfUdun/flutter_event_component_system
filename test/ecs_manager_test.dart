@@ -80,12 +80,14 @@ void main() {
       final manager = ECSManager();
       final feature = DummyFeature();
       manager.addFeature(feature);
+      manager.activate();
       final component = manager.getEntity<DummyComponent>();
       expect(component, isA<DummyComponent>());
     });
 
     test('get throws if entity not found', () {
       final manager = ECSManager();
+      manager.activate();
       expect(() => manager.getEntity<DummyComponent>(), throwsStateError);
     });
 
@@ -95,7 +97,7 @@ void main() {
       final reactive = DummyReactiveSystem();
       feature.addSystem(reactive);
       manager.addFeature(feature);
-      feature.activate();
+      manager.activate();
       feature.getEntity<DummyEvent>().trigger();
       expect(reactive.reacted, isTrue);
     });
@@ -106,6 +108,7 @@ void main() {
       final feature2 = DummyFeature();
       manager.addFeature(feature1);
       manager.addFeature(feature2);
+      manager.activate();
       expect(manager.entities.whereType<DummyComponent>().length, 2);
       expect(manager.getEntity<DummyComponent>(), isA<DummyComponent>());
     });
@@ -116,6 +119,7 @@ void main() {
       final feature2 = DummyFeature();
       manager.addFeature(feature1);
       manager.addFeature(feature2);
+      manager.activate();
       final entity = manager.getEntity<DummyComponent>();
       expect(entity, anyOf(feature1.getEntity<DummyComponent>(), feature2.getEntity<DummyComponent>()));
     });
@@ -128,7 +132,7 @@ void main() {
       feature.addSystem(reactive1);
       feature.addSystem(reactive2);
       manager.addFeature(feature);
-      feature.activate();
+      manager.activate();
       feature.getEntity<DummyEvent>().trigger();
       expect(reactive1.reacted, isTrue);
       expect(reactive2.reacted, isTrue);
@@ -142,7 +146,7 @@ void main() {
       feature.addSystem(eventReactiveSystem);
       feature.addSystem(componentReactiveSystem);
       manager.addFeature(feature);
-      feature.activate();
+      manager.activate();
 
       // Trigger event - only event reactive system should react
       feature.getEntity<DummyEvent>().trigger();
@@ -162,6 +166,7 @@ void main() {
       final feature2 = AnotherDummyFeature();
       manager.addFeature(feature1);
       manager.addFeature(feature2);
+      manager.activate();
 
       final allEntities = manager.entities;
       expect(allEntities.whereType<DummyComponent>().length, 1);
@@ -175,6 +180,7 @@ void main() {
       final feature2 = DummyFeature();
       manager.addFeature(feature1);
       manager.addFeature(feature2);
+      manager.activate();
 
       final component = manager.getEntity<DummyComponent>();
       expect(component, equals(feature1.getEntity<DummyComponent>()));
@@ -191,8 +197,7 @@ void main() {
       feature2.addSystem(reactive2);
       manager.addFeature(feature1);
       manager.addFeature(feature2);
-      feature1.activate();
-      feature2.activate();
+      manager.activate();
 
       feature1.getEntity<DummyEvent>().trigger();
       expect(reactive1.reacted, isTrue);
@@ -203,6 +208,7 @@ void main() {
       final manager = ECSManager();
       final feature = DummyFeature();
       manager.addFeature(feature);
+      manager.activate();
 
       final features = manager.features;
       expect(features, contains(feature));

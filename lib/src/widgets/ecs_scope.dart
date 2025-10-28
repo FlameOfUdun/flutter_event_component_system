@@ -44,7 +44,7 @@ final class ECSScope extends StatefulWidget {
 
 final class _ECSScopeState extends State<ECSScope> with SingleTickerProviderStateMixin {
   /// The ECS manager for this scope.
-  ECSManager? manager;
+  final manager = ECSManager();
 
   /// Ticker for driving the ECS execution loop.
   Ticker? ticker;
@@ -52,19 +52,16 @@ final class _ECSScopeState extends State<ECSScope> with SingleTickerProviderStat
   /// Duration tracker for ticker elapsed time calculation.
   Duration duration = Duration.zero;
 
-  /// Whether this scope is the primary ECS scope.
-  bool isPrimary = false;
-
   @override
   void initState() {
+    for (final feature in widget.features) {
+      manager.addFeature(feature);
+    }
+    manager.activate();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      for (final feature in widget.features) {
-        feature.initialize();
-      }
-      if (isPrimary) {
-        if (manager!.hasExecuteOrCleanup) {
-          startTicker();
-        }
+      manager.initialize();
+      if (manager.hasExecuteOrCleanupSystems) {
+        startTicker();
       }
     });
     super.initState();
@@ -81,12 +78,8 @@ final class _ECSScopeState extends State<ECSScope> with SingleTickerProviderStat
   void startTicker() {
     ticker = createTicker((duration) {
       final elapsed = calculateElapsed(duration);
-      for (final feature in widget.features) {
-        feature.execute(elapsed);
-      }
-      for (final feature in widget.features) {
-        feature.cleanup();
-      }
+      manager.execute(elapsed);
+      manager.cleanup();
     });
     ticker!.start();
   }
@@ -94,51 +87,13 @@ final class _ECSScopeState extends State<ECSScope> with SingleTickerProviderStat
   @override
   void dispose() {
     ticker?.stop();
-    for (final feature in widget.features) {
-      feature.teardown();
-    }
-    for (final feature in widget.features) {
-      feature.deactivate();
-    }
-    for (final feature in widget.features) {
-      manager!.removeFeature(feature);
-    }
+    manager.teardown();
+    manager.deactivate();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (manager == null) {
-      final inherited = ECSScope.maybeOf(context);
-      if (inherited == null) {
-        manager = ECSManager();
-        isPrimary = true;
-        registerDevtools(manager!);
-      } else {
-        manager = inherited;
-        isPrimary = false;
-      }
-      for (final feature in widget.features) {
-        manager!.addFeature(feature);
-      }
-      for (final feature in widget.features) {
-        feature.activate();
-      }
-    }
-
     return widget.child;
   }
-}
-
-var _devtoolsRegistered = false;
-
-/// Registers DevTools extensions for ECS inspection.
-void registerDevtools(ECSManager manager) {
-  if (_devtoolsRegistered) return;
-  developer.registerExtension('ext.ecs.requestManagerData', (method, parameters) async {
-    final data = ECSManagerData.fromManager(manager).toJson();
-    final encoded = jsonEncode(data);
-    return developer.ServiceExtensionResponse.result(encoded);
-  });
-  _devtoolsRegistered = true;
 }

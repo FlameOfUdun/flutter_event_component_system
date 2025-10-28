@@ -49,6 +49,12 @@ abstract class ECSFeature {
     return initializeSystems.length + teardownSystems.length + reactiveSystems.length + cleanupSystems.length + executeSystems.length;
   }
 
+  /// Indicates whether this feature has execute or cleanup systems.
+  @visibleForTesting
+  bool get hasExecuteOrCleanupSystems {
+    return executeSystems.isNotEmpty || cleanupSystems.isNotEmpty;
+  }
+
   /// Attaches this feature to an ECS manager.
   @visibleForTesting
   void attach(ECSManager manager) {
