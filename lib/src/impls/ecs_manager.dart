@@ -1,7 +1,7 @@
 part of '../ecs_base.dart';
 
 /// ECSFeature is a base class for creating features in the ECS system.
-final class ECSManager with ECSLogger {
+final class ECSManager with _ECSLogger {
   /// Static set of all features in every ECS manager.
   static final Set<ECSFeature> _allFeatures = {};
 

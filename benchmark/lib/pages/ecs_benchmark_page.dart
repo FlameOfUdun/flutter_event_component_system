@@ -14,11 +14,11 @@ class ECSBenchmarkPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ECSScope(
       features: {
-          CounterFeature(),
-          TodoFeature(),
-          LoadingFeature(),
-          UserProfileFeature(),
-        },
+        CounterFeature(),
+        TodoFeature(),
+        LoadingFeature(),
+        UserProfileFeature(),
+      },
       child: Scaffold(
         appBar: AppBar(
           title: const Text('ECS Benchmark'),
@@ -134,7 +134,7 @@ class _MainContentState extends ECSState<_MainContent> {
         await completer!.future;
       },
     );
-    
+
     final average = benchmarkRunner.getAverageResult('User Profile Benchmark', 'ECS');
     debugPrint('User Profile Benchmark completed: $average');
   }
@@ -170,7 +170,7 @@ class _MainContentState extends ECSState<_MainContent> {
         await completer!.future;
       },
     );
-    
+
     final average = benchmarkRunner.getAverageResult('Todo Benchmark', 'ECS');
     debugPrint('Todo Benchmark completed: $average');
   }

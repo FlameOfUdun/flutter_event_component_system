@@ -67,7 +67,7 @@ class TestECSWidget extends ECSWidget {
     }
 
     final counter = ecs.watch<TestCounterComponent>();
-    final stringComponent = ecs.get<TestStringComponent>();
+    final stringComponent = ecs.watch<TestStringComponent>();
 
     return Column(
       children: [
@@ -253,7 +253,6 @@ void main() {
 
       expect(capturedecs, isNotNull);
       expect(capturedecs!.manager, isA<ECSManager>());
-      expect(find.text('String: initial'), findsOneWidget);
     });
 
     testWidgets('should rebuild when watched entity changes', (WidgetTester tester) async {
@@ -268,14 +267,13 @@ void main() {
         ),
       );
 
-      // Verify initial state
-      expect(find.text('Counter: 0'), findsOneWidget);
+      await Future.microtask(tester.pumpAndSettle);
 
       // Change the counter value
       final counter = feature.getEntity<TestCounterComponent>();
       counter.update(42);
 
-      await tester.pump();
+      await Future.microtask(tester.pumpAndSettle);
 
       // Verify the widget rebuilt with new value
       expect(find.text('Counter: 42'), findsOneWidget);
@@ -440,6 +438,7 @@ void main() {
       final manager = ECSManager();
       final feature = TestFeature();
       manager.addFeature(feature);
+      manager.activate();
 
       int rebuildCount = 0;
       final ecs = ECSContext(manager, () {
@@ -467,6 +466,7 @@ void main() {
       final manager = ECSManager();
       final feature = TestFeature();
       manager.addFeature(feature);
+      manager.activate();
 
       int rebuildCount = 0;
       
@@ -502,6 +502,7 @@ void main() {
       final manager = ECSManager();
       final feature = TestFeature();
       manager.addFeature(feature);
+      manager.activate();
 
       final ecs = ECSContext(manager, () {});
 

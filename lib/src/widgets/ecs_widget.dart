@@ -13,34 +13,7 @@ abstract class ECSWidget extends StatefulWidget {
   Widget build(BuildContext context, ECSContext ecs);
 }
 
-final class _ECSWidgetState extends State<ECSWidget> {
-  ECSContext? _ecs;
-
-  @protected
-  ECSContext get ecs {
-    return _ecs ??= ECSContext(
-      ECSScope.of(context),
-      () {
-        if (!mounted) return;
-        setState(() {});
-      },
-    );
-  }
-
-  @override
-  void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ecs.initialize();
-    });
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    ecs.dispose();
-    super.dispose();
-  }
-
+final class _ECSWidgetState extends State<ECSWidget> with _ECSContextProvider<ECSWidget> {
   @override
   Widget build(BuildContext context) {
     return widget.build(context, ecs);
@@ -55,31 +28,37 @@ abstract class ECSStatefulWidget extends StatefulWidget {
   ECSState<ECSStatefulWidget> createState();
 }
 
-abstract class ECSState<TWidget extends ECSStatefulWidget> extends State<TWidget> {
+abstract class ECSState<TWidget extends ECSStatefulWidget> extends State<TWidget> with _ECSContextProvider {}
+
+mixin _ECSContextProvider<T extends StatefulWidget> on State<T> {
   ECSContext? _ecs;
 
   @protected
   ECSContext get ecs {
     return _ecs ??= ECSContext(
       ECSScope.of(context),
-      () {
-        if (!mounted) return;
-        setState(() {});
-      },
+      _rebuild,
     );
+  }
+
+  void _rebuild() {
+    if (!mounted) return;
+    setState(() {});
   }
 
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ecs.initialize();
-    });
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ecs.initialize();
+      }
+    });
   }
 
   @override
   void dispose() {
-    ecs.dispose();
+    _ecs?.dispose();
     super.dispose();
   }
 }

@@ -16,7 +16,7 @@ final class ECSContext implements ECSEntityListener {
 
   /// Set of entities being watched.
   @visibleForTesting
-  final Map<ECSEntity, bool Function(ECSEntity)> watchers = {};
+  final Set<ECSEntity> watchers = {};
 
   /// Optional listeners for enter event.
   @visibleForTesting
@@ -81,8 +81,7 @@ final class ECSContext implements ECSEntityListener {
   /// If a [condition] is provided, the context will only rebuild when the condition is met.
   TEntity watch<TEntity extends ECSEntity>([bool Function(TEntity entity)? condition]) {
     final entity = _getEntity<TEntity>();
-    if (!watchers.containsKey(entity)) entity.addListener(this);
-    watchers[entity] = (entity) => condition?.call(entity as TEntity) ?? true;
+    if (watchers.add(entity)) entity.addListener(this);
     return entity;
   }
 
@@ -103,7 +102,7 @@ final class ECSContext implements ECSEntityListener {
   @visibleForTesting
   void initialize() {
     if (onEnterListener != null) {
-      _enqueue(onEnterListener!);
+      enqueue(onEnterListener!);
     }
   }
 
@@ -114,7 +113,7 @@ final class ECSContext implements ECSEntityListener {
 
     entities.clear();
 
-    for (final entity in watchers.keys) {
+    for (final entity in watchers) {
       entity.removeListener(this);
     }
     watchers.clear();
@@ -125,7 +124,7 @@ final class ECSContext implements ECSEntityListener {
     listeners.clear();
 
     if (onExitListener != null) {
-      _enqueue(onExitListener!);
+      enqueue(onExitListener!);
     }
   }
 
@@ -138,8 +137,11 @@ final class ECSContext implements ECSEntityListener {
   void rebuild() {
     if (locked) return;
     locked = true;
-    callback();
-    Future.microtask(() {
+    guard(
+      callback,
+      description: 'ECSContext rebuild callback',
+    );
+    scheduleMicrotask(() {
       locked = false;
     });
   }
@@ -161,28 +163,55 @@ final class ECSContext implements ECSEntityListener {
   @override
   @visibleForTesting
   void onEntityChanged(ECSEntity entity) {
-    final watcher = watchers[entity];
-    if (watcher != null && watcher(entity)) rebuild();
+    if (watchers.contains(entity)) {
+      rebuild();
+    }
 
-    final listener = listeners[entity];
-    if (listener != null) _enqueue(listener);
+    if (listeners.containsKey(entity)) {
+      enqueue(listeners[entity]!);
+    }
   }
 
-  void _enqueue(void Function() function) {
+  /// Enqueues a function to be executed asynchronously.
+  @visibleForTesting
+  void enqueue(void Function() function) {
     queue.add(function);
 
     if (isRunning) return;
     isRunning = true;
 
-    Future.microtask(() async {
-      isRunning = false;
+    scheduleMicrotask(() async {
+      while (queue.isNotEmpty) {
+        final callbacks = List<void Function()>.from(queue);
+        queue.clear();
 
-      final callbacks = List<void Function()>.from(queue);
-      queue.clear();
-
-      for (final callback in callbacks) {
-        callback();
+        for (final callback in callbacks) {
+          guard(
+            callback,
+            description: 'ECSContext queued callback',
+          );
+        }
       }
+
+      isRunning = false;
     });
+  }
+
+  /// Runs a function safely, catching and reporting any errors.
+  @visibleForTesting
+  void guard(
+    void Function() function, {
+    required String description,
+  }) {
+    try {
+      function();
+    } catch (error, stack) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: error,
+        stack: stack,
+        library: 'ECSContext',
+        context: ErrorDescription(description),
+      ));
+    }
   }
 }
