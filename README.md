@@ -1,6 +1,6 @@
 # Flutter Event Component System (ECS)
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
+[![Apache 2.0 License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-0175C2?logo=dart&logoColor=white)](https://dart.dev)
 
@@ -696,13 +696,14 @@ This project follows the [Dart Style Guide](https://dart.dev/guides/language/eff
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+Copyright 2025 Ehsan Rashidi
 
 ## 🙏 Acknowledgments
 
 - Inspired by the Entity-Component-System pattern from game development
 - Built for the Flutter community with ❤️
-- Special thanks to all contributors and users
 
 ## 📞 Support
 
