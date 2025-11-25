@@ -3,11 +3,11 @@ import 'package:flutter_event_component_system/flutter_event_component_system.da
 
 import '../features/user_auth_feature/user_auth_feature.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends ECSWidget {
   const LoginPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ECSContext ecs) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Login'),

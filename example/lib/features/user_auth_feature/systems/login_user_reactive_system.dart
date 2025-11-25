@@ -1,8 +1,6 @@
 part of '../user_auth_feature.dart';
 
 final class LoginUserReactiveSystem extends ReactiveSystem {
-  LoginUserReactiveSystem();
-
   @override
   Set<Type> get reactsTo {
     return {
@@ -20,14 +18,14 @@ final class LoginUserReactiveSystem extends ReactiveSystem {
 
   @override
   void react() async {
-    manager.getEntity<LoginProcessComponent>().update(const LoginProcess.running());
+    getEntity<LoginProcessComponent>().update(const LoginProcess.running());
 
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString('auth_state', AuthState.loggedIn.name);
     await Future.delayed(const Duration(seconds: 2));
 
-    manager.getEntity<LoginProcessComponent>().update(const LoginProcess.success('mock_token'));
+    getEntity<LoginProcessComponent>().update(const LoginProcess.success('mock_token'));
 
-    manager.getEntity<AuthStateComponent>().update(AuthState.loggedIn);
+    getEntity<AuthStateComponent>().update(AuthState.loggedIn);
   }
 }

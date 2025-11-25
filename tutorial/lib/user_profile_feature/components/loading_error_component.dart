@@ -4,7 +4,7 @@ class LoadingErrorComponent extends ECSComponent<String?> {
   LoadingErrorComponent() : super(null);
 
   @override
-  String buildDescriptor(String? value) {
+  String describe(String? value) {
     if (value == null || value.isEmpty) {
       return 'No Error';
     } else {

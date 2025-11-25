@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_event_component_system/flutter_event_component_system.dart';
 
@@ -40,39 +39,30 @@ class UserProfilePage extends ECSWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('User Profile')),
-      body: Row(
-        children: [
-          Expanded(
-            child: Builder(
-              builder: (context) {
-                // Display loading indicator, error message, or user data based on state
-                if (loadingState.value == LoadingState.running) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-            
-                // Handle error state
-                if (loadingState.value == LoadingState.error) {
-                  return Center(child: Text('Error: ${loadingError.value}'));
-                }
-            
-                // Display user data if loaded
-                if (userData.value != null) {
-                  return Center(child: Text('User Loaded: ${userData.value!.name} - ${userData.value!.email}'));
-                }
-            
-                // Initial state with load button
-                return Center(
-                  child: ElevatedButton(
-                    onPressed: () => loadEvent.triggerWithUserId(userId), 
-                    child: const Text('Load User Profile')),
-                );
-              },
-            ),
-          ),
-          Expanded(
-            child: kDebugMode ? ECSInspector() : const SizedBox(),
-          ),
-        ],
+      body: Builder(
+        builder: (context) {
+          // Display loading indicator, error message, or user data based on state
+          if (loadingState.value == LoadingState.running) {
+            return const Center(child: CircularProgressIndicator());
+          }
+      
+          // Handle error state
+          if (loadingState.value == LoadingState.error) {
+            return Center(child: Text('Error: ${loadingError.value}'));
+          }
+      
+          // Display user data if loaded
+          if (userData.value != null) {
+            return Center(child: Text('User Loaded: ${userData.value!.name} - ${userData.value!.email}'));
+          }
+      
+          // Initial state with load button
+          return Center(
+            child: ElevatedButton(
+              onPressed: () => loadEvent.triggerWithUserId(userId), 
+              child: const Text('Load User Profile')),
+          );
+        },
       ),
     );
   }

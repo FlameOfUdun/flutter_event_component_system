@@ -14,7 +14,6 @@ part 'events/reload_user_event.dart';
 part 'systems/reload_user_reactive_system.dart';
 part 'systems/logout_user_reactive_system.dart';
 part 'systems/login_user_reactive_system.dart';
-part 'systems/test_initialize_system.dart';
 
 final class UserAuthFeature extends ECSFeature {
   UserAuthFeature() {
@@ -33,6 +32,5 @@ final class UserAuthFeature extends ECSFeature {
     addSystem(ReloadUserReactiveSystem());
     addSystem(LogoutUserReactiveSystem());
     addSystem(LoginUserReactiveSystem());
-    addSystem(TestInitializeSystem());
   }
 }

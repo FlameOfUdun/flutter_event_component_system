@@ -16,7 +16,7 @@ final class NavigateToSelectedRouteReactiveSystem extends ReactiveSystem {
 
   @override
   void react() {
-    final appRoute = manager.getEntity<AppRouteComponent>().value;
+    final appRoute = getEntity<AppRouteComponent>().value;
     navigatorKey.currentState?.pushReplacementNamed(appRoute.path);
   }
 }

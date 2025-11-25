@@ -4,8 +4,6 @@ import '../components/timer_state_component.dart';
 import '../events/timer_start_event.dart';
 
 final class StartTimerReactiveSystem extends ReactiveSystem {
-  StartTimerReactiveSystem();
-
   @override
   Set<Type> get reactsTo {
     return const {
@@ -22,13 +20,13 @@ final class StartTimerReactiveSystem extends ReactiveSystem {
 
   @override
   bool get reactsIf {
-    final state = manager.getEntity<TimerStateComponent>();
+    final state = getEntity<TimerStateComponent>();
     return state.value == TimerState.stopped;
   }
 
   @override
   void react() {
-    final state = manager.getEntity<TimerStateComponent>();
+    final state = getEntity<TimerStateComponent>();
     state.update(TimerState.running);
   }
 }

@@ -29,53 +29,35 @@ class DecrementEvent extends ECSEvent {}
 class ResetCounterEvent extends ECSEvent {}
 
 class IncrementCounterSystem extends ReactiveSystem {
-  
-
-  IncrementCounterSystem();
-
-  CounterComponent? counter;
-
   @override
   Set<Type> get reactsTo => {IncrementEvent};
 
   @override
   void react() {
-    counter ??= feature.getEntity<CounterComponent>();
-    counter!.update(counter!.value.increment());
+    final counter = getEntity<CounterComponent>();
+    counter.update(counter.value.increment());
   }
 }
 
 class DecrementCounterSystem extends ReactiveSystem {
-  
-
-  DecrementCounterSystem();
-
-  CounterComponent? counter;
-
   @override
   Set<Type> get reactsTo => {DecrementEvent};
 
   @override
   void react() {
-    counter ??= feature.getEntity<CounterComponent>();
-    counter!.update(counter!.value.decrement());
+    final counter = getEntity<CounterComponent>();
+    counter.update(counter.value.decrement());
   }
 }
 
 class ResetCounterSystem extends ReactiveSystem {
-  
-
-  ResetCounterSystem();
-
-  CounterComponent? counter;
-
   @override
   Set<Type> get reactsTo => {ResetCounterEvent};
 
   @override
   void react() {
-    counter ??= feature.getEntity<CounterComponent>();
-    counter!.update(counter!.value.reset());
+    final counter = getEntity<CounterComponent>();
+    counter.update(counter.value.reset());
   }
 }
 
@@ -141,95 +123,61 @@ class SetFilterEvent extends ECSEvent {
 class ClearCompletedEvent extends ECSEvent {}
 
 class AddTodoSystem extends ReactiveSystem {
-  
-
-  TodoListComponent? todoList;
-  AddTodoEvent? addEvent;
-
-  AddTodoSystem();
-
   @override
   Set<Type> get reactsTo => {AddTodoEvent};
 
   @override
   void react() {
-    todoList ??= feature.getEntity<TodoListComponent>();
-    addEvent ??= feature.getEntity<AddTodoEvent>();
-    todoList!.update(todoList!.value.addItem(addEvent!.item!));
+    final todoList = getEntity<TodoListComponent>();
+    final addEvent = getEntity<AddTodoEvent>();
+    todoList.update(todoList.value.addItem(addEvent.item!));
   }
 }
 
 class RemoveTodoSystem extends ReactiveSystem {
-  
-
-  TodoListComponent? todoList;
-  RemoveTodoEvent? removeEvent;
-
-  RemoveTodoSystem();
-
   @override
   Set<Type> get reactsTo => {RemoveTodoEvent};
 
   @override
   void react() {
-    todoList ??= feature.getEntity<TodoListComponent>();
-    removeEvent ??= feature.getEntity<RemoveTodoEvent>();
-    todoList!.update(todoList!.value.removeItem(removeEvent!.id!));
+    final todoList = getEntity<TodoListComponent>();
+    final removeEvent = getEntity<RemoveTodoEvent>();
+    todoList.update(todoList.value.removeItem(removeEvent.id!));
   }
 }
 
 class ToggleTodoSystem extends ReactiveSystem {
-  
-
-  TodoListComponent? todoList;
-  ToggleTodoEvent? toggleEvent;
-
-  ToggleTodoSystem();
-
   @override
   Set<Type> get reactsTo => {ToggleTodoEvent};
 
   @override
   void react() {
-    todoList ??= feature.getEntity<TodoListComponent>();
-    toggleEvent ??= feature.getEntity<ToggleTodoEvent>();
-    todoList!.update(todoList!.value.toggleItem(toggleEvent!.id!));
+    final todoList = getEntity<TodoListComponent>();
+    final toggleEvent = getEntity<ToggleTodoEvent>();
+    todoList.update(todoList.value.toggleItem(toggleEvent.id!));
   }
 }
 
 class SetFilterSystem extends ReactiveSystem {
-  
-
-  TodoListComponent? todoList;
-  SetFilterEvent? setFilterEvent;
-
-  SetFilterSystem();
-
   @override
   Set<Type> get reactsTo => {SetFilterEvent};
 
   @override
   void react() {
-    todoList ??= feature.getEntity<TodoListComponent>();
-    setFilterEvent ??= feature.getEntity<SetFilterEvent>();
-    todoList!.update(todoList!.value.setFilter(setFilterEvent!.filter!));
+    final todoList = getEntity<TodoListComponent>();
+    final setFilterEvent = getEntity<SetFilterEvent>();
+    todoList.update(todoList.value.setFilter(setFilterEvent.filter!));
   }
 }
 
 class ClearCompletedSystem extends ReactiveSystem {
-  
-
-  TodoListComponent? todoList;
-
-  ClearCompletedSystem();
-
   @override
   Set<Type> get reactsTo => {ClearCompletedEvent};
 
   @override
   void react() {
-    todoList ??= feature.getEntity<TodoListComponent>();
-    todoList!.update(todoList!.value.clearCompleted());
+    final todoList = getEntity<TodoListComponent>();
+    todoList.update(todoList.value.clearCompleted());
   }
 }
 
@@ -273,57 +221,37 @@ class LoginEvent extends ECSEvent {
 class LogoutEvent extends ECSEvent {}
 
 class UpdateUserSystem extends ReactiveSystem {
-  
-
-  UserProfileComponent? userProfile;
-  UpdateUserEvent? updateEvent;
-
-  UpdateUserSystem();
-
   @override
   Set<Type> get reactsTo => {UpdateUserEvent};
 
   @override
   void react() {
-    userProfile ??= feature.getEntity<UserProfileComponent>();
-    updateEvent ??= feature.getEntity<UpdateUserEvent>();
-    userProfile!.update(updateEvent!.user);
+    final userProfile = getEntity<UserProfileComponent>();
+    final updateEvent = getEntity<UpdateUserEvent>();
+    userProfile.update(updateEvent.user);
   }
 }
 
 class LoginSystem extends ReactiveSystem {
-  
-
-  UserProfileComponent? userProfile;
-  LoginEvent? loginEvent;
-
-  LoginSystem();
-
   @override
   Set<Type> get reactsTo => {LoginEvent};
 
   @override
   void react() {
-    userProfile ??= feature.getEntity<UserProfileComponent>();
-    loginEvent ??= feature.getEntity<LoginEvent>();
-    userProfile!.update(loginEvent!.user);
+    final userProfile = getEntity<UserProfileComponent>();
+    final loginEvent = getEntity<LoginEvent>();
+    userProfile.update(loginEvent.user);
   }
 }
 
 class LogoutSystem extends ReactiveSystem {
-  
-
-  UserProfileComponent? userProfile;
-
-  LogoutSystem();
-
   @override
   Set<Type> get reactsTo => {LogoutEvent};
 
   @override
   void react() {
-    userProfile ??= feature.getEntity<UserProfileComponent>();
-    userProfile!.update(null);
+    final userProfile = getEntity<UserProfileComponent>();
+    userProfile.update(null);
   }
 }
 
@@ -350,34 +278,23 @@ class StopLoadingEvent extends ECSEvent {}
 
 class StartLoadingSystem extends ReactiveSystem {
   
-
-  LoadingComponent? loading;
-
-  StartLoadingSystem();
-
   @override
   Set<Type> get reactsTo => {StartLoadingEvent};
 
   @override
   void react() {
-    loading ??= feature.getEntity<LoadingComponent>();
-    loading!.update(true);
+    final loading = getEntity<LoadingComponent>();
+    loading.update(true);
   }
 }
 
 class StopLoadingSystem extends ReactiveSystem {
-  
-
-  LoadingComponent? loading;
-
-  StopLoadingSystem();
-
   @override
   Set<Type> get reactsTo => {StopLoadingEvent};
 
   @override
   void react() {
-    loading ??= feature.getEntity<LoadingComponent>();
-    loading!.update(false);
+    final loading = getEntity<LoadingComponent>();
+    loading.update(false);
   }
 }

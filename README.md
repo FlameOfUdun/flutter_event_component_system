@@ -1,6 +1,6 @@
 # Flutter Event Component System (ECS)
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
+[![Apache 2.0 License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-0175C2?logo=dart&logoColor=white)](https://dart.dev)
 
@@ -40,7 +40,10 @@ Add this package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  flutter_event_component_system: ^0.0.1
+  flutter_event_component_system:
+    git: 
+      url: https://github.com/FlameOfUdun/flutter_event_component_system.git
+      ref: main
 ```
 
 ### Basic Usage
@@ -74,7 +77,7 @@ class IncrementCounterSystem extends ReactiveSystem {
 
   @override
   void react() {
-    final counter = manager.getEntity<CounterComponent>();
+    final counter = getEntity<CounterComponent>();
     counter.update(counter.value + 1);
   }
 }
@@ -194,12 +197,18 @@ Central coordinator that:
 graph TD
     A[Feature Added] --> B[Initialize Systems]
     B --> C[Execute Systems]
-    C --> D[Entity Changes]
-    D --> E[Reactive Systems]
-    E --> F[Cleanup Systems]
-    F --> C
-    C --> G[Teardown Systems]
-    G --> H[Feature Disposed]
+    C --> D[Cleanup Systems]
+    D --> C
+    D --> E[Teardown Systems]
+    E --> F[Feature Disposed]
+
+    G[Entity Changes]
+    G --> H[Reactive Systems]
+    H --> G
+    B --> G
+    C --> G
+    D --> G
+    E --> G
 ```
 
 ## 🎯 Advanced Features
@@ -247,10 +256,10 @@ For complex widgets requiring local state:
 ```dart
 class ComplexWidget extends ECSStatefulWidget {
   @override
-  State<ComplexWidget> createState() => _ComplexWidgetState();
+  ECSState<ComplexWidget> createState() => _ComplexWidgetState();
 }
 
-class _ComplexWidgetState extends ECSStatefulWidgetState<ComplexWidget> {
+class _ComplexWidgetState extends ECSState<ComplexWidget> {
   @override
   Widget build(BuildContext context) {
     final data = ecs.watch<DataComponent>();
@@ -267,10 +276,10 @@ class _ComplexWidgetState extends ECSStatefulWidgetState<ComplexWidget> {
 class NotificationWidget extends ECSWidget {
   @override
   Widget build(BuildContext context, ECSContext ecs) {
-    // Listen to specific events
-    ecs.listen<ErrorEvent>((error) {
+    // Listen to specific entity
+    ecs.listen<ErrorComponent>((entity) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.value.message)),
+        SnackBar(content: Text(entity.value.message)),
       );
     });
     
@@ -319,8 +328,8 @@ class ValidationSystem extends ReactiveSystem {
   
   @override
   void react() {
-    final formData = manager.getEntity<FormDataComponent>();
-    final validation = manager.getEntity<ValidationStateComponent>();
+    final formData = getEntity<FormDataComponent>();
+    final validation = getEntity<ValidationStateComponent>();
     
     // Validate form data
     final isValid = validateForm(formData.value);
@@ -339,10 +348,13 @@ class TimerSystem extends ExecuteSystem {
 
   @override
   Set<Type> get interactsWith => {TimerComponent};
+
+  @override
+  executesIf => true; // Conditional executions
   
   @override
   void execute(Duration elapsed) {
-    final timer = manager.getEntity<TimerComponent>();
+    final timer = getEntity<TimerComponent>();
     timer.update(timer.value + elapsed.inMilliseconds);
   }
 }
@@ -374,108 +386,6 @@ class DatabaseTeardownSystem extends TeardownSystem {
     print('Database closed');
   }
 }
-```
-
-## 🔍 Debugging and Inspection
-
-### ECS Inspector
-
-Real-time debugging interface with four main views:
-
-#### **Summary View**
-
-- Cascade analysis and flow detection
-- Circular dependency warnings
-- System interaction overview
-- Performance metrics
-
-#### **Entities View**
-
-- Live entity inspection
-- Component value monitoring  
-- Event triggering interface
-- Filtering by feature and type
-
-#### **Logs View**
-
-- System reaction tracking
-- Entity change history
-- Filterable log levels
-- Stack trace analysis
-
-#### **Graph View**
-
-- Interactive dependency visualization
-- Cascade flow representation
-- Visual circular dependency detection
-- Pan and zoom navigation
-
-### Inspector Integration
-
-```dart
-MaterialApp(
-  home: YourHomePage(),
-  builder: (context, child) {
-    return Row(
-      children: [
-        Expanded(child: child ?? SizedBox()),
-        Expanded(child: ECSInspector()), // Add inspector
-      ],
-    );
-  },
-)
-```
-
-### Custom Inspector Widgets
-
-Components can provide custom inspector representations:
-
-```dart
-class UserComponent extends ECSComponent<User> {
-  UserComponent(super.value);
-  
-  @override
-  Widget buildInspector(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Name: ${value.name}'),
-        Text('Email: ${value.email}'),
-        Text('Role: ${value.role}'),
-      ],
-    );
-  }
-}
-```
-
-### Logging and Analysis
-
-#### Custom Logging
-
-```dart
-// Log custom events
-ECSLogger.log(CustomLog(
-  time: DateTime.now(),
-  level: ECSLogLevel.info,
-  message: 'Custom event occurred',
-  stack: StackTrace.current,
-));
-```
-
-#### Cascade Analysis
-
-```dart
-final manager = ECSScope.of(context);
-final analysis = ECSAnalyzer.analize(manager);
-
-// Get cascade flows
-final flows = analysis.getCascadeFlowsFrom(UserLoginEvent);
-
-// Check for circular dependencies
-final circular = analysis.getCircularDependencies();
-
-// Validate system health
-final issues = analysis.validateCascadeSystem();
 ```
 
 ## 📊 Real-World Example
@@ -513,8 +423,8 @@ class LoginUserReactiveSystem extends ReactiveSystem {
 
   @override
   void react() async {
-    final credentials = manager.getEntity<LoginCredentialsComponent>();
-    final authState = manager.getEntity<AuthStateComponent>();
+    final credentials = getEntity<LoginCredentialsComponent>();
+    final authState = getEntity<AuthStateComponent>();
     
     try {
       authState.update(AuthState.loading);
@@ -582,42 +492,6 @@ class LoginPage extends ECSWidget {
 }
 ```
 
-## 🏗️ Project Structure
-
-```text
-lib/
-├── flutter_event_component_system.dart  # Main library export
-├── source/                              # Core implementation
-│   ├── ecs_entity.dart                  # Entity base classes
-│   ├── ecs_feature.dart                 # Feature organization
-│   ├── ecs_system.dart                  # System types
-│   ├── ecs_manager.dart                 # Central coordinator
-│   ├── ecs_context.dart                 # Widget integration
-│   ├── ecs_logger.dart                  # Logging system
-│   └── ecs_analyzer.dart                # Flow analysis
-├── widgets/                             # Flutter integration
-│   ├── ecs_scope.dart                   # ECS provider widget
-│   ├── ecs_widget.dart                  # Reactive widgets
-│   └── ecs_builder.dart                 # Builder widgets
-└── debug/                               # Development tools
-    └── ecs_inspector.dart               # Visual debugger
-
-example/                                 # Complete example app
-├── lib/
-│   ├── main.dart                        # App entry point
-│   ├── features/                        # Feature modules
-│   │   ├── user_auth_feature/           # Authentication
-│   │   └── navigation_feature/          # Navigation
-│   └── pages/                           # UI pages
-└── test/                                # Example tests
-
-test/                                    # Package tests
-├── ecs_entity_test.dart                 # Entity tests
-├── ecs_feature_test.dart                # Feature tests
-├── ecs_manager_test.dart                # Manager tests
-└── ecs_widget_test.dart                 # Widget tests
-```
-
 ## 🧪 Testing
 
 ### Testing Components
@@ -646,6 +520,7 @@ test('reactive system processes events', () {
   feature.addEntity(TestEvent());
   feature.addSystem(system);
   manager.addFeature(feature);
+  manager.activate();
   
   manager.getEntity<TestEvent>().trigger();
   
@@ -657,12 +532,15 @@ test('reactive system processes events', () {
 
 ```dart
 test('feature manages entities and systems', () {
+  final manager = ECSManager();
   final feature = TestFeature();
   final component = TestComponent();
   final system = TestSystem();
   
   feature.addEntity(component);
   feature.addSystem(system);
+  manager.addFeature(feature);
+  manager.activate();
   
   expect(feature.entities, contains(component));
   expect(feature.reactiveSystems[TestEvent], contains(system));
@@ -673,278 +551,22 @@ test('feature manages entities and systems', () {
 
 ```dart
 testWidgets('ECS widget rebuilds on component change', (tester) async {
+  final feature = TestFeature();
+
   await tester.pumpWidget(
     ECSScope(
-      features: {TestFeature()},
+      features: {feature},
       child: TestECSWidget(),
     ),
   );
   
-  final component = ECSScope.of(tester.element(find.byType(TestECSWidget)))
-      .getEntity<TestComponent>();
-  
+  final component = feature.getEntity<TestComponent>();
   component.update(100);
+
   await tester.pump();
   
   expect(find.text('100'), findsOneWidget);
 });
-```
-
-## 📚 API Reference
-
-### Core Classes
-
-#### `ECSEntity`
-
-Base class for all entities in the system.
-
-**Key Methods:**
-
-- `addListener(ECSEntityListener listener)` - Add change listener
-- `removeListener(ECSEntityListener listener)` - Remove listener
-- `buildInspector(BuildContext context)` - Custom inspector widget
-
-#### `ECSComponent<T>`
-
-Stateful entity that holds data of type `T`.
-
-**Key Methods:**
-
-- `update(T value, {bool notify = true})` - Update component value
-- `get value` - Current component value
-- `get previous` - Previous component value
-
-#### `ECSEvent`
-
-Stateless entity for triggering actions.
-
-**Key Methods:**
-
-- `trigger()` - Fire the event and notify listeners
-
-#### `ECSFeature`
-
-Container for organizing related entities and systems.
-
-**Key Methods:**
-
-- `addEntity(ECSEntity entity)` - Add entity to feature
-- `addSystem(ECSSystem system)` - Add system to feature
-- `getEntity<T extends ECSEntity>()` - Retrieve entity by type
-
-#### `ECSManager`
-
-Central coordinator for the entire ECS system.
-
-**Key Methods:**
-
-- `addFeature(ECSFeature feature)` - Add feature to manager
-- `getEntity<T extends ECSEntity>()` - Get entity from any feature
-- `initialize()` - Initialize all features
-- `teardown()` - Cleanup all features
-
-#### `ECSContext`
-
-Widget-level interface for ECS system access.
-
-**Key Methods:**
-
-- `get<T extends ECSEntity>()` - Get entity without watching
-- `watch<T extends ECSEntity>()` - Watch entity for changes
-- `listen<T extends ECSEntity>(Function(T) listener)` - Listen to entity changes
-- `onEnter(Function() callback)` - Widget lifecycle callback
-- `onExit(Function() callback)` - Widget disposal callback
-
-### System Types
-
-#### `ReactiveSystem`
-
-Responds to entity changes.
-
-**Abstract Members:**
-
-- `Set<Type> get reactsTo` - Entity types that trigger this system
-- `Set<Type> get interactsWith` - Entity types this system modifies
-- `bool get reactsIf` - Conditional reaction logic
-- `void react()` - Reaction implementation
-
-#### `ExecuteSystem`
-
-Runs continuously every frame.
-
-**Abstract Members:**
-
-- `Set<Type> get interactsWith` - Entity types this system uses
-- `void execute(Duration elapsed)` - Execution implementation
-
-#### `InitializeSystem`
-
-Runs once during feature initialization.
-
-**Abstract Members:**
-
-- `Set<Type> get interactsWith` - Entity types this system sets up
-- `void initialize()` - Initialization implementation
-
-#### `TeardownSystem`
-
-Runs once during feature disposal.
-
-**Abstract Members:**
-
-- `Set<Type> get interactsWith` - Entity types this system cleans up
-- `void teardown()` - Teardown implementation
-
-#### `CleanupSystem`
-
-Runs after each frame execution.
-
-**Abstract Members:**
-
-- `Set<Type> get interactsWith` - Entity types this system cleans
-- `void cleanup()` - Cleanup implementation
-
-### Widget Classes
-
-#### `ECSScope`
-
-Provides ECS context to widget tree.
-
-**Constructor:**
-
-```dart
-ECSScope({
-  required Set<ECSFeature> features,
-  required Widget child,
-})
-```
-
-#### `ECSWidget`
-
-Base class for reactive widgets.
-
-**Abstract Members:**
-
-```dart
-Widget build(BuildContext context, ECSContext ecs);
-```
-
-#### `ECSBuilder<T>`
-
-Functional reactive widget builder.
-
-**Constructor:**
-
-```dart
-ECSBuilder({
-  required Widget Function(BuildContext, ECSContext) builder,
-})
-```
-
-#### `ECSStatefulWidget`
-
-Base class for complex reactive widgets with local state.
-
-**Usage:**
-
-```dart
-class MyWidget extends ECSStatefulWidget {
-  @override
-  State<MyWidget> createState() => _MyWidgetState();
-}
-
-class _MyWidgetState extends ECSStatefulWidgetState<MyWidget> {
-  @override
-  Widget build(BuildContext context) {
-    final data = ecs.watch<DataComponent>();
-    return YourWidget(data: data.value);
-  }
-}
-```
-
-### Analysis and Debugging
-
-#### `ECSAnalyzer`
-
-Static analysis of ECS system structure.
-
-**Key Methods:**
-
-- `static ECSAnalysis analize(ECSManager manager)` - Analyze system
-- Analysis methods for cascade flows and circular dependencies
-
-#### `ECSInspector`
-
-Visual debugging interface.
-
-**Constructor:**
-
-```dart
-ECSInspector({
-  Duration refreshDelay = const Duration(milliseconds: 100),
-})
-```
-
-#### `ECSLogger`
-
-System activity logging.
-
-**Key Methods:**
-
-- `static void log(ECSLog log)` - Add custom log entry
-- `static void clear()` - Clear all logs
-- `static List<ECSLog> get entries` - Access log history
-
-## 🔧 Configuration
-
-### Logger Configuration
-
-```dart
-// Set maximum log entries
-ECSLogger.maxEntries = 2000;
-
-// Custom log levels
-class CustomLog extends ECSLog {
-  final String message;
-  
-  const CustomLog({
-    required this.message,
-    required super.time,
-    required super.level,
-    required super.stack,
-  });
-
-  @override
-  String get description => message;
-}
-```
-
-### Inspector Customization
-
-```dart
-// Custom refresh rate
-ECSInspector(
-  refreshDelay: Duration(milliseconds: 50),
-)
-
-// Component-specific inspector widgets
-class UserComponent extends ECSComponent<User> {
-  UserComponent(super.value);
-  
-  @override
-  Widget buildInspector(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundImage: NetworkImage(value.avatarUrl),
-        ),
-        title: Text(value.name),
-        subtitle: Text(value.email),
-        trailing: Chip(label: Text(value.role)),
-      ),
-    );
-  }
-}
 ```
 
 ## 🎯 Best Practices
@@ -1040,89 +662,6 @@ class LoginSystem extends ReactiveSystem {
 }
 ```
 
-### 5. **Testing Strategy**
-
-```dart
-// ✅ Good: Test systems in isolation
-test('login system authenticates user', () async {
-  final manager = ECSManager();
-  final feature = TestAuthFeature();
-  manager.addFeature(feature);
-  
-  final loginEvent = manager.getEntity<LoginEvent>();
-  final authState = manager.getEntity<AuthStateComponent>();
-  
-  loginEvent.trigger();
-  
-  expect(authState.value, equals(AuthState.authenticated));
-});
-```
-
-## 🚀 Performance Tips
-
-### 1. **Minimize Reactive System Scope**
-
-```dart
-// ✅ Good: Specific reactsTo
-class UserProfileSystem extends ReactiveSystem {
-  @override
-  Set<Type> get reactsTo => {UserProfileComponent};
-}
-
-// ❌ Avoid: Broad reactsTo
-class UserProfileSystem extends ReactiveSystem {
-  @override
-  Set<Type> get reactsTo => {UserComponent, ProfileComponent, SettingsComponent};
-}
-```
-
-### 2. **Use Conditional Reactions**
-
-```dart
-class ExpensiveSystem extends ReactiveSystem {
-  @override
-  bool get reactsIf => shouldProcess();
-  
-  bool shouldProcess() {
-    // Only react under specific conditions
-    return manager.getEntity<ConfigComponent>().value.enableExpensiveProcessing;
-  }
-}
-```
-
-### 3. **Optimize Widget Watching**
-
-```dart
-// ✅ Good: Watch only what you need
-class UserWidget extends ECSWidget {
-  @override
-  Widget build(BuildContext context, ECSContext ecs) {
-    final userName = ecs.watch<UserNameComponent>();
-    final userAvatar = ecs.get<UserAvatarComponent>(); // No rebuild on avatar change
-    
-    return ListTile(
-      title: Text(userName.value),
-      leading: CircleAvatar(backgroundImage: userAvatar.value),
-    );
-  }
-}
-```
-
-### 4. **Batch Component Updates**
-
-```dart
-// ✅ Good: Batch updates
-void updateUserProfile(UserProfile profile) {
-  userNameComponent.update(profile.name, notify: false);
-  userEmailComponent.update(profile.email, notify: false);
-  userAvatarComponent.update(profile.avatar); // Only this triggers rebuild
-}
-```
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
 ### Development Setup
 
 1. **Clone the repository**
@@ -1157,13 +696,14 @@ This project follows the [Dart Style Guide](https://dart.dev/guides/language/eff
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+Copyright 2025 Ehsan Rashidi
 
 ## 🙏 Acknowledgments
 
 - Inspired by the Entity-Component-System pattern from game development
 - Built for the Flutter community with ❤️
-- Special thanks to all contributors and users
 
 ## 📞 Support
 
@@ -1172,4 +712,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Made with ❤️ by [Ehsan Rashidi](https://github.com/FlameOfUdun)**
+**Made with ❤️ by [FlameOfUdun](https://github.com/FlameOfUdun)**

@@ -35,20 +35,6 @@ class _Application extends StatelessWidget {
           '/dashboard': (context) => const DashboardPage(),
           '/login': (context) => const LoginPage(),
         },
-        builder: (context, child) {
-          return Row(
-            children: [
-              Expanded(
-                child: child ?? const SizedBox.shrink(),
-              ),
-              Expanded(
-                child: MaterialApp(
-                  home: ECSInspector(),
-                ),
-              ),
-            ],
-          );
-        },
       ),
     );
   }

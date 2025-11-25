@@ -1,8 +1,6 @@
 part of '../navigation_feature.dart';
 
 final class NavigateToLoginWhenLoggedOutReactiveSystem extends ReactiveSystem {
-  NavigateToLoginWhenLoggedOutReactiveSystem();
-
   @override
   Set<Type> get reactsTo {
     return {
@@ -12,7 +10,7 @@ final class NavigateToLoginWhenLoggedOutReactiveSystem extends ReactiveSystem {
 
   @override
   bool get reactsIf {
-    final authState = manager.getEntity<AuthStateComponent>().value;
+    final authState = getEntity<AuthStateComponent>().value;
     return authState == AuthState.loggedOut;
   }
 
@@ -25,7 +23,7 @@ final class NavigateToLoginWhenLoggedOutReactiveSystem extends ReactiveSystem {
 
   @override
   void react() {
-    final routeComponent = manager.getEntity<AppRouteComponent>();
+    final routeComponent = getEntity<AppRouteComponent>();
     routeComponent.value = AppRoutes.login;
   }
 }
