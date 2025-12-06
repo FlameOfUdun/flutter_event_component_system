@@ -3,7 +3,7 @@ part of '../ecs_base.dart';
 /// ECSFeature is a base class for creating features in the ECS system.
 final class ECSManager with _ECSLogger {
   /// Static set of all features in every ECS manager.
-  static final Set<ECSFeature> _allFeatures = {};
+  static final Set<ECSManager> _managers = {};
 
   /// Indicates if the ECS manager is active.
   bool _isActive = false;
@@ -45,7 +45,7 @@ final class ECSManager with _ECSLogger {
     if (_devtoolsRegistered) return;
     developer.registerExtension('ext.ecs.requestManagerData', (method, parameters) async {
       final features = <ECSFeatureData>[];
-      for (final feature in _allFeatures) {
+      for (final feature in _features) {
         features.add(ECSFeatureData.fromFeature(feature));
       }
       final logs = <ECSLogData>[];
@@ -66,9 +66,7 @@ final class ECSManager with _ECSLogger {
   @visibleForTesting
   void activate() {
     if (_isActive) return;
-    for (final feature in _features) {
-      _allFeatures.add(feature);
-    }
+    _managers.add(this);
     for (final feature in _features) {
       feature.activate();
     }
@@ -82,9 +80,7 @@ final class ECSManager with _ECSLogger {
     for (final feature in _features) {
       feature.deactivate();
     }
-    for (final feature in _features) {
-      _allFeatures.remove(feature);
-    }
+    _managers.remove(this);
     _isActive = false;
   }
 
@@ -127,24 +123,27 @@ final class ECSManager with _ECSLogger {
   /// Optional [excludeFeatures] can be provided to skip certain feature types during the search.
   ///
   /// Throws a [StateError] if the entity of type [TEntity] is not found.
-  TEntity getEntity<TEntity extends ECSEntity>({
-    Set<Type>? excludeFeatures,
-  }) {
-    final filtered = _allFeatures.where((feature) {
-      if (excludeFeatures != null) {
-        if (excludeFeatures.contains(feature.runtimeType)) {
-          return false;
+  TEntity getEntity<TEntity extends ECSEntity>() {
+    TEntity? getEntityFromManager(ECSManager manager) {
+      for (final feature in manager._features) {
+        try {
+          return feature.getEntity<TEntity>();
+        } catch (_) {
+          continue;
         }
       }
-      return true;
-    });
-    for (final feature in filtered) {
-      try {
-        return feature.getEntity<TEntity>();
-      } catch (_) {
-        continue;
-      }
+      return null;
     }
+
+    final current = getEntityFromManager(this);
+    if (current != null) return current;
+
+    for (final manager in _managers) {
+      if (manager == this) continue;
+      final entity = getEntityFromManager(manager);
+      if (entity != null) return entity;
+    }
+
     throw StateError("Entity of type $TEntity not found");
   }
 
@@ -153,13 +152,26 @@ final class ECSManager with _ECSLogger {
   /// Throws a [StateError] if the entity of the specified [type] is not found.
   @visibleForTesting
   ECSEntity getEntityOfType(Type type) {
-    for (final feature in _allFeatures) {
-      try {
-        return feature.getEntityOfType(type);
-      } catch (_) {
-        continue;
+    ECSEntity? getEntityFromManager(ECSManager manager) {
+      for (final feature in manager._features) {
+        try {
+          return feature.getEntityOfType(type);
+        } catch (_) {
+          continue;
+        }
       }
+      return null;
     }
+
+    final current = getEntityFromManager(this);
+    if (current != null) return current;
+
+    for (final manager in _managers) {
+      if (manager == this) continue;
+      final entity = getEntityFromManager(manager);
+      if (entity != null) return entity;
+    }
+
     throw StateError("Entity of type $type not found");
   }
 }

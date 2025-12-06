@@ -13,13 +13,32 @@ class DashboardPage extends StatelessWidget {
       features: {
         NestedFeature(),
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Dashboard'),
-        ),
-        body: const Center(
-          child: _LogoutButton(),
-        ),
+      child: ECSBuilder(
+        builder: (context, ecs) {
+          final component = ecs.get<NestedComponent>();
+          debugPrint('NestedComponent data: ${component.hashCode}');
+
+          return ECSScope(
+            features: {
+              NestedFeature(),
+            },
+            child: ECSBuilder(
+              builder: (context, ecs) {
+                final component = ecs.get<NestedComponent>();
+                debugPrint('NestedComponent data: ${component.hashCode}');
+
+                return Scaffold(
+                  appBar: AppBar(
+                    title: const Text('Dashboard'),
+                  ),
+                  body: const Center(
+                    child: _LogoutButton(),
+                  ),
+                );
+              }
+            ),
+          );
+        }
       ),
     );
   }

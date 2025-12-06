@@ -62,11 +62,7 @@ sealed class ECSSystem {
     try {
       entity = feature!.getEntity<TEntity>();
     } catch (_) {
-      entity = feature!.manager!.getEntity<TEntity>(
-        excludeFeatures: {
-          feature.runtimeType,
-        },
-      );
+      entity = feature!.manager!.getEntity<TEntity>();
     }
     entities.add(entity);
     return entity;

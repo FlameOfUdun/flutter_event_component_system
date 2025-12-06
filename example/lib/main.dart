@@ -22,12 +22,12 @@ class _Application extends StatelessWidget {
   Widget build(BuildContext context) {
     return ECSScope(
       features: {
-          NavigationFeature(
-            navigatorKey: navigatorKey,
-          ),
-          UserAuthFeature(),
-          TimerFeature(),
-        },
+        NavigationFeature(
+          navigatorKey: navigatorKey,
+        ),
+        UserAuthFeature(),
+        TimerFeature(),
+      },
       child: MaterialApp(
         navigatorKey: navigatorKey,
         routes: {
