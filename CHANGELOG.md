@@ -10,3 +10,7 @@
 * Performance monitoring
 * Graph visualization
 * Comprehensive documentation and examples
+
+## 0.0.2
+
+* Fix for license files so pub.dev would recognise them
