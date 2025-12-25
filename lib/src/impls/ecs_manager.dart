@@ -2,17 +2,17 @@ part of '../ecs_base.dart';
 
 /// ECSFeature is a base class for creating features in the ECS system.
 final class ECSManager with _ECSLogger {
-  /// Static set of all features in every ECS manager.
+  /// Static set of all ECS managers.
   static final Set<ECSManager> _managers = {};
+
+  /// Static flag that indicates if DevTools extensions have been registered.
+  static bool _devtoolsRegistered = false;
 
   /// Indicates if the ECS manager is active.
   bool _isActive = false;
 
   /// Internal set of features in this ECS manager instance.
   final Set<ECSFeature> _features = {};
-
-  /// Indicates if DevTools extensions have been registered.
-  static bool _devtoolsRegistered = false;
 
   @visibleForTesting
   ECSManager() {
@@ -34,7 +34,7 @@ final class ECSManager with _ECSLogger {
   @visibleForTesting
   Set<ECSEntity> get entities => Set.unmodifiable(features.expand((feature) => feature.entities));
 
-  /// Unmodifiable set of all entities across all features.
+  /// Adds a feature to the ECS manager.
   void addFeature(ECSFeature feature) {
     feature.attach(this);
     _features.add(feature);
@@ -119,8 +119,6 @@ final class ECSManager with _ECSLogger {
   /// Gets an entity of type [TEntity] from all features.
   ///
   /// Throws a [StateError] if the entity is not found.
-  ///
-  /// Optional [excludeFeatures] can be provided to skip certain feature types during the search.
   ///
   /// Throws a [StateError] if the entity of type [TEntity] is not found.
   TEntity getEntity<TEntity extends ECSEntity>() {
