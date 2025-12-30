@@ -24,7 +24,8 @@ class _LoginCredentialsModifier extends StatefulWidget {
   });
 
   @override
-  State<_LoginCredentialsModifier> createState() => _LoginCredentialsModifierState();
+  State<_LoginCredentialsModifier> createState() =>
+      _LoginCredentialsModifierState();
 }
 
 class _LoginCredentialsModifierState extends State<_LoginCredentialsModifier> {
@@ -89,7 +90,6 @@ class _LoginCredentialsModifierState extends State<_LoginCredentialsModifier> {
               ),
             ],
           ),
-          
         ],
       ),
     );

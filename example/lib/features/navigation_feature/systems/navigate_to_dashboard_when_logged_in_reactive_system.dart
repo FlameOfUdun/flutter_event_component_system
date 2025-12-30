@@ -1,6 +1,7 @@
 part of '../navigation_feature.dart';
 
-final class NavigateToDashboardWhenLoggedInReactiveSystem extends ReactiveSystem {
+final class NavigateToDashboardWhenLoggedInReactiveSystem
+    extends ReactiveSystem {
   @override
   Set<Type> get reactsTo {
     return const {

@@ -43,10 +43,17 @@ abstract class ECSFeature {
   /// Indicates whether this feature is attached to a manager.
   bool get isAttached => manager != null;
 
+  /// Unique identifier for this feature.
+  String get identifier => "${manager?.identifier}.$runtimeType";
+
   /// Number of systems in this feature.
   @visibleForTesting
   int get systemsCount {
-    return initializeSystems.length + teardownSystems.length + reactiveSystems.length + cleanupSystems.length + executeSystems.length;
+    return initializeSystems.length +
+        teardownSystems.length +
+        reactiveSystems.length +
+        cleanupSystems.length +
+        executeSystems.length;
   }
 
   /// Indicates whether this feature has execute or cleanup systems.
@@ -96,7 +103,8 @@ abstract class ECSFeature {
     } else if (system is ReactiveSystem) {
       reactiveSystems.add(system);
     } else {
-      throw ArgumentError("System of type ${system.runtimeType} is not supported");
+      throw ArgumentError(
+          "System of type ${system.runtimeType} is not supported");
     }
     system.attach(this);
   }

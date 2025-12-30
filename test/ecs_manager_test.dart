@@ -121,7 +121,10 @@ void main() {
       manager.addFeature(feature2);
       manager.activate();
       final entity = manager.getEntity<DummyComponent>();
-      expect(entity, anyOf(feature1.getEntity<DummyComponent>(), feature2.getEntity<DummyComponent>()));
+      expect(
+          entity,
+          anyOf(feature1.getEntity<DummyComponent>(),
+              feature2.getEntity<DummyComponent>()));
     });
 
     test('multiple reactive systems for same entity type are triggered', () {

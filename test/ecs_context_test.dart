@@ -255,7 +255,8 @@ void main() {
       expect(capturedecs!.manager, isA<ECSManager>());
     });
 
-    testWidgets('should rebuild when watched entity changes', (WidgetTester tester) async {
+    testWidgets('should rebuild when watched entity changes',
+        (WidgetTester tester) async {
       final feature = TestFeature();
 
       await tester.pumpWidget(
@@ -280,7 +281,8 @@ void main() {
       expect(find.text('Counter: 0'), findsNothing);
     });
 
-    testWidgets('should handle onEnter and onExit lifecycle', (WidgetTester tester) async {
+    testWidgets('should handle onEnter and onExit lifecycle',
+        (WidgetTester tester) async {
       final feature = TestFeature();
       bool onEnterCalled = false;
       bool onExitCalled = false;
@@ -363,7 +365,8 @@ void main() {
       expect(receivedEntity!.value, equals(25));
     });
 
-    testWidgets('should not rebuild after disposal', (WidgetTester tester) async {
+    testWidgets('should not rebuild after disposal',
+        (WidgetTester tester) async {
       final feature = TestFeature();
 
       await tester.pumpWidget(
@@ -397,7 +400,8 @@ void main() {
       expect(find.text('Counter: 99'), findsNothing);
     });
 
-    testWidgets('should handle multiple ECSWidgets independently', (WidgetTester tester) async {
+    testWidgets('should handle multiple ECSWidgets independently',
+        (WidgetTester tester) async {
       final feature = TestFeature();
 
       await tester.pumpWidget(
@@ -462,14 +466,15 @@ void main() {
       ecs.dispose();
     });
 
-    test('should prevent multiple builds when previous build is not completed', () async {
+    test('should prevent multiple builds when previous build is not completed',
+        () async {
       final manager = ECSManager();
       final feature = TestFeature();
       manager.addFeature(feature);
       manager.activate();
 
       int rebuildCount = 0;
-      
+
       final ecs = ECSContext(manager, () {
         rebuildCount++;
       });
@@ -478,7 +483,7 @@ void main() {
 
       // Trigger first build
       counter.update(1);
-      
+
       // Immediately trigger more changes while first build is in progress
       counter.update(2);
       counter.update(3);
@@ -491,7 +496,7 @@ void main() {
 
       // Should only rebuild once despite multiple changes
       expect(rebuildCount, equals(1));
-      
+
       // After microtask, ecs should be unlocked
       expect(ecs.locked, isFalse);
 

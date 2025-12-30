@@ -22,4 +22,3 @@ extension AppRoutesExtension on AppRoutes {
     }
   }
 }
-

@@ -37,8 +37,12 @@ final class _ECSEntityBrowserState extends State<ECSEntityBrowser> {
   void refresh() async {
     final provider = ECSEventProvider.of(context);
     await provider.waitForServiceInit();
-    final data = await provider.requestManagerData();
-    update(data.entities);
+    final inspectorData = await provider.requestInspectorData();
+    // Aggregate entities from all managers
+    final allEntities = inspectorData.managers
+        .expand((manager) => manager.entities)
+        .toList();
+    update(allEntities);
   }
 
   void update(List<ECSEntityData> data) {
@@ -50,11 +54,19 @@ final class _ECSEntityBrowserState extends State<ECSEntityBrowser> {
   @override
   Widget build(BuildContext context) {
     final entities = data ?? <ECSEntityData>[];
-    final features = data?.map((e) => e.feature).toSet() ?? <String>{};
+    // Extract feature names from identifiers (format: "Manager.Feature.Entity")
+    final features =
+        data?.map((e) {
+          final parts = e.identifier.split('.');
+          return parts.length >= 2 ? parts[1] : parts[0];
+        }).toSet() ??
+        <String>{};
 
     final filtered = entities.where((entity) {
       if (feature != null) {
-        if (entity.feature.runtimeType.toString() != feature!) {
+        final parts = entity.identifier.split('.');
+        final entityFeature = parts.length >= 2 ? parts[1] : parts[0];
+        if (entityFeature != feature!) {
           return false;
         }
       }
@@ -67,7 +79,7 @@ final class _ECSEntityBrowserState extends State<ECSEntityBrowser> {
 
       if (search != null && search!.isNotEmpty) {
         final searchTerm = search!.toLowerCase();
-        final entityName = entity.toString().toLowerCase();
+        final entityName = entity.identifier.toLowerCase();
         if (!entityName.contains(searchTerm)) {
           return false;
         }
@@ -94,11 +106,20 @@ final class _ECSEntityBrowserState extends State<ECSEntityBrowser> {
                     Expanded(
                       child: DropdownButtonFormField<String?>(
                         initialValue: feature,
-                        decoration: const InputDecoration(labelText: 'Feature', border: OutlineInputBorder()),
+                        decoration: const InputDecoration(
+                          labelText: 'Feature',
+                          border: OutlineInputBorder(),
+                        ),
                         items: [
-                          const DropdownMenuItem(value: null, child: Text('Any')),
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Any'),
+                          ),
                           for (final feature in features)
-                            DropdownMenuItem(value: feature, child: Text(feature)),
+                            DropdownMenuItem(
+                              value: feature,
+                              child: Text(feature),
+                            ),
                         ],
                         onChanged: (value) {
                           setState(() {
@@ -111,11 +132,20 @@ final class _ECSEntityBrowserState extends State<ECSEntityBrowser> {
                     Expanded(
                       child: DropdownButtonFormField<String?>(
                         initialValue: type,
-                        decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
+                        decoration: const InputDecoration(
+                          labelText: 'Type',
+                          border: OutlineInputBorder(),
+                        ),
                         items: const [
                           DropdownMenuItem(value: null, child: Text('Any')),
-                          DropdownMenuItem(value: 'Component', child: Text('Component')),
-                          DropdownMenuItem(value: 'Event', child: Text('Event')),
+                          DropdownMenuItem(
+                            value: 'Component',
+                            child: Text('Component'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Event',
+                            child: Text('Event'),
+                          ),
                         ],
                         onChanged: (value) {
                           setState(() {
@@ -166,14 +196,19 @@ final class _ECSEntityBrowserState extends State<ECSEntityBrowser> {
                     final entity = filtered.elementAt(index);
 
                     if (entity.isEvent) {
-                      return ListTile(title: Text('${entity.feature}.${entity.name}'));
+                      return ListTile(title: Text(entity.identifier));
                     }
 
                     if (entity.isComponent) {
-                      return ListTile(title: Text('${entity.feature}.${entity.name}'), subtitle: Text('Value: ${entity.value ?? '--'}'));
+                      return ListTile(
+                        title: Text(entity.identifier),
+                        subtitle: Text('Value: ${entity.value ?? '--'}'),
+                      );
                     }
 
-                    throw UnimplementedError('Unknown entity type: ${entity.runtimeType}');
+                    throw UnimplementedError(
+                      'Unknown entity type: ${entity.runtimeType}',
+                    );
                   },
                 );
               },

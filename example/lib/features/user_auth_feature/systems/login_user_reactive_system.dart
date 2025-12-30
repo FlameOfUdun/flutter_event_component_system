@@ -24,7 +24,8 @@ final class LoginUserReactiveSystem extends ReactiveSystem {
     await preferences.setString('auth_state', AuthState.loggedIn.name);
     await Future.delayed(const Duration(seconds: 2));
 
-    getEntity<LoginProcessComponent>().update(const LoginProcess.success('mock_token'));
+    getEntity<LoginProcessComponent>()
+        .update(const LoginProcess.success('mock_token'));
 
     getEntity<AuthStateComponent>().update(AuthState.loggedIn);
   }

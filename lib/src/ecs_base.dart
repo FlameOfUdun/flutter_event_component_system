@@ -16,6 +16,7 @@ part 'models/ecs_feature_data.dart';
 part 'models/ecs_entity_data.dart';
 part 'models/ecs_system_data.dart';
 part 'models/ecs_log_data.dart';
+part 'models/ecs_inspector_data.dart';
 
 part 'utilities/ecs_logger.dart';
 

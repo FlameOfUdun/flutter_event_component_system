@@ -13,14 +13,19 @@ class LoadUserDataReactiveSystem extends ReactiveSystem {
 
   @override
   Set<Type> get interactsWith {
-    return const {UserDataComponent, LoadingStateComponent, LoadingErrorComponent};
+    return const {
+      UserDataComponent,
+      LoadingStateComponent,
+      LoadingErrorComponent,
+    };
   }
 
   @override
   bool get reactsIf {
     final loadEvent = getEntity<LoadUserEvent>();
     final loadingState = getEntity<LoadingStateComponent>();
-    return loadEvent.userId != null && loadingState.value != LoadingState.running;
+    return loadEvent.userId != null &&
+        loadingState.value != LoadingState.running;
   }
 
   @override

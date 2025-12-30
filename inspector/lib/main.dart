@@ -7,7 +7,9 @@ import 'widgets/ecs_graph_view.dart';
 import 'widgets/ecs_log_viewer.dart';
 
 void main() {
-  runApp(DevToolsExtension(child: ECSEventProvider(child: const _Application())));
+  runApp(
+    DevToolsExtension(child: ECSEventProvider(child: const _Application())),
+  );
 }
 
 class _Application extends StatefulWidget {
@@ -33,13 +35,20 @@ class _ApplicationState extends State<_Application> {
               child: Column(
                 spacing: 16,
                 mainAxisSize: MainAxisSize.min,
-                children: [Text('Initializing ECS Inspector...'), CircularProgressIndicator()],
+                children: [
+                  Text('Initializing ECS Inspector...'),
+                  CircularProgressIndicator(),
+                ],
               ),
             );
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Error initializing ECS Inspector: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                'Error initializing ECS Inspector: ${snapshot.error}',
+              ),
+            );
           }
 
           return Column(
@@ -48,9 +57,18 @@ class _ApplicationState extends State<_Application> {
               Card(
                 child: SegmentedButton(
                   segments: const [
-                    ButtonSegment(value: 'graph_view', label: Text('Graph View')),
-                    ButtonSegment(value: 'entity_browser', label: Text('Entity Browser')),
-                    ButtonSegment(value: 'log_viewer', label: Text('Log Viewer')),
+                    ButtonSegment(
+                      value: 'graph_view',
+                      label: Text('Graph View'),
+                    ),
+                    ButtonSegment(
+                      value: 'entity_browser',
+                      label: Text('Entity Browser'),
+                    ),
+                    ButtonSegment(
+                      value: 'log_viewer',
+                      label: Text('Log Viewer'),
+                    ),
                   ],
                   selected: {selectedTab},
                   onSelectionChanged: (values) {

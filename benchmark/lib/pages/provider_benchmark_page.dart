@@ -41,13 +41,14 @@ class _MainContentState extends State<_MainContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer4<CounterProvider, TodoProvider, LoadingProvider, UserProfileProvider>(
+    return Consumer4<CounterProvider, TodoProvider, LoadingProvider,
+        UserProfileProvider>(
       builder: (context, counter, todo, loading, userProfile, child) {
         // Complete the completer when the widget rebuilds (indicating state change)
         if (completer != null && !completer!.isCompleted) {
           completer!.complete();
         }
-    
+
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -70,7 +71,8 @@ class _MainContentState extends State<_MainContent> {
   Future<void> runCounterBenchmark() async {
     debugPrint('Running Counter Benchmark...');
 
-    final counterProvider = Provider.of<CounterProvider>(context, listen: false);
+    final counterProvider =
+        Provider.of<CounterProvider>(context, listen: false);
 
     await benchmarkRunner.runBenchmarkIterations(
       testName: 'Counter Benchmark',
@@ -98,7 +100,8 @@ class _MainContentState extends State<_MainContent> {
   Future<void> runProfileBenchmark() async {
     debugPrint('Running User Profile Benchmark...');
 
-    final userProfileProvider = Provider.of<UserProfileProvider>(context, listen: false);
+    final userProfileProvider =
+        Provider.of<UserProfileProvider>(context, listen: false);
 
     await benchmarkRunner.runBenchmarkIterations(
       testName: 'User Profile Benchmark',

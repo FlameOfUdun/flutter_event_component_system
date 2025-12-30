@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
 
-import '../models/ecs_manager_data.dart';
+import '../models/ecs_inspector_data.dart';
 import 'ecs_event_provider.dart';
 
 final class ECSGraphView extends StatefulWidget {
@@ -47,7 +47,8 @@ final class _ECSGraphViewState extends State<ECSGraphView> {
     }
 
     for (final edge in graph.edges) {
-      if (!visited.contains(edge.source) || !visited.contains(edge.destination)) {
+      if (!visited.contains(edge.source) ||
+          !visited.contains(edge.destination)) {
         edge.paint = Paint()
           ..color = Colors.grey
           ..strokeWidth = 1
@@ -68,72 +69,10 @@ final class _ECSGraphViewState extends State<ECSGraphView> {
       final lowerQuery = query.toLowerCase();
       final matchedNodes = graph.nodes.where((node) {
         final nodeData = data[node.key!.value as String]!;
-        return nodeData.label.toLowerCase().contains(lowerQuery) || nodeData.feature.toLowerCase().contains(lowerQuery);
+        return nodeData.label.toLowerCase().contains(lowerQuery) ||
+            nodeData.feature.toLowerCase().contains(lowerQuery);
       }).toSet();
       filtered = matchedNodes.toList();
-    }
-
-    setState(() {});
-  }
-
-  void update(ECSManagerData manager) {
-    data.clear();
-
-    graph.nodes.clear();
-    graph.edges.clear();
-
-    final initializeNode = Node.Id('Lifecycle.OnInitialize');
-    graph.addNode(initializeNode);
-    data['Lifecycle.OnInitialize'] = _NodeData(feature: 'Lifecycle', label: 'OnInitialize', color: Colors.purple);
-
-    final executeNode = Node.Id('Lifecycle.OnExecute');
-    graph.addNode(executeNode);
-    data['Lifecycle.OnExecute'] = _NodeData(feature: 'Lifecycle', label: 'OnExecute', color: Colors.purple);
-
-    final cleanupNode = Node.Id('Lifecycle.OnCleanup');
-    graph.addNode(cleanupNode);
-    data['Lifecycle.OnCleanup'] = _NodeData(feature: 'Lifecycle', label: 'OnCleanup', color: Colors.purple);
-
-    final teardownNode = Node.Id('Lifecycle.OnTeardown');
-    graph.addNode(teardownNode);
-    data['Lifecycle.OnTeardown'] = _NodeData(feature: 'Lifecycle', label: 'OnTeardown', color: Colors.purple);
-
-    for (final feature in manager.features) {
-      for (final entity in feature.entities) {
-        final entityNode = Node.Id(entity.id);
-        graph.addNode(entityNode);
-        data[entity.id] = _NodeData(feature: feature.name, label: entity.name, color: entity.type == "Component" ? Colors.green : Colors.orange);
-      }
-
-      for (final system in feature.systems) {
-        final systemNode = Node.Id(system.id);
-        graph.addNode(systemNode);
-        data[system.id] = _NodeData(feature: feature.name, label: system.name, color: Colors.blue);
-      }
-    }
-
-    for (final feature in manager.features) {
-      for (final system in feature.systems) {
-        final systemNode = Node.Id(system.id);
-
-        if (system.type == "InitializeSystem") {
-          graph.addEdge(Node.Id('Lifecycle.OnInitialize'), systemNode);
-        } else if (system.type == "ExecuteSystem") {
-          graph.addEdge(Node.Id('Lifecycle.OnExecute'), systemNode);
-        } else if (system.type == "CleanupSystem") {
-          graph.addEdge(Node.Id('Lifecycle.OnCleanup'), systemNode);
-        } else if (system.type == "TeardownSystem") {
-          graph.addEdge(Node.Id('Lifecycle.OnTeardown'), systemNode);
-        } else {
-          for (final reactTo in system.reactsTo) {
-            graph.addEdge(Node.Id(reactTo), systemNode);
-          }
-        }
-
-        for (final interactWith in system.interactsWith) {
-          graph.addEdge(systemNode, Node.Id(interactWith));
-        }
-      }
     }
 
     setState(() {});
@@ -155,8 +94,109 @@ final class _ECSGraphViewState extends State<ECSGraphView> {
   void refresh() async {
     final provider = ECSEventProvider.of(context);
     await provider.waitForServiceInit();
-    final data = await provider.requestManagerData();
-    update(data);
+    final data = await provider.requestInspectorData();
+    updateFromInspectorData(data);
+  }
+
+  void updateFromInspectorData(ECSInspectorData inspectorData) {
+    data.clear();
+    graph.nodes.clear();
+    graph.edges.clear();
+
+    final initializeNode = Node.Id('Lifecycle.OnInitialize');
+    graph.addNode(initializeNode);
+    data['Lifecycle.OnInitialize'] = _NodeData(
+      feature: 'Lifecycle',
+      label: 'OnInitialize',
+      color: Colors.purple,
+    );
+
+    final executeNode = Node.Id('Lifecycle.OnExecute');
+    graph.addNode(executeNode);
+    data['Lifecycle.OnExecute'] = _NodeData(
+      feature: 'Lifecycle',
+      label: 'OnExecute',
+      color: Colors.purple,
+    );
+
+    final cleanupNode = Node.Id('Lifecycle.OnCleanup');
+    graph.addNode(cleanupNode);
+    data['Lifecycle.OnCleanup'] = _NodeData(
+      feature: 'Lifecycle',
+      label: 'OnCleanup',
+      color: Colors.purple,
+    );
+
+    final teardownNode = Node.Id('Lifecycle.OnTeardown');
+    graph.addNode(teardownNode);
+    data['Lifecycle.OnTeardown'] = _NodeData(
+      feature: 'Lifecycle',
+      label: 'OnTeardown',
+      color: Colors.purple,
+    );
+
+    // Process all managers
+    for (final manager in inspectorData.managers) {
+      for (final feature in manager.features) {
+        for (final entity in feature.entities) {
+          final entityNode = Node.Id(entity.id);
+          graph.addNode(entityNode);
+          // Extract just the entity name from identifier (last part after last dot)
+          final entityName = entity.identifier.split('.').last;
+          // Extract feature name (second part of identifier)
+          final featureName = entity.identifier.split('.').length >= 2
+              ? entity.identifier.split('.')[1]
+              : entity.identifier.split('.').first;
+          data[entity.id] = _NodeData(
+            feature: featureName,
+            label: entityName,
+            color: entity.type == "Component" ? Colors.green : Colors.orange,
+          );
+        }
+
+        for (final system in feature.systems) {
+          final systemNode = Node.Id(system.id);
+          graph.addNode(systemNode);
+          // Extract just the system name from identifier (last part after last dot)
+          final systemName = system.identifier.split('.').last;
+          // Extract feature name (second part of identifier)
+          final featureName = system.identifier.split('.').length >= 2
+              ? system.identifier.split('.')[1]
+              : system.identifier.split('.').first;
+          data[system.id] = _NodeData(
+            feature: featureName,
+            label: systemName,
+            color: Colors.blue,
+          );
+        }
+      }
+
+      for (final feature in manager.features) {
+        for (final system in feature.systems) {
+          final systemNode = Node.Id(system.id);
+
+          if (system.type == "InitializeSystem") {
+            graph.addEdge(Node.Id('Lifecycle.OnInitialize'), systemNode);
+          } else if (system.type == "ExecuteSystem") {
+            graph.addEdge(Node.Id('Lifecycle.OnExecute'), systemNode);
+          } else if (system.type == "CleanupSystem") {
+            graph.addEdge(Node.Id('Lifecycle.OnCleanup'), systemNode);
+          } else if (system.type == "TeardownSystem") {
+            graph.addEdge(Node.Id('Lifecycle.OnTeardown'), systemNode);
+          } else {
+            for (final reactTo in system.reactsTo) {
+              graph.addEdge(Node.Id(reactTo), systemNode);
+            }
+          }
+
+          for (final interactWith in system.interactsWith) {
+            graph.addEdge(systemNode, Node.Id(interactWith));
+          }
+        }
+      }
+    }
+
+    setState(() {});
   }
 
   @override
@@ -185,7 +225,8 @@ final class _ECSGraphViewState extends State<ECSGraphView> {
                   builder: (node) {
                     final id = node.key!.value as String;
                     final nodeData = data[id]!;
-                    final inFilter = filtered.isEmpty || filtered.contains(node);
+                    final inFilter =
+                        filtered.isEmpty || filtered.contains(node);
                     final inCascade = cascade.contains(node);
                     final isSelected = selected == node;
 
@@ -198,16 +239,30 @@ final class _ECSGraphViewState extends State<ECSGraphView> {
                         decoration: BoxDecoration(
                           color: inFilter ? nodeData.color : Colors.grey,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: inCascade ? Colors.yellow : Colors.grey.shade300, width: 4),
+                          border: Border.all(
+                            color: inCascade
+                                ? Colors.yellow
+                                : Colors.grey.shade300,
+                            width: 4,
+                          ),
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (isSelected) Text(nodeData.feature, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white70)),
+                            if (isSelected)
+                              Text(
+                                nodeData.feature,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(color: Colors.white70),
+                              ),
                             Text(
                               nodeData.label,
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                           ],
                         ),
@@ -232,7 +287,10 @@ final class _ECSGraphViewState extends State<ECSGraphView> {
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: Padding(
                         padding: const EdgeInsets.only(right: 4),
-                        child: IconButton(icon: Icon(Icons.clear), onPressed: controller.clear),
+                        child: IconButton(
+                          icon: Icon(Icons.clear),
+                          onPressed: controller.clear,
+                        ),
                       ),
                     ),
                   ),
@@ -269,5 +327,9 @@ final class _NodeData {
   final String label;
   final Color color;
 
-  const _NodeData({required this.feature, required this.label, required this.color});
+  const _NodeData({
+    required this.feature,
+    required this.label,
+    required this.color,
+  });
 }

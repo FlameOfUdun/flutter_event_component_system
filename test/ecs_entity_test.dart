@@ -11,7 +11,7 @@ class TestEvent extends ECSEvent {
 
 class TestListener implements ECSEntityListener {
   final void Function() onChanged;
-  
+
   TestListener(this.onChanged);
 
   @override
@@ -139,16 +139,16 @@ void main() {
       final component = TestComponent();
       final listener1 = TestListener(() {});
       final listener2 = TestListener(() {});
-      
+
       expect(component.listeners.length, 0);
-      
+
       component.addListener(listener1);
       expect(component.listeners.length, 1);
       expect(component.listeners, contains(listener1));
-      
+
       component.addListener(listener2);
       expect(component.listeners.length, 2);
-      
+
       component.removeListener(listener1);
       expect(component.listeners.length, 1);
       expect(component.listeners, isNot(contains(listener1)));

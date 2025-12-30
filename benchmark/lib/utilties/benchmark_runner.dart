@@ -22,12 +22,17 @@ class BenchmarkResult {
     this.additionalMetrics = const {},
   });
 
-  double get operationsPerSecond => operations / duration.inMicroseconds * 1000000;
+  double get operationsPerSecond =>
+      operations / duration.inMicroseconds * 1000000;
   double get averageTimePerOperation => duration.inMicroseconds / operations;
 
-  double? get stateUpdateOpsPerSecond => stateUpdateDuration != null ? operations / stateUpdateDuration!.inMicroseconds * 1000000 : null;
+  double? get stateUpdateOpsPerSecond => stateUpdateDuration != null
+      ? operations / stateUpdateDuration!.inMicroseconds * 1000000
+      : null;
 
-  double? get uiPropagationOpsPerSecond => uiPropagationDuration != null ? operations / uiPropagationDuration!.inMicroseconds * 1000000 : null;
+  double? get uiPropagationOpsPerSecond => uiPropagationDuration != null
+      ? operations / uiPropagationDuration!.inMicroseconds * 1000000
+      : null;
 
   @override
   String toString() {
@@ -176,35 +181,52 @@ class BenchmarkRunner {
 
   /// Get average results for a specific test and implementation
   BenchmarkResult getAverageResult(String testName, String implementation) {
-    final relevantResults = _results.where((r) => r.testName.startsWith(testName) && r.implementation == implementation).toList();
+    final relevantResults = _results
+        .where((r) =>
+            r.testName.startsWith(testName) &&
+            r.implementation == implementation)
+        .toList();
 
     if (relevantResults.isEmpty) {
-      throw ArgumentError('No results found for $testName with $implementation');
+      throw ArgumentError(
+          'No results found for $testName with $implementation');
     }
 
     final avgDuration = Duration(
-      microseconds: (relevantResults.map((r) => r.duration.inMicroseconds).reduce((a, b) => a + b) / relevantResults.length).round(),
+      microseconds: (relevantResults
+                  .map((r) => r.duration.inMicroseconds)
+                  .reduce((a, b) => a + b) /
+              relevantResults.length)
+          .round(),
     );
 
     Duration? avgStateUpdateDuration;
     Duration? avgUiPropagationDuration;
 
     // Calculate averages for separate timings if available
-    final stateUpdateDurations =
-        relevantResults.where((r) => r.stateUpdateDuration != null).map((r) => r.stateUpdateDuration!.inMicroseconds).toList();
+    final stateUpdateDurations = relevantResults
+        .where((r) => r.stateUpdateDuration != null)
+        .map((r) => r.stateUpdateDuration!.inMicroseconds)
+        .toList();
 
     if (stateUpdateDurations.isNotEmpty) {
       avgStateUpdateDuration = Duration(
-        microseconds: (stateUpdateDurations.reduce((a, b) => a + b) / stateUpdateDurations.length).round(),
+        microseconds: (stateUpdateDurations.reduce((a, b) => a + b) /
+                stateUpdateDurations.length)
+            .round(),
       );
     }
 
-    final uiPropagationDurations =
-        relevantResults.where((r) => r.uiPropagationDuration != null).map((r) => r.uiPropagationDuration!.inMicroseconds).toList();
+    final uiPropagationDurations = relevantResults
+        .where((r) => r.uiPropagationDuration != null)
+        .map((r) => r.uiPropagationDuration!.inMicroseconds)
+        .toList();
 
     if (uiPropagationDurations.isNotEmpty) {
       avgUiPropagationDuration = Duration(
-        microseconds: (uiPropagationDurations.reduce((a, b) => a + b) / uiPropagationDurations.length).round(),
+        microseconds: (uiPropagationDurations.reduce((a, b) => a + b) /
+                uiPropagationDurations.length)
+            .round(),
       );
     }
 
@@ -236,25 +258,31 @@ class BenchmarkRunner {
       buffer.writeln('Test: $testName');
       buffer.writeln('-' * 50);
 
-      final implementations = groupedResults[testName]!.map((r) => r.implementation).toSet();
+      final implementations =
+          groupedResults[testName]!.map((r) => r.implementation).toSet();
 
       for (final impl in implementations) {
         try {
           final avgResult = getAverageResult(testName, impl);
           buffer.writeln('  $impl:');
-          buffer.writeln('    Total Duration: ${avgResult.duration.inMilliseconds}ms');
-          buffer.writeln('    Ops/sec: ${avgResult.operationsPerSecond.toStringAsFixed(2)}');
+          buffer.writeln(
+              '    Total Duration: ${avgResult.duration.inMilliseconds}ms');
+          buffer.writeln(
+              '    Ops/sec: ${avgResult.operationsPerSecond.toStringAsFixed(2)}');
 
           if (avgResult.stateUpdateDuration != null) {
-            buffer.writeln('    State Update: ${avgResult.stateUpdateDuration!.inMilliseconds}ms');
-            buffer.writeln('    State Ops/sec: ${avgResult.stateUpdateOpsPerSecond!.toStringAsFixed(2)}');
+            buffer.writeln(
+                '    State Update: ${avgResult.stateUpdateDuration!.inMilliseconds}ms');
+            buffer.writeln(
+                '    State Ops/sec: ${avgResult.stateUpdateOpsPerSecond!.toStringAsFixed(2)}');
           }
 
           if (avgResult.uiPropagationDuration != null) {
-            buffer.writeln('    UI Propagation: ${avgResult.uiPropagationDuration!.inMilliseconds}ms');
-            buffer.writeln('    UI Ops/sec: ${avgResult.uiPropagationOpsPerSecond!.toStringAsFixed(2)}');
+            buffer.writeln(
+                '    UI Propagation: ${avgResult.uiPropagationDuration!.inMilliseconds}ms');
+            buffer.writeln(
+                '    UI Ops/sec: ${avgResult.uiPropagationOpsPerSecond!.toStringAsFixed(2)}');
           }
-
         } catch (e) {
           buffer.writeln('  $impl: No average available');
         }

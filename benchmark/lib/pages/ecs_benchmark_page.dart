@@ -96,7 +96,8 @@ class _MainContentState extends ECSState<_MainContent> {
       },
     );
 
-    final average = benchmarkRunner.getAverageResult('Counter Benchmark', 'ECS');
+    final average =
+        benchmarkRunner.getAverageResult('Counter Benchmark', 'ECS');
     debugPrint('Counter Benchmark completed: $average');
   }
 
@@ -135,7 +136,8 @@ class _MainContentState extends ECSState<_MainContent> {
       },
     );
 
-    final average = benchmarkRunner.getAverageResult('User Profile Benchmark', 'ECS');
+    final average =
+        benchmarkRunner.getAverageResult('User Profile Benchmark', 'ECS');
     debugPrint('User Profile Benchmark completed: $average');
   }
 

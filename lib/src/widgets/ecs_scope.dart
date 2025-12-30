@@ -11,6 +11,10 @@ part of '../ecs_base.dart';
 ///
 /// After disposal, the features will also be removed from the ECS manager.
 final class ECSScope extends StatefulWidget {
+  /// An optional name for this ECS scope.
+  /// This can be useful pertcularly for debugging and using inspector devtools extension.
+  final String? name;
+
   /// Set of features to be managed by this ECS scope.
   final Set<ECSFeature> features;
 
@@ -19,6 +23,7 @@ final class ECSScope extends StatefulWidget {
 
   const ECSScope({
     super.key,
+    this.name,
     required this.features,
     required this.child,
   });
@@ -42,9 +47,12 @@ final class ECSScope extends StatefulWidget {
   }
 }
 
-final class _ECSScopeState extends State<ECSScope> with SingleTickerProviderStateMixin {
+final class _ECSScopeState extends State<ECSScope>
+    with SingleTickerProviderStateMixin {
   /// The ECS manager for this scope.
-  final manager = ECSManager();
+  late final manager = ECSManager(
+    name: widget.name,
+  );
 
   /// Ticker for driving the ECS execution loop.
   Ticker? ticker;
@@ -54,16 +62,18 @@ final class _ECSScopeState extends State<ECSScope> with SingleTickerProviderStat
 
   @override
   void initState() {
-    for (final feature in widget.features) {
-      manager.addFeature(feature);
-    }
-    manager.activate();
+    manager
+      ..addFeatures(widget.features)
+      ..activate();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       manager.initialize();
+
       if (manager.hasExecuteOrCleanupSystems) {
         startTicker();
       }
     });
+
     super.initState();
   }
 
@@ -80,15 +90,18 @@ final class _ECSScopeState extends State<ECSScope> with SingleTickerProviderStat
       final elapsed = calculateElapsed(duration);
       manager.execute(elapsed);
       manager.cleanup();
-    });
-    ticker!.start();
+    })
+      ..start();
   }
 
   @override
   void dispose() {
     ticker?.stop();
-    manager.teardown();
-    manager.deactivate();
+
+    manager
+      ..teardown()
+      ..deactivate();
+
     super.dispose();
   }
 

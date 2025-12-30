@@ -9,9 +9,4 @@ class LoadingStateComponent extends ECSComponent<LoadingState> {
   }
 }
 
-enum LoadingState {
-  idle,
-  running,
-  success,
-  error,
-}
+enum LoadingState { idle, running, success, error }

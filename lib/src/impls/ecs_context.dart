@@ -18,6 +18,10 @@ final class ECSContext implements ECSEntityListener {
   @visibleForTesting
   final Set<ECSEntity> watchers = {};
 
+  /// Map of watch conditions for entities.
+  @visibleForTesting
+  final Map<ECSEntity, bool Function(ECSEntity)> watchConditions = {};
+
   /// Optional listeners for enter event.
   @visibleForTesting
   void Function()? onEnterListener;
@@ -79,9 +83,16 @@ final class ECSContext implements ECSEntityListener {
   /// Watches an entity of type [TEntity] for changes.
   ///
   /// If a [condition] is provided, the context will only rebuild when the condition is met.
-  TEntity watch<TEntity extends ECSEntity>([bool Function(TEntity entity)? condition]) {
+  TEntity watch<TEntity extends ECSEntity>({
+    bool Function(TEntity entity)? condition,
+  }) {
     final entity = _getEntity<TEntity>();
-    if (watchers.add(entity)) entity.addListener(this);
+    if (watchers.add(entity)) {
+      entity.addListener(this);
+      if (condition != null) {
+        watchConditions[entity] = (e) => condition(e as TEntity);
+      }
+    }
     return entity;
   }
 
@@ -92,7 +103,8 @@ final class ECSContext implements ECSEntityListener {
   /// If the entity is already being watched, it will be overridden.
   ///
   /// Callbacks are executed asynchronously and safe to use in the widget tree.
-  void listen<TEntity extends ECSEntity>(void Function(TEntity entity) listener) {
+  void listen<TEntity extends ECSEntity>(
+      void Function(TEntity entity) listener) {
     final entity = _getEntity<TEntity>();
     if (!listeners.containsKey(entity)) entity.addListener(this);
     listeners[entity] = () => listener(entity);
@@ -117,6 +129,7 @@ final class ECSContext implements ECSEntityListener {
       entity.removeListener(this);
     }
     watchers.clear();
+    watchConditions.clear();
 
     for (final entity in listeners.keys) {
       entity.removeListener(this);
@@ -132,16 +145,20 @@ final class ECSContext implements ECSEntityListener {
   ///
   /// This method is used to trigger a rebuild of the context.
   ///
-  /// If the context is locked, it will not rebuild until the lock is released.
+  /// Rebuilds are coalesced - multiple rebuild requests within the same
+  /// frame will result in only one actual rebuild at the next frame boundary.
   @visibleForTesting
   void rebuild() {
-    if (locked) return;
+    if (locked || disposed) return;
     locked = true;
-    guard(
-      callback,
-      description: 'ECSContext rebuild callback',
-    );
-    scheduleMicrotask(() {
+
+    SchedulerBinding.instance.scheduleFrameCallback((_) {
+      if (!disposed) {
+        guard(
+          callback,
+          description: 'ECSContext rebuild callback',
+        );
+      }
       locked = false;
     });
   }
@@ -164,7 +181,10 @@ final class ECSContext implements ECSEntityListener {
   @visibleForTesting
   void onEntityChanged(ECSEntity entity) {
     if (watchers.contains(entity)) {
-      rebuild();
+      final condition = watchConditions[entity];
+      if (condition == null || condition(entity)) {
+        rebuild();
+      }
     }
 
     if (listeners.containsKey(entity)) {

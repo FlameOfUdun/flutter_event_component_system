@@ -14,3 +14,8 @@
 ## 0.0.2
 
 * Fix for license files so pub.dev would recognise them
+
+## 0.0.3
+
+* Fix for inspector
+* Fix for nested scopes

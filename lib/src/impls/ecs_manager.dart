@@ -2,21 +2,42 @@ part of '../ecs_base.dart';
 
 /// ECSFeature is a base class for creating features in the ECS system.
 final class ECSManager with _ECSLogger {
+  /// An optional name for this ECS manager.
+  final String? name;
+
+  /// The unique index for this ECS manager.
+  late final int index;
+
   /// Static set of all ECS managers.
   static final Set<ECSManager> _managers = {};
-
-  /// Static flag that indicates if DevTools extensions have been registered.
-  static bool _devtoolsRegistered = false;
-
-  /// Indicates if the ECS manager is active.
-  bool _isActive = false;
 
   /// Internal set of features in this ECS manager instance.
   final Set<ECSFeature> _features = {};
 
+  /// Static flag that indicates if DevTools extensions have been registered.
+  static bool _devtoolsRegistered = false;
+
+  /// Static counter for generating unique manager indexes.
+  static int _nextManagerIndex = 0;
+
+  /// Indicates if the ECS manager is active.
+  bool _isActive = false;
+
   @visibleForTesting
-  ECSManager() {
-    _ensureDevtoolsRegistered(this);
+  ECSManager({
+    this.name,
+  }) {
+    if (name != null) {
+      for (final manager in _managers) {
+        if (manager.name == name) {
+          throw ArgumentError('ECSManager with name "$name" already exists.');
+        }
+      }
+    }
+
+    index = _nextManagerIndex++;
+
+    _ensureDevtoolsRegistered();
   }
 
   /// Indicates if the ECS manager is active.
@@ -24,7 +45,8 @@ final class ECSManager with _ECSLogger {
   bool get isActive => _isActive;
 
   /// Indicates if any feature has execute or cleanup systems.
-  bool get hasExecuteOrCleanupSystems => _features.any((feature) => feature.hasExecuteOrCleanupSystems);
+  bool get hasExecuteOrCleanupSystems =>
+      _features.any((feature) => feature.hasExecuteOrCleanupSystems);
 
   /// Unmodifiable set of features in the ECS manager.
   @visibleForTesting
@@ -32,7 +54,11 @@ final class ECSManager with _ECSLogger {
 
   /// Unmodifiable set of all entities across all features.
   @visibleForTesting
-  Set<ECSEntity> get entities => Set.unmodifiable(features.expand((feature) => feature.entities));
+  Set<ECSEntity> get entities =>
+      Set.unmodifiable(features.expand((feature) => feature.entities));
+
+  /// Unique identifier for this ECS manager.
+  String get identifier => name ?? 'ECSManager_$index';
 
   /// Adds a feature to the ECS manager.
   void addFeature(ECSFeature feature) {
@@ -40,25 +66,28 @@ final class ECSManager with _ECSLogger {
     _features.add(feature);
   }
 
+  /// Adds multiple features to the ECS manager.
+  void addFeatures(Set<ECSFeature> features) {
+    for (final feature in features) {
+      feature.attach(this);
+      _features.add(feature);
+    }
+  }
+
   /// Registers DevTools extensions for ECS inspection.
-  void _ensureDevtoolsRegistered(ECSManager manager) {
-    if (_devtoolsRegistered) return;
-    developer.registerExtension('ext.ecs.requestManagerData', (method, parameters) async {
-      final features = <ECSFeatureData>[];
-      for (final feature in _features) {
-        features.add(ECSFeatureData.fromFeature(feature));
-      }
-      final logs = <ECSLogData>[];
-      for (final log in manager.logs) {
-        logs.add(ECSLogData.fromLog(log));
-      }
-      final data = ECSManagerData(
-        features: features,
-        logs: logs,
-      );
+  void _ensureDevtoolsRegistered() {
+    if (_devtoolsRegistered) {
+      return;
+    }
+
+    developer.registerExtension('ext.ecs.requestInspectorData',
+        (method, parameters) async {
+      final managers = _managers.map(ECSManagerData.fromManager).toList();
+      final data = ECSInspectorData(managers: managers);
       final encoded = jsonEncode(data.toJson());
       return developer.ServiceExtensionResponse.result(encoded);
     });
+
     _devtoolsRegistered = true;
   }
 

@@ -1,16 +1,14 @@
 part of '../ecs_base.dart';
 
 final class ECSEntityData {
-  final String name;
+  final String identifier;
   final String type;
-  final String feature;
   final String? value;
   final String? previous;
 
   const ECSEntityData({
-    required this.name,
+    required this.identifier,
     required this.type,
-    required this.feature,
     this.value,
     this.previous,
   });
@@ -19,19 +17,18 @@ final class ECSEntityData {
     final type = entity is ECSEvent ? 'Event' : 'Component';
 
     return ECSEntityData(
-      name: entity.runtimeType.toString(),
-      feature: entity.feature.runtimeType.toString(),
+      identifier: entity.identifier,
       type: type,
       value: entity is ECSComponent ? entity.describe(entity.value) : null,
-      previous: entity is ECSComponent ? entity.describe(entity.previous) : null,
+      previous:
+          entity is ECSComponent ? entity.describe(entity.previous) : null,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
+      'identifier': identifier,
       'type': type,
-      'feature': feature,
       if (value != null) 'value': value,
       if (previous != null) 'previous': previous,
     };

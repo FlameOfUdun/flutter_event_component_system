@@ -21,6 +21,7 @@ class _Application extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ECSScope(
+      name: "Main",
       features: {
         NavigationFeature(
           navigatorKey: navigatorKey,

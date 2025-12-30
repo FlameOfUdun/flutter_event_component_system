@@ -185,7 +185,7 @@ class ClearCompletedSystem extends ReactiveSystem {
 class UserProfileFeature extends ECSFeature {
   UserProfileFeature() {
     addEntity(UserProfileComponent());
-    
+
     addEntity(UpdateUserEvent());
     addEntity(LoginEvent());
     addEntity(LogoutEvent());
@@ -277,7 +277,6 @@ class StartLoadingEvent extends ECSEvent {}
 class StopLoadingEvent extends ECSEvent {}
 
 class StartLoadingSystem extends ReactiveSystem {
-  
   @override
   Set<Type> get reactsTo => {StartLoadingEvent};
 

@@ -40,10 +40,7 @@ Add this package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  flutter_event_component_system:
-    git: 
-      url: https://github.com/FlameOfUdun/flutter_event_component_system.git
-      ref: main
+  flutter_event_component_system: any
 ```
 
 ### Basic Usage

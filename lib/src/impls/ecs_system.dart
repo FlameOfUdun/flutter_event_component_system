@@ -6,6 +6,13 @@ sealed class ECSSystem {
   @visibleForTesting
   Set<ECSEntity> entities = {};
 
+  /// The parent feature of this system.
+  @visibleForTesting
+  @protected
+  ECSFeature? feature;
+
+  ECSSystem();
+
   /// Set of types that this system interacts with.
   ///
   /// This set should be overridden in subclasses to specify the types of
@@ -18,12 +25,8 @@ sealed class ECSSystem {
   /// are being processed by the system.
   Set<Type> get interactsWith => const {};
 
-  /// The parent feature of this system.
-  @visibleForTesting
-  @protected
-  ECSFeature? feature;
-
-  ECSSystem();
+  /// Unique identifier for this system.
+  String get identifier => '${feature?.identifier}.$runtimeType';
 
   /// Indicates whether this system is active.
   @visibleForTesting
@@ -216,9 +219,9 @@ abstract class ReactiveSystem extends ECSSystem implements ECSEntityListener {
   void onEntityChanged(ECSEntity entity) {
     if (reactsIf) {
       if (entity is ECSComponent) {
-        log('${feature.runtimeType}.$runtimeType reacted to changes in ${entity.feature.runtimeType}.${entity.runtimeType}');
+        log('$identifier reacted to changes in ${entity.identifier}');
       } else {
-        log('${feature.runtimeType}.$runtimeType reacted to trigger of ${entity.runtimeType}');
+        log('$identifier reacted to trigger of ${entity.identifier}');
       }
       react();
     }

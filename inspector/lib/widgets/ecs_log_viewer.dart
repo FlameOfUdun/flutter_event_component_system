@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_event_component_system_inspector/models/ecs_inspector_data.dart';
 import 'package:flutter_event_component_system_inspector/models/ecs_log_data.dart';
-import 'package:flutter_event_component_system_inspector/models/ecs_manager_data.dart';
 
 import 'ecs_event_provider.dart';
 
@@ -17,7 +17,7 @@ final class _LogsViewState extends State<ECSLogViewer> {
   String? search;
   String? level;
 
-  ECSManagerData? data;
+  ECSInspectorData? data;
   DateTime? clearedAt;
   Timer? refreshTimer;
 
@@ -40,20 +40,23 @@ final class _LogsViewState extends State<ECSLogViewer> {
   void refresh() async {
     final provider = ECSEventProvider.of(context);
     await provider.waitForServiceInit();
-    final data = await provider.requestManagerData();
-    update(data);
+    final inspectorData = await provider.requestInspectorData();
+    update(inspectorData);
   }
 
-  void update(ECSManagerData data) {
+  void update(ECSInspectorData data) {
     setState(() {
       this.data = data;
     });
   }
 
   List<ECSLogData> get logs {
-    var logs = data?.logs ?? [];
+    // Aggregate logs from all managers
+    var logs = data?.managers.expand((manager) => manager.logs).toList() ?? [];
     if (clearedAt != null) {
-      logs = logs.where((log) => log.time.isAfter(clearedAt!)).toList();
+      logs = logs.where((log) {
+        return log.time.isAfter(clearedAt!);
+      }).toList();
     }
 
     return logs.where((log) {
@@ -93,10 +96,18 @@ final class _LogsViewState extends State<ECSLogViewer> {
                     Expanded(
                       child: DropdownButtonFormField(
                         initialValue: level,
-                        decoration: const InputDecoration(labelText: 'Level', border: OutlineInputBorder()),
-                        items: ["warning", "error", "debug", "verbose", "fatal"].map((level) {
-                          return DropdownMenuItem(value: level, child: Text(level.toUpperCase()));
-                        }).toList(),
+                        decoration: const InputDecoration(
+                          labelText: 'Level',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: ["warning", "error", "debug", "verbose", "fatal"]
+                            .map((level) {
+                              return DropdownMenuItem(
+                                value: level,
+                                child: Text(level.toUpperCase()),
+                              );
+                            })
+                            .toList(),
                         onChanged: (value) {
                           setState(() {
                             level = value;
@@ -109,13 +120,17 @@ final class _LogsViewState extends State<ECSLogViewer> {
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.red,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4.0),
+                          ),
                           minimumSize: const Size.fromHeight(55),
                         ),
                         onPressed: () {
                           setState(() {
-                            logs.clear();
-                            clearedAt = DateTime.now();
+                            // Add a small buffer to ensure all current logs are cleared
+                            clearedAt = DateTime.now().add(
+                              const Duration(milliseconds: 100),
+                            );
                           });
                         },
                         child: const Text('Clear Logs'),
@@ -138,6 +153,11 @@ final class _LogsViewState extends State<ECSLogViewer> {
                       },
                     ),
                   ),
+                  onChanged: (value) {
+                    setState(() {
+                      search = value;
+                    });
+                  },
                 ),
               ],
             ),

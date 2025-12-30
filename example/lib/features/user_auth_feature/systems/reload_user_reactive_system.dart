@@ -19,7 +19,8 @@ final class ReloadUserReactiveSystem extends ReactiveSystem {
   void react() async {
     final preferences = await SharedPreferences.getInstance();
     final value = preferences.getString('auth_state');
-    final state = value == null ? AuthState.loggedOut : AuthState.values.byName(value);
+    final state =
+        value == null ? AuthState.loggedOut : AuthState.values.byName(value);
     getEntity<AuthStateComponent>().update(state);
   }
 }

@@ -23,6 +23,9 @@ sealed class ECSEntity {
   @protected
   bool get isAttached => feature != null;
 
+  /// Unique identifier for this entity.
+  String get identifier => '${feature?.identifier}.$runtimeType';
+
   /// Attaches this entity to a feature.
   @visibleForTesting
   void attach(ECSFeature feature) {
@@ -76,7 +79,7 @@ abstract class ECSEvent extends ECSEntity {
 
   @override
   void notifyListeners() {
-    log('$runtimeType triggered');
+    log('$identifier triggered');
     super.notifyListeners();
   }
 }
@@ -146,7 +149,7 @@ abstract class ECSComponent<TValue> extends ECSEntity {
 
   @override
   void notifyListeners() {
-    log('${feature.runtimeType}.$runtimeType updated from ${describe(_previous)} to ${describe(_value)}');
+    log('$identifier updated from ${describe(_previous)} to ${describe(_value)}');
     super.notifyListeners();
   }
 }

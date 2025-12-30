@@ -18,9 +18,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ECSScope(
       features: {UserProfileFeature()},
-      child: const MaterialApp(
-        home: UserProfilePage(userId: '123')
-      ),
+      child: const MaterialApp(home: UserProfilePage(userId: '123')),
     );
   }
 }
@@ -45,22 +43,27 @@ class UserProfilePage extends ECSWidget {
           if (loadingState.value == LoadingState.running) {
             return const Center(child: CircularProgressIndicator());
           }
-      
+
           // Handle error state
           if (loadingState.value == LoadingState.error) {
             return Center(child: Text('Error: ${loadingError.value}'));
           }
-      
+
           // Display user data if loaded
           if (userData.value != null) {
-            return Center(child: Text('User Loaded: ${userData.value!.name} - ${userData.value!.email}'));
+            return Center(
+              child: Text(
+                'User Loaded: ${userData.value!.name} - ${userData.value!.email}',
+              ),
+            );
           }
-      
+
           // Initial state with load button
           return Center(
             child: ElevatedButton(
-              onPressed: () => loadEvent.triggerWithUserId(userId), 
-              child: const Text('Load User Profile')),
+              onPressed: () => loadEvent.triggerWithUserId(userId),
+              child: const Text('Load User Profile'),
+            ),
           );
         },
       ),

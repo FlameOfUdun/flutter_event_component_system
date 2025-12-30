@@ -1,16 +1,14 @@
 part of '../ecs_base.dart';
 
 final class ECSSystemData {
-  final String name;
+  final String identifier;
   final String type;
-  final String feature;
   final List<String> interactsWith;
   final List<String> reactsTo;
 
   const ECSSystemData({
-    required this.name,
+    required this.identifier,
     required this.type,
-    required this.feature,
     this.interactsWith = const [],
     this.reactsTo = const [],
   });
@@ -33,21 +31,18 @@ final class ECSSystemData {
     if (system is ReactiveSystem) {
       for (final type in system.reactsTo) {
         final entity = system.feature!.manager!.getEntityOfType(type);
-        final identifier = '${entity.feature.runtimeType}.${entity.runtimeType}';
-        reactsTo.add(identifier);
+        reactsTo.add(entity.identifier);
       }
     }
 
     final interactsWith = <String>[];
     for (final type in system.interactsWith) {
       final entity = system.feature!.manager!.getEntityOfType(type);
-      final identifier = '${entity.feature.runtimeType}.${entity.runtimeType}';
-      interactsWith.add(identifier);
+      interactsWith.add(entity.identifier);
     }
 
     return ECSSystemData(
-      name: system.runtimeType.toString(),
-      feature: system.feature.runtimeType.toString(),
+      identifier: system.identifier,
       type: type,
       interactsWith: interactsWith,
       reactsTo: reactsTo,
@@ -56,9 +51,8 @@ final class ECSSystemData {
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
+      'identifier': identifier,
       'type': type,
-      'feature': feature,
       'interactsWith': interactsWith,
       'reactsTo': reactsTo,
     };

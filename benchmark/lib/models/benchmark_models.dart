@@ -69,7 +69,11 @@ class TodoListModel {
 
   TodoListModel toggleItem(String id) {
     return TodoListModel(
-      items: items.map((item) => item.id == id ? item.copyWith(isCompleted: !item.isCompleted) : item).toList(),
+      items: items
+          .map((item) => item.id == id
+              ? item.copyWith(isCompleted: !item.isCompleted)
+              : item)
+          .toList(),
       filter: filter,
     );
   }
@@ -102,7 +106,10 @@ class TodoListModel {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TodoListModel && other.filter == filter && other.items.length == items.length && other.items.every((item) => items.contains(item));
+      other is TodoListModel &&
+          other.filter == filter &&
+          other.items.length == items.length &&
+          other.items.every((item) => items.contains(item));
 
   @override
   int get hashCode => Object.hash(items, filter);

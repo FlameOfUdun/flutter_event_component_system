@@ -1,12 +1,12 @@
 part of '../ecs_base.dart';
 
 final class ECSFeatureData {
-  final String name;
+  final String identifier;
   final List<ECSSystemData> systems;
   final List<ECSEntityData> entities;
 
   const ECSFeatureData({
-    required this.name,
+    required this.identifier,
     required this.systems,
     required this.entities,
   });
@@ -33,9 +33,8 @@ final class ECSFeatureData {
     for (final entity in feature.entities) {
       entities.add(ECSEntityData.fromEntity(entity));
     }
-
     return ECSFeatureData(
-      name: feature.runtimeType.toString(),
+      identifier: feature.identifier,
       systems: systems,
       entities: entities,
     );
@@ -43,7 +42,7 @@ final class ECSFeatureData {
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
+      'identifier': identifier,
       'systems': systems.map((s) => s.toJson()).toList(),
       'entities': entities.map((e) => e.toJson()).toList(),
     };

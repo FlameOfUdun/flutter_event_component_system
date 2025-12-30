@@ -13,7 +13,8 @@ abstract class ECSWidget extends StatefulWidget {
   Widget build(BuildContext context, ECSContext ecs);
 }
 
-final class _ECSWidgetState extends State<ECSWidget> with _ECSContextProvider<ECSWidget> {
+final class _ECSWidgetState extends State<ECSWidget>
+    with _ECSContextProvider<ECSWidget> {
   @override
   Widget build(BuildContext context) {
     return widget.build(context, ecs);
@@ -28,7 +29,8 @@ abstract class ECSStatefulWidget extends StatefulWidget {
   ECSState<ECSStatefulWidget> createState();
 }
 
-abstract class ECSState<TWidget extends ECSStatefulWidget> extends State<TWidget> with _ECSContextProvider {}
+abstract class ECSState<TWidget extends ECSStatefulWidget>
+    extends State<TWidget> with _ECSContextProvider {}
 
 mixin _ECSContextProvider<T extends StatefulWidget> on State<T> {
   ECSContext? _ecs;
