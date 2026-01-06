@@ -23,21 +23,37 @@ final class ECSManager with _ECSLogger {
   /// Indicates if the ECS manager is active.
   bool _isActive = false;
 
-  @visibleForTesting
-  ECSManager({
+  ECSManager._internal({
     this.name,
+    Set<ECSFeature>? features,
+  }) {
+    _ensureDevtoolsRegistered();
+    index = _nextManagerIndex++;
+    if (features != null) {
+      addFeatures(features);
+    }
+    activate();
+  }
+
+  /// Factory constructor for creating or retrieving an ECS manager.
+  factory ECSManager({
+    String? name,
+    Set<ECSFeature>? features,
   }) {
     if (name != null) {
       for (final manager in _managers) {
         if (manager.name == name) {
-          throw ArgumentError('ECSManager with name "$name" already exists.');
+          return manager;
         }
       }
     }
 
-    index = _nextManagerIndex++;
+    final manager = ECSManager._internal(
+      name: name,
+      features: features,
+    );
 
-    _ensureDevtoolsRegistered();
+    return manager;
   }
 
   /// Indicates if the ECS manager is active.

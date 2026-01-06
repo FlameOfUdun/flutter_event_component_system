@@ -9,8 +9,9 @@ final class ECSEventProvider extends InheritedWidget {
   static ECSEventProvider of(BuildContext context) {
     final widget = context
         .dependOnInheritedWidgetOfExactType<ECSEventProvider>();
-    if (widget == null)
+    if (widget == null) {
       throw FlutterError('ECSEventProvider not found in context');
+    }
     return widget;
   }
 

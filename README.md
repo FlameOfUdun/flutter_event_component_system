@@ -6,6 +6,11 @@
 
 A powerful and flexible **Event-Component-System (ECS)** architecture pattern implementation for Flutter applications. This package provides a reactive state management solution that promotes clean architecture, separation of concerns, and scalable application development.
 
+## 📚 Articles & Resources
+
+- [**Flutter ECS: Rethinking State Management for Flutter Apps**](https://medium.com/@dr.e.rashidi/flutter-ecs-rethinking-state-management-for-flutter-apps-bd224da10881) - Introduction to the ECS pattern and core concepts
+- [**Flutter ECS: Mastering Async Operations and Complex Workflows**](https://medium.com/@dr.e.rashidi/flutter-ecs-mastering-async-operations-and-complex-workflows-af558143bef9) - Advanced patterns for async operations and workflow management
+
 ## 🌟 Features
 
 ### Core Architecture

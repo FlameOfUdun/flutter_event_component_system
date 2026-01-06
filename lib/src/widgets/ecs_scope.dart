@@ -52,6 +52,7 @@ final class _ECSScopeState extends State<ECSScope>
   /// The ECS manager for this scope.
   late final manager = ECSManager(
     name: widget.name,
+    features: widget.features,
   );
 
   /// Ticker for driving the ECS execution loop.
@@ -62,13 +63,8 @@ final class _ECSScopeState extends State<ECSScope>
 
   @override
   void initState() {
-    manager
-      ..addFeatures(widget.features)
-      ..activate();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       manager.initialize();
-
       if (manager.hasExecuteOrCleanupSystems) {
         startTicker();
       }
@@ -88,8 +84,9 @@ final class _ECSScopeState extends State<ECSScope>
   void startTicker() {
     ticker = createTicker((duration) {
       final elapsed = calculateElapsed(duration);
-      manager.execute(elapsed);
-      manager.cleanup();
+      manager
+        ..execute(elapsed)
+        ..cleanup();
     })
       ..start();
   }
@@ -97,11 +94,9 @@ final class _ECSScopeState extends State<ECSScope>
   @override
   void dispose() {
     ticker?.stop();
-
     manager
       ..teardown()
       ..deactivate();
-
     super.dispose();
   }
 

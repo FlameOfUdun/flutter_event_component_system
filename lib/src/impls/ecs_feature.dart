@@ -77,9 +77,9 @@ abstract class ECSFeature {
   /// Throws a [StateError] if the feature is already active.
   @protected
   @visibleForTesting
-  void addEntity(ECSEntity entitiy) {
-    entities.add(entitiy);
-    entitiy.attach(this);
+  void addEntity(ECSEntity entity) {
+    entities.add(entity);
+    entity.attach(this);
   }
 
   /// Adds a system to this feature.

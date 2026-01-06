@@ -10,20 +10,22 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ECSScope(
+      name: 'NestedScope1',
       features: {
         NestedFeature(),
       },
       child: ECSBuilder(builder: (context, ecs) {
         final component = ecs.get<NestedComponent>();
-        debugPrint('NestedComponent data: ${component.hashCode}');
+        debugPrint('NestedComponent data: ${component.identifier}');
 
         return ECSScope(
+          name: 'NestedScope2',
           features: {
             NestedFeature(),
           },
           child: ECSBuilder(builder: (context, ecs) {
             final component = ecs.get<NestedComponent>();
-            debugPrint('NestedComponent data: ${component.hashCode}');
+            debugPrint('NestedComponent data: ${component.identifier}');
 
             return Scaffold(
               appBar: AppBar(
