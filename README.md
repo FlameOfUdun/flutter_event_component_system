@@ -1,5 +1,6 @@
 # Flutter Event Component System (ECS)
 
+[![pub package](https://img.shields.io/pub/v/flutter_event_component_system.svg)](https://pub.dev/packages/flutter_event_component_system)
 [![Apache 2.0 License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-0175C2?logo=dart&logoColor=white)](https://dart.dev)
