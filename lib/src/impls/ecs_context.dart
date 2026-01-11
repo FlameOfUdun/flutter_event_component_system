@@ -18,10 +18,6 @@ final class ECSContext implements ECSEntityListener {
   @visibleForTesting
   final Set<ECSEntity> watchers = {};
 
-  /// Map of watch conditions for entities.
-  @visibleForTesting
-  final Map<ECSEntity, bool Function(ECSEntity)> watchConditions = {};
-
   /// Optional listeners for enter event.
   @visibleForTesting
   void Function()? onEnterListener;
@@ -42,13 +38,13 @@ final class ECSContext implements ECSEntityListener {
   @visibleForTesting
   Set<ECSEntity> entities = {};
 
-  /// Queue of callbacks to be executed.
+  /// Indicates if listener callbacks are currently scheduled for next frame.
   @visibleForTesting
-  List<void Function()> queue = [];
+  bool listenerLocked = false;
 
-  /// Indicates if a queue is currently running.
+  /// Pending listener callbacks to execute on next frame.
   @visibleForTesting
-  bool isRunning = false;
+  List<void Function()> pendingListeners = [];
 
   /// Indicates if onEnter has been set.
   @visibleForTesting
@@ -76,69 +72,103 @@ final class ECSContext implements ECSEntityListener {
   }
 
   /// Gets an entity of type [TEntity] from the ECS manager.
+  ///
+  /// Entities are cached for performance. Subsequent calls for the same type
+  /// will return the cached instance.
+  ///
+  /// Throws [StateError] if called on a disposed context.
   TEntity get<TEntity extends ECSEntity>() {
+    if (disposed) throw StateError('Cannot get entity on disposed context');
     return _getEntity<TEntity>();
   }
 
   /// Watches an entity of type [TEntity] for changes.
   ///
-  /// If a [condition] is provided, the context will only rebuild when the condition is met.
-  TEntity watch<TEntity extends ECSEntity>({
-    bool Function(TEntity entity)? condition,
-  }) {
+  /// When the entity changes, the widget will rebuild automatically.
+  ///
+  /// Multiple calls with the same entity type will not create duplicate subscriptions.
+  ///
+  /// Throws [StateError] if called on a disposed context.
+  TEntity watch<TEntity extends ECSEntity>() {
+    if (disposed) throw StateError('Cannot watch entity on disposed context');
     final entity = _getEntity<TEntity>();
     if (watchers.add(entity)) {
       entity.addListener(this);
-      if (condition != null) {
-        watchConditions[entity] = (e) => condition(e as TEntity);
-      }
     }
     return entity;
   }
 
   /// Listens to changes in an entity of type [TEntity].
   ///
-  /// The listener will be called whenever the entity changes.
+  /// The listener will be called at the next frame boundary when the entity changes.
+  /// Unlike [watch], this does not trigger widget rebuilds.
   ///
-  /// If the entity is already being watched, it will be overridden.
+  /// Callbacks are executed via frame callbacks and are batched together.
+  /// Multiple calls with the same entity type will override the previous listener.
   ///
-  /// Callbacks are executed asynchronously and safe to use in the widget tree.
+  /// If called on a disposed context, the operation is silently ignored.
   void listen<TEntity extends ECSEntity>(
       void Function(TEntity entity) listener) {
+    if (disposed) {
+      return;
+    }
     final entity = _getEntity<TEntity>();
     if (!listeners.containsKey(entity)) entity.addListener(this);
     listeners[entity] = () => listener(entity);
   }
 
   /// Initializes the ECS context.
+  ///
+  /// This is called automatically by the ECS widget after the first frame.
+  /// If an [onEnter] callback was registered, it will be scheduled to run
+  /// at the next frame boundary to avoid setState during build.
   @visibleForTesting
   void initialize() {
     if (onEnterListener != null) {
-      enqueue(onEnterListener!);
+      SchedulerBinding.instance.scheduleFrameCallback((_) {
+        if (!disposed) {
+          guard(
+            onEnterListener!,
+            description: 'ECSContext onEnter callback',
+          );
+        }
+      });
     }
   }
 
   /// Disposes the ECS context.
+  ///
+  /// Disposal sequence:
+  /// 1. Sets [disposed] flag to prevent new operations
+  /// 2. Executes [onExit] callback synchronously (can still access entities)
+  /// 3. Clears entity cache and pending listener callbacks
+  /// 4. Removes all entity listeners and clears subscriptions
+  ///
+  /// After disposal, [get] and [watch] will throw [StateError], while [listen]
+  /// will silently ignore new calls.
   @visibleForTesting
   void dispose() {
     disposed = true;
 
+    if (onExitListener != null) {
+      guard(
+        onExitListener!,
+        description: 'ECSContext onExit callback',
+      );
+    }
+
     entities.clear();
+    pendingListeners.clear();
 
     for (final entity in watchers) {
       entity.removeListener(this);
     }
     watchers.clear();
-    watchConditions.clear();
 
     for (final entity in listeners.keys) {
       entity.removeListener(this);
     }
     listeners.clear();
-
-    if (onExitListener != null) {
-      enqueue(onExitListener!);
-    }
   }
 
   /// Rebuilds the ECS context.
@@ -149,7 +179,9 @@ final class ECSContext implements ECSEntityListener {
   /// frame will result in only one actual rebuild at the next frame boundary.
   @visibleForTesting
   void rebuild() {
-    if (locked || disposed) return;
+    if (locked || disposed) {
+      return;
+    }
     locked = true;
 
     SchedulerBinding.instance.scheduleFrameCallback((_) {
@@ -163,16 +195,32 @@ final class ECSContext implements ECSEntityListener {
     });
   }
 
-  /// Callback for when entring the ECS context.
+  /// Registers a callback to be executed when the context is initialized.
+  ///
+  /// The callback is executed at the next frame boundary after initialization
+  /// to avoid setState during build. This ensures the widget is fully initialized
+  /// before the callback runs.
+  ///
+  /// Can only be set once - subsequent calls are ignored.
   void onEnter(void Function() function) {
-    if (onEnterSet) return;
+    if (onEnterSet) {
+      return;
+    }
     onEnterSet = true;
     onEnterListener = function;
   }
 
-  /// Callback for when exiting the ECS context.
+  /// Registers a callback to be executed when the context is disposed.
+  ///
+  /// The callback is executed synchronously during disposal, after the [disposed]
+  /// flag is set but before resources are cleared. This allows the callback to
+  /// access entities and perform cleanup.
+  ///
+  /// Can only be set once - subsequent calls are ignored.
   void onExit(void Function() function) {
-    if (onExitSet) return;
+    if (onExitSet) {
+      return;
+    }
     onExitSet = true;
     onExitListener = function;
   }
@@ -180,40 +228,46 @@ final class ECSContext implements ECSEntityListener {
   @override
   @visibleForTesting
   void onEntityChanged(ECSEntity entity) {
+    if (disposed) {
+      return;
+    }
     if (watchers.contains(entity)) {
-      final condition = watchConditions[entity];
-      if (condition == null || condition(entity)) {
-        rebuild();
-      }
+      rebuild();
     }
 
     if (listeners.containsKey(entity)) {
-      enqueue(listeners[entity]!);
+      final callback = listeners[entity]!;
+      if (!pendingListeners.contains(callback)) {
+        pendingListeners.add(callback);
+      }
+      _scheduleListeners();
     }
   }
 
-  /// Enqueues a function to be executed asynchronously.
-  @visibleForTesting
-  void enqueue(void Function() function) {
-    queue.add(function);
+  /// Schedules pending listener callbacks to execute at the next frame boundary.
+  ///
+  /// Multiple listener callbacks are batched together and executed in a single frame.
+  /// Callbacks are coalesced - multiple schedule requests within the same frame
+  /// result in only one execution at the next frame boundary.
+  void _scheduleListeners() {
+    if (listenerLocked || disposed) {
+      return;
+    }
+    listenerLocked = true;
 
-    if (isRunning) return;
-    isRunning = true;
-
-    scheduleMicrotask(() async {
-      while (queue.isNotEmpty) {
-        final callbacks = List<void Function()>.from(queue);
-        queue.clear();
+    SchedulerBinding.instance.scheduleFrameCallback((_) {
+      if (!disposed && pendingListeners.isNotEmpty) {
+        final callbacks = List<void Function()>.from(pendingListeners);
+        pendingListeners.clear();
 
         for (final callback in callbacks) {
           guard(
             callback,
-            description: 'ECSContext queued callback',
+            description: 'ECSContext listener callback',
           );
         }
       }
-
-      isRunning = false;
+      listenerLocked = false;
     });
   }
 

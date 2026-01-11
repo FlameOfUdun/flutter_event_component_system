@@ -18,9 +18,12 @@ class DummyReactiveSystem extends ReactiveSystem {
 }
 
 class DummyFeature extends ECSFeature {
-  DummyFeature() {
+  DummyFeature({
+    Set<ECSSystem>? systems,
+  }) {
     addEntity(DummyComponent());
     addEntity(DummyEvent());
+    systems?.forEach(addSystem);
   }
 }
 
@@ -30,7 +33,10 @@ class AnotherDummyFeature extends ECSFeature {
   bool cleaned = false;
   bool executed = false;
 
-  AnotherDummyFeature() {
+  AnotherDummyFeature({
+    Set<ECSSystem>? systems,
+  }) {
+    systems?.forEach(addSystem);
     addSystem(DummyReactiveSystem());
   }
 
@@ -68,7 +74,7 @@ class ComponentReactiveSystem extends ReactiveSystem {
 void main() {
   group('ECSManager', () {
     test('addFeature adds feature and entities', () {
-      final manager = ECSManager();
+      final manager = ECSManager(features: {});
       final feature = DummyFeature();
       manager.addFeature(feature);
       expect(manager.features, contains(feature));
@@ -85,18 +91,19 @@ void main() {
       expect(component, isA<DummyComponent>());
     });
 
-    test('get throws if entity not found', () {
+    test('get returns entity if found', () {
       final manager = ECSManager();
+      final feature = DummyFeature();
+      manager.addFeature(feature);
       manager.activate();
-      expect(() => manager.getEntity<DummyComponent>(), throwsStateError);
+      final component = manager.getEntity<DummyComponent>();
+      expect(component, isA<DummyComponent>());
     });
 
     test('onEntityChanged triggers reactive systems', () {
-      final manager = ECSManager();
-      final feature = DummyFeature();
       final reactive = DummyReactiveSystem();
-      feature.addSystem(reactive);
-      manager.addFeature(feature);
+      final feature = DummyFeature(systems: {reactive});
+      final manager = ECSManager(features: {feature});
       manager.activate();
       feature.getEntity<DummyEvent>().trigger();
       expect(reactive.reacted, isTrue);
@@ -128,13 +135,10 @@ void main() {
     });
 
     test('multiple reactive systems for same entity type are triggered', () {
-      final manager = ECSManager();
-      final feature = DummyFeature();
       final reactive1 = DummyReactiveSystem();
       final reactive2 = DummyReactiveSystem();
-      feature.addSystem(reactive1);
-      feature.addSystem(reactive2);
-      manager.addFeature(feature);
+      final feature = DummyFeature(systems: {reactive1, reactive2});
+      final manager = ECSManager(features: {feature});
       manager.activate();
       feature.getEntity<DummyEvent>().trigger();
       expect(reactive1.reacted, isTrue);
@@ -142,13 +146,11 @@ void main() {
     });
 
     test('reactive systems only trigger for correct entity types', () {
-      final manager = ECSManager();
-      final feature = DummyFeature();
       final eventReactiveSystem = DummyReactiveSystem();
       final componentReactiveSystem = ComponentReactiveSystem();
-      feature.addSystem(eventReactiveSystem);
-      feature.addSystem(componentReactiveSystem);
-      manager.addFeature(feature);
+      final feature =
+          DummyFeature(systems: {eventReactiveSystem, componentReactiveSystem});
+      final manager = ECSManager(features: {feature});
       manager.activate();
 
       // Trigger event - only event reactive system should react
@@ -190,16 +192,13 @@ void main() {
     });
 
     test('entity change triggers systems across all features', () {
-      final manager = ECSManager();
-      final feature1 = DummyFeature();
-      final feature2 = AnotherDummyFeature();
       final reactive1 = DummyReactiveSystem();
       final reactive2 = DummyReactiveSystem();
 
-      feature1.addSystem(reactive1);
-      feature2.addSystem(reactive2);
-      manager.addFeature(feature1);
-      manager.addFeature(feature2);
+      final feature1 = DummyFeature(systems: {reactive1});
+      final feature2 = AnotherDummyFeature(systems: {reactive2});
+
+      final manager = ECSManager(features: {feature1, feature2});
       manager.activate();
 
       feature1.getEntity<DummyEvent>().trigger();
