@@ -71,7 +71,6 @@ As your app grows:
 
 This makes large and complex applications easier to evolve than with shared state or global providers.
 
-
 ## 📚 Articles & Resources
 
 - [**Flutter ECS: Rethinking State Management for Flutter Apps**](https://medium.com/@dr.e.rashidi/flutter-ecs-rethinking-state-management-for-flutter-apps-bd224da10881)
@@ -262,23 +261,7 @@ Central coordinator that:
 
 ### System Lifecycle
 
-```mermaid
-graph TD
-    A[Feature Added] --> B[Initialize Systems]
-    B --> C[Execute Systems]
-    C --> D[Cleanup Systems]
-    D --> C
-    D --> E[Teardown Systems]
-    E --> F[Feature Disposed]
-
-    G[Entity Changes]
-    G --> H[Reactive Systems]
-    H --> G
-    B --> G
-    C --> G
-    D --> G
-    E --> G
-```
+![ECS System Lifecycle](https://raw.githubusercontent.com/FlameOfUdun/flutter_event_component_system/main/assets/ecs_system_lifecycle_diagram.png)
 
 ## 🎯 Advanced Features
 
