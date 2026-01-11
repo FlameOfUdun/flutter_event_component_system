@@ -5,12 +5,78 @@
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-0175C2?logo=dart&logoColor=white)](https://dart.dev)
 
-A powerful and flexible **Event-Component-System (ECS)** architecture pattern implementation for Flutter applications. This package provides a reactive state management solution that promotes clean architecture, separation of concerns, and scalable application development.
+A powerful and flexible **Event-Component-System** architecture pattern implementation for Flutter applications. This package provides a reactive state management solution that promotes clean architecture, separation of concerns, and scalable application development.
+
+---
+
+**NOTICE**
+This library is not a data-oriented ECS. It does not optimize for memory layout or CPU cache efficiency. Instead, it uses events, components, and systems as a conceptual model for structuring complex, event-driven domain logic in Flutter applications.
+Events and components are modeled as entities with explicit lifecycle and state, enabling deterministic, inspectable, and testable workflows.
+
+---
+
+## 📌 Why Choose This Over Other State Management Libraries
+
+### Clear Separation of Data, Logic, and Events
+
+Instead of coupling state and logic inside widgets, notifiers, or bloc classes, this system splits:
+
+- Components: containers for state with history tracking
+- Events: explicit triggers for actions
+- Systems: pure logic reacting to changes and events
+
+This separation makes business logic easier to reason about, test, and maintain as the application grows.
+
+### Features as Self Contained Modules**
+
+Your app can be structured into features that encapsulate related entities, events, and systems together. This enables:
+
+- Easy removal or addition of features
+- Clear boundaries between domains modular testing
+
+This modularity isn’t easy to achieve with classic state management methods.
+
+### Deterministic and Testable Logic
+
+Systems in this architecture are pure and stateless functions of components and events. This makes them:
+
+- predictable
+- Easy to unit test in isolation
+- Easy to mock
+- Easy to reason about without widget scaffolding
+
+Testing flows or business rules does not require spinning up widget trees or provider scopes.
+
+### Explicit Event Handling
+
+Instead of implicit streams, callbacks, or passing dispatch functions through widget trees, events in this library are first-class entities that can carry data and trigger reactions explicitly. This gives you:
+
+- Traceable workflows
+- Easier debugging
+
+behavior that is visible and inspectable
+This contrasts with the invisible event flow in many pub-sub systems.
+
+### Built-In Inspector Devtools Extension
+
+Because the architecture has explicit entities, events, and systems, you can build tooling to inspect the runtime structure including logs, entity state, and dependency graphs; something that most state libs don’t provide out of the box.
+
+### Scalability Without Coupling
+
+As your app grows:
+
+- You don’t end up with tangled notifier hierarchies.
+- UI logic doesn’t leak into business workflows.
+- Systems can evolve independently.
+
+This makes large and complex applications easier to evolve than with shared state or global providers.
+
 
 ## 📚 Articles & Resources
 
-- [**Flutter ECS: Rethinking State Management for Flutter Apps**](https://medium.com/@dr.e.rashidi/flutter-ecs-rethinking-state-management-for-flutter-apps-bd224da10881) - Introduction to the ECS pattern and core concepts
-- [**Flutter ECS: Mastering Async Operations and Complex Workflows**](https://medium.com/@dr.e.rashidi/flutter-ecs-mastering-async-operations-and-complex-workflows-af558143bef9) - Advanced patterns for async operations and workflow management
+- [**Flutter ECS: Rethinking State Management for Flutter Apps**](https://medium.com/@dr.e.rashidi/flutter-ecs-rethinking-state-management-for-flutter-apps-bd224da10881)
+- [**Flutter ECS: Mastering Async Operations and Complex Workflows**](https://medium.com/@dr.e.rashidi/flutter-ecs-mastering-async-operations-and-complex-workflows-af558143bef9)
+- [**Flutter ECS: Testing Strategies That Actually Work**](https://medium.com/@dr.e.rashidi/flutter-ecs-testing-strategies-that-actually-work-47685dc03a7a)
 
 ## 🌟 Features
 
@@ -19,7 +85,7 @@ A powerful and flexible **Event-Component-System (ECS)** architecture pattern im
 - **🏗️ Entity-Component-System Pattern**: Clean separation between data (Components), behavior (Systems), and events
 - **⚡ Reactive Programming**: Automatic UI updates when components change
 - **🔄 Event-Driven**: Decoupled communication through events and reactive systems
-- **🎯 Type-Safe**: Full TypeScript-like type safety with Dart generics
+- **🎯 Type-Safe**: Full type safety with Dart generics
 - **🧩 Modular Design**: Organize code into reusable features
 
 ### Advanced Capabilities
