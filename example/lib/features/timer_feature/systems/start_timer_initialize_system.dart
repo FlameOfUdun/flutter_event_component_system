@@ -1,6 +1,4 @@
-import 'package:flutter_event_component_system/flutter_event_component_system.dart';
-
-import '../events/timer_start_event.dart';
+part of '../timer_feature.dart';
 
 final class StartTimerInitializeSystem extends InitializeSystem {
   @override

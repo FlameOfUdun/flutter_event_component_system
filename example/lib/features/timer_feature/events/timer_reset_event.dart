@@ -1,4 +1,4 @@
-import 'package:flutter_event_component_system/flutter_event_component_system.dart';
+part of '../timer_feature.dart';
 
 final class TimerResetEvent extends ECSEvent {
   TimerResetEvent();

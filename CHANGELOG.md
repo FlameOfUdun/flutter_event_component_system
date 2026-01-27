@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.0.6
+
+* Added ECSDataEvent class
+* Refactored Inspector Devtools Extension
+
 ## 0.0.5
 
 * Major ECSContext refactoring for improved performance and reliability

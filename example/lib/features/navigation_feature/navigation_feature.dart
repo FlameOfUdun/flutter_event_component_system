@@ -9,6 +9,8 @@ part 'systems/navigate_to_selected_route_reactive_system.dart';
 part 'systems/navigate_to_dashboard_when_logged_in_reactive_system.dart';
 part 'systems/navigate_to_login_when_logged_out_reactive_system.dart';
 
+part 'models/app_routes.dart';
+
 final class NavigationFeature extends ECSFeature {
   NavigationFeature({
     required GlobalKey<NavigatorState> navigatorKey,

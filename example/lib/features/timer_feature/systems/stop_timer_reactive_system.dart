@@ -1,7 +1,4 @@
-import 'package:flutter_event_component_system/flutter_event_component_system.dart';
-
-import '../components/timer_state_component.dart';
-import '../events/timer_stop_event.dart';
+part of '../timer_feature.dart';
 
 final class StopTimerReactiveSystem extends ReactiveSystem {
   @override

@@ -3,7 +3,7 @@ part of '../ecs_base.dart';
 /// Interface for listening to changes in entities.
 abstract interface class ECSEntityListener {
   /// Called when an entity changes.
-  void onEntityChanged(ECSEntity entity) {}
+  void onEntityChanged(ECSEntity entity);
 }
 
 /// Represents a base entity in the ECS system.
@@ -15,8 +15,6 @@ sealed class ECSEntity {
   /// The parent feature of this entity.
   @visibleForTesting
   ECSFeature? feature;
-
-  ECSEntity();
 
   /// Indicates whether this entity is active (i.e., has a parent feature).
   @visibleForTesting
@@ -66,21 +64,50 @@ abstract class ECSEvent extends ECSEntity {
   /// The last triggered timestamp of the event.
   DateTime? _triggeredAt;
 
-  ECSEvent();
-
   /// The last triggered timestamp of the event, or null if never triggered.
   DateTime? get triggeredAt => _triggeredAt;
 
   /// Triggers the event, notifying all listeners.
   void trigger() {
     _triggeredAt = DateTime.now();
+    log('$identifier triggered');
     notifyListeners();
   }
+}
 
-  @override
-  void notifyListeners() {
-    log('$identifier triggered');
-    super.notifyListeners();
+/// Data events are specialized entities that can be triggered with associated
+/// data to notify listeners.
+///
+/// When triggered, the event holds the data temporarily during notification,
+/// after which the data is cleared.
+///
+/// Noice that you should not use the [data] property asynchronously after triggering,
+/// as it will be nullified right after notifying listeners.
+abstract class ECSDataEvent<TData> extends ECSEntity {
+  /// The current data of the event.
+  TData? _data;
+
+  /// The last triggered timestamp of the event.
+  DateTime? _triggeredAt;
+
+  /// The current data of the event, or null if none.
+  TData? get data => _data;
+
+  /// The last triggered timestamp of the event, or null if never triggered.
+  DateTime? get triggeredAt => _triggeredAt;
+
+  /// Triggers the event with associated [data], notifying all listeners.
+  void trigger(TData data) {
+    _data = data;
+    _triggeredAt = DateTime.now();
+    log('$identifier triggered with data: ${describe(_data)}');
+    notifyListeners();
+    _data = null;
+  }
+
+  /// Builds a string descriptor for the event's data in inspector.
+  String describe(TData? data) {
+    return data.toString();
   }
 }
 
@@ -131,6 +158,7 @@ abstract class ECSComponent<TValue> extends ECSEntity {
     _value = value;
     _updatedAt = DateTime.now();
     if (notify) {
+      log('$identifier updated from ${describe(_previous)} to ${describe(_value)}');
       notifyListeners();
     }
   }
@@ -142,14 +170,8 @@ abstract class ECSComponent<TValue> extends ECSEntity {
     update(value);
   }
 
-  /// Builds a string descriptor for the component's value in [ECSInspector].
+  /// Builds a string descriptor for the component's value in inspector.
   String describe(TValue? value) {
     return value.toString();
-  }
-
-  @override
-  void notifyListeners() {
-    log('$identifier updated from ${describe(_previous)} to ${describe(_value)}');
-    super.notifyListeners();
   }
 }

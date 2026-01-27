@@ -17,15 +17,19 @@ final class LogoutUserReactiveSystem extends ReactiveSystem {
   }
 
   @override
-  void react() async {
-    getEntity<LogoutProcessComponent>().update(const LogoutProcess.running());
+  void react() {
+    _performLogout().ignore();
+  }
 
+  Future<void> _performLogout() async {
+    final process = getEntity<LogoutProcessComponent>();
+    process.update(const LogoutProcess.running());
     final preferences = await SharedPreferences.getInstance();
-    await preferences.remove('auth_state');
+    await preferences.setString('auth_state', AuthState.loggedOut.name);
     await Future.delayed(const Duration(seconds: 2));
+    process.update(const LogoutProcess.success());
 
-    getEntity<LogoutProcessComponent>().update(const LogoutProcess.success());
-
-    getEntity<AuthStateComponent>().update(AuthState.loggedOut);
+    final state = getEntity<AuthStateComponent>();
+    state.update(AuthState.loggedOut);
   }
 }

@@ -1,12 +1,6 @@
-import 'package:flutter_event_component_system/flutter_event_component_system.dart';
-
-import '../components/timer_value_component.dart';
-import '../components/timer_state_component.dart';
+part of '../timer_feature.dart';
 
 final class UpdateTimerExecuteSystem extends ExecuteSystem {
-  TimerValueComponent? timer;
-  TimerStateComponent? state;
-
   Duration? duration;
 
   @override
@@ -18,14 +12,13 @@ final class UpdateTimerExecuteSystem extends ExecuteSystem {
 
   @override
   bool get executesIf {
-    timer ??= getEntity<TimerValueComponent>();
-    state ??= getEntity<TimerStateComponent>();
-    return state!.value == TimerState.running;
+    final state = getEntity<TimerStateComponent>();
+    return state.value == TimerState.running;
   }
 
   @override
   void execute(Duration elapsed) {
-    final value = timer!.value + elapsed;
-    timer!.update(value);
+    final timer = getEntity<TimerValueComponent>();
+    timer.value = timer.value + elapsed;
   }
 }

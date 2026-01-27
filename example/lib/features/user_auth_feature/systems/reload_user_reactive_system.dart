@@ -16,11 +16,14 @@ final class ReloadUserReactiveSystem extends ReactiveSystem {
   }
 
   @override
-  void react() async {
+  void react() {
+    _performReload().ignore();
+  }
+
+  Future<void> _performReload() async {
     final preferences = await SharedPreferences.getInstance();
     final value = preferences.getString('auth_state');
-    final state =
-        value == null ? AuthState.loggedOut : AuthState.values.byName(value);
+    final state = value == null ? AuthState.loggedOut : AuthState.values.byName(value);
     getEntity<AuthStateComponent>().update(state);
   }
 }
