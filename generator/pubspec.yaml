@@ -1,0 +1,20 @@
+name: flutter_event_component_system_generator
+description: Code generator for Flutter Event-Component-System. Generates ECS features, components, events, and systems from annotated declarations.
+version: 0.0.1
+repository: https://github.com/ArcaneArts/flutter_event_component_system
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  analyzer: ^8.0.0
+  build: ^4.0.4
+  source_gen: ^4.2.0
+  flutter_event_component_system_annotations:
+    path: ../annotations
+
+dev_dependencies:
+  build_runner: 2.11.1
+  build_test: ^3.5.7
+  test: ^1.24.0

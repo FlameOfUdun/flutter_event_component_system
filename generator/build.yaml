@@ -1,0 +1,7 @@
+builders:
+  ecs_builder:
+    import: "package:flutter_event_component_system_generator/flutter_event_component_system_generator.dart"
+    builder_factories: ["ecsBuilder"]
+    build_extensions: {".dart": [".ecs.dart"]}
+    auto_apply: dependents
+    build_to: source

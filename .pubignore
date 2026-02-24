@@ -1,4 +1,7 @@
 benchmark/
+generator/
+inspector/
+lints/
 tutorial/
 
 benchmark/build/

@@ -9,14 +9,27 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  
+  shared_preferences: ^2.5.3
+
   flutter_event_component_system:
     path: ../
-  shared_preferences: ^2.5.3
+  flutter_event_component_system_annotations:
+    path: ../annotations
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
   flutter_lints: ^5.0.0
+  custom_lint: ^0.8.1
+  build_runner: ^2.11.1
+
+  flutter_event_component_system_lints:
+    path: ../lints
+  flutter_event_component_system_generator:
+    path: ../generator
 
 flutter:
   uses-material-design: true

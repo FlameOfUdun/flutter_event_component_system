@@ -1,7 +1,6 @@
 part of '../navigation_feature.dart';
 
-final class NavigateToDashboardWhenLoggedInReactiveSystem
-    extends ReactiveSystem {
+final class NavigateToDashboardWhenLoggedInReactiveSystem extends ReactiveSystem {
   @override
   Set<Type> get reactsTo {
     return const {
@@ -23,7 +22,8 @@ final class NavigateToDashboardWhenLoggedInReactiveSystem
   }
 
   @override
-  void react() {
+  void react() async {
+    await Future.delayed(const Duration(seconds: 1)); // Simulate async work
     final routeComponent = getEntity<AppRouteComponent>();
     routeComponent.value = AppRoutes.dashboard;
   }
