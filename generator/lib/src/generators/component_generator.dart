@@ -28,10 +28,9 @@ final class ComponentGenerator extends GeneratorForAnnotation<ComponentDefinitio
 
     final varName = element.name!;
     final type = element.type.getDisplayString();
-    final customName = annotation.peek('name')?.stringValue;
     final description = annotation.peek('description')?.stringValue;
 
-    final className = customName ?? '${_capitalize(varName)}Component';
+    final className = '${_capitalize(varName)}Component';
     final defaultValue = _extractDefault(element);
 
     final buffer = StringBuffer();

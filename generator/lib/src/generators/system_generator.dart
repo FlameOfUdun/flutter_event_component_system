@@ -34,10 +34,9 @@ final class ReactiveSystemGenerator extends GeneratorForAnnotation<ReactiveSyste
 
     final unit = astNode.root as CompilationUnit;
     final funcName = element.name!;
-    final customName = annotation.peek('name')?.stringValue;
     final description = annotation.peek('description')?.stringValue;
 
-    final rawName = customName ?? _capitalize(funcName);
+    final rawName = _capitalize(funcName);
     final className = rawName.endsWith('ReactiveSystem') ? rawName : '${rawName}ReactiveSystem';
 
     final reactsToNames = _extractSetIds(astNode, 'reactsTo');

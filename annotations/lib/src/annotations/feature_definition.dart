@@ -1,14 +1,12 @@
 final class FeatureDefinition {
-  final String? name;
   final String? description;
-  final void Function<TArgs>(TArgs args)? builder;
 
-  const FeatureDefinition({this.name, this.description, this.builder});
+  const FeatureDefinition({this.description});
 }
 
 final class FeatureReference {
-  void addComponent(Object component) {}
-  void addEvent(Object event) {}
-  void addDataEvent(Object dataEvent) {}
-  void addReactiveSystem(Object system) {}
+  void addComponent(dynamic component) {}
+  void addEvent(dynamic event) {}
+  void addDataEvent(dynamic dataEvent) {}
+  void addReactiveSystem(dynamic system) {}
 }

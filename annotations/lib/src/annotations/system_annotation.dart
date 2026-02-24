@@ -1,12 +1,10 @@
 final class ReactiveSystemDefinition {
-  final String? name;
   final String? description;
   final Set<Object> reactsTo;
   final Set<Object> interactsWith;
   final bool Function(SystemReference system)? reactsIf;
 
   const ReactiveSystemDefinition({
-    this.name,
     this.description,
     required this.reactsTo,
     this.interactsWith = const {},
@@ -21,7 +19,11 @@ sealed class EntityReference<T> {
 final class ComponentReference<T> {
   const ComponentReference(T referece);
 
-  void update(T value) {}
+  void update(
+    T value, {
+    bool notify = true,
+    bool force = false,
+  }) {}
   set value(T value) => update(value);
   T get value => Object() as T;
   T? get previousValue => null;

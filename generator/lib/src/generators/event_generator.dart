@@ -20,10 +20,9 @@ final class EventGenerator extends GeneratorForAnnotation<EventDefinition> {
     }
 
     final varName = element.name!;
-    final customName = annotation.peek('name')?.stringValue;
     final description = annotation.peek('description')?.stringValue;
 
-    final rawName = customName ?? _capitalize(varName);
+    final rawName = _capitalize(varName);
     final className = rawName.endsWith('Event') ? rawName : '${rawName}Event';
 
     final buffer = StringBuffer();
