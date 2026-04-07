@@ -4,8 +4,8 @@ import 'package:build/build.dart';
 import 'package:flutter_event_component_system_annotations/flutter_event_component_system_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
-final class ReactiveSystemGenerator extends GeneratorForAnnotation<ReactiveSystemDefinition> {
-  const ReactiveSystemGenerator() : super(inPackage: 'flutter_event_component_system_annotations');
+final class ECSReactiveSystemGenerator extends GeneratorForAnnotation<ECSReactiveSystemDefinition> {
+  const ECSReactiveSystemGenerator() : super(inPackage: 'flutter_event_component_system_annotations');
 
   @override
   Future<String> generateForAnnotatedElement(
@@ -15,7 +15,7 @@ final class ReactiveSystemGenerator extends GeneratorForAnnotation<ReactiveSyste
   ) async {
     if (element is! TopLevelFunctionElement) {
       throw InvalidGenerationSourceError(
-        '@ReactiveSystemDefinition can only be applied to top-level functions.',
+        '@ECSReactiveSystemDefinition can only be applied to top-level functions.',
         element: element,
       );
     }
@@ -36,26 +36,27 @@ final class ReactiveSystemGenerator extends GeneratorForAnnotation<ReactiveSyste
     final funcName = element.name!;
     final description = annotation.peek('description')?.stringValue;
 
-    final rawName = _capitalize(funcName);
-    final className = rawName.endsWith('ReactiveSystem') ? rawName : '${rawName}ReactiveSystem';
-
-    final reactsToNames = _extractSetIds(astNode, 'reactsTo');
-    final interactsWithNames = _extractSetIds(astNode, 'interactsWith');
+    final raw = _capitalize(funcName);
+    final className = raw.endsWith('ReactiveSystem') ? raw : '${raw}ReactiveSystem';
+    final reactsToTypes = _extractSetIds(astNode, 'reactsTo').map((id) => _resolveEntityTypeName(id, unit)).toList();
+    final interactsWithTypes = _extractSetIds(astNode, 'interactsWith').map((id) => _resolveEntityTypeName(id, unit)).toList();
     final reactsIfName = _extractFuncRef(astNode, 'reactsIf');
 
-    final reactsToTypes = reactsToNames.map((n) => _resolveGeneratedType(n, unit)).toList();
-    final interactsWithTypes = interactsWithNames.map((n) => _resolveGeneratedType(n, unit)).toList();
-
     final reactBody = _extractBody(astNode.functionExpression.body);
-    final reactsIfBody = reactsIfName != null ? _extractNamedFuncBody(reactsIfName, unit) : null;
+    final reactsIfBody = reactsIfName != null
+        ? _extractNamedFuncBody(reactsIfName, unit)
+            ?.split('\n')
+            .map(_transform)
+            .join('\n')
+        : null;
 
     final buffer = StringBuffer();
     if (description != null) buffer.writeln('/// $description');
-    buffer.writeln('final class $className extends ReactiveSystem {');
+    buffer.writeln('final class $className extends ECSReactiveSystem {');
 
     buffer.writeln('  @override');
     buffer.writeln('  Set<Type> get reactsTo {');
-    buffer.writeln('    return {${reactsToTypes.join(', ')}};');
+    buffer.writeln('    return const {${reactsToTypes.join(',\n')}};');
     buffer.writeln('  }');
 
     if (reactsIfBody != null) {
@@ -70,7 +71,7 @@ final class ReactiveSystemGenerator extends GeneratorForAnnotation<ReactiveSyste
       buffer.writeln();
       buffer.writeln('  @override');
       buffer.writeln('  Set<Type> get interactsWith {');
-      buffer.writeln('    return {${interactsWithTypes.join(', ')}};');
+      buffer.writeln('    return const {${interactsWithTypes.join(',\n')}};');
       buffer.writeln('  }');
     }
 
@@ -111,28 +112,6 @@ final class ReactiveSystemGenerator extends GeneratorForAnnotation<ReactiveSyste
     return null;
   }
 
-  String _resolveGeneratedType(String varName, CompilationUnit unit) {
-    for (final decl in unit.declarations) {
-      if (decl is TopLevelVariableDeclaration) {
-        for (final v in decl.variables.variables) {
-          if (v.name.lexeme == varName) {
-            for (final ann in decl.metadata) {
-              final name = ann.name.name.toLowerCase();
-              final raw = _capitalize(varName);
-              if (name.contains('component')) {
-                return raw.endsWith('Component') ? raw : '${raw}Component';
-              }
-              if (name.contains('event')) {
-                return raw.endsWith('Event') ? raw : '${raw}Event';
-              }
-            }
-          }
-        }
-      }
-    }
-    return _capitalize(varName);
-  }
-
   String _extractBody(FunctionBody body) {
     if (body is! BlockFunctionBody) return '';
     return _transformStatements(body.block.statements);
@@ -171,7 +150,31 @@ final class ReactiveSystemGenerator extends GeneratorForAnnotation<ReactiveSyste
       RegExp(r'system\.getEvent\((\w+)\)'),
       (m) => 'getEntity<${_capitalize(m.group(1)!)}Event>()',
     );
+    source = source.replaceAllMapped(
+      RegExp(r'system\.getDependency\((\w+)\)'),
+      (m) => 'getEntity<${_capitalize(m.group(1)!)}Dependency>()',
+    );
     return source;
+  }
+
+  /// Resolves the generated class name for a top-level variable identifier
+  /// by inspecting its annotation and appending the appropriate suffix.
+  String _resolveEntityTypeName(String varName, CompilationUnit unit) {
+    final raw = _capitalize(varName);
+    for (final decl in unit.declarations) {
+      if (decl is TopLevelVariableDeclaration) {
+        final hasVar = decl.variables.variables.any((v) => v.name.lexeme == varName);
+        if (!hasVar) continue;
+        for (final ann in decl.metadata) {
+          final name = ann.name.name;
+          if (name.contains('Component')) return '${raw}Component';
+          if (name.contains('DataEvent')) return '${raw}Event';
+          if (name.contains('Event')) return '${raw}Event';
+          if (name.contains('Dependency')) return '${raw}Dependency';
+        }
+      }
+    }
+    return raw;
   }
 
   String _capitalize(String s) {
