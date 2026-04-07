@@ -314,12 +314,12 @@ final class ECSExecuteSystemGenerator extends GeneratorForAnnotation<ECSExecuteS
     final description = annotation.peek('description')?.stringValue;
     final raw = capitalize(funcName);
     final className = raw.endsWith('ExecuteSystem') ? raw : '${raw}ExecuteSystem';
-    final executesIfName = _extractFuncRef(astNode, 'executesIf');
-    final body = _extractBody(astNode.functionExpression.body, element);
+    final executesIfName = extractFuncRef(astNode, 'executesIf');
+    final body = extractBlockBody(astNode.functionExpression.body, element);
     final executesIfBody = executesIfName != null
-        ? _extractNamedFuncBody(executesIfName, unit)
+        ? extractNamedFuncBody(executesIfName, unit)
             ?.split('\n')
-            .map(_transform)
+            .map(transformSource)
             .join('\n')
         : null;
 
@@ -341,68 +341,5 @@ final class ECSExecuteSystemGenerator extends GeneratorForAnnotation<ECSExecuteS
     buffer.writeln('  }');
     buffer.writeln('}');
     return buffer.toString();
-  }
-
-  String? _extractFuncRef(FunctionDeclaration funcDecl, String param) {
-    for (final ann in funcDecl.metadata) {
-      for (final arg in ann.arguments?.arguments ?? <Expression>[]) {
-        if (arg is NamedExpression && arg.name.label.name == param) {
-          if (arg.expression is SimpleIdentifier) {
-            return (arg.expression as SimpleIdentifier).name;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  String? _extractNamedFuncBody(String name, CompilationUnit unit) {
-    for (final decl in unit.declarations) {
-      if (decl is FunctionDeclaration && decl.name.lexeme == name) {
-        final body = decl.functionExpression.body;
-        if (body is BlockFunctionBody) {
-          return _transformStatements(body.block.statements);
-        }
-      }
-    }
-    return null;
-  }
-
-  String _extractBody(FunctionBody body, Element element) {
-    if (body is! BlockFunctionBody) {
-      throw InvalidGenerationSourceError(
-        'System function must use a block body {}. Expression bodies => are not supported.',
-        element: element,
-      );
-    }
-    return _transformStatements(body.block.statements);
-  }
-
-  String _transformStatements(NodeList<Statement> stmts) {
-    final buffer = StringBuffer();
-    for (final stmt in stmts) {
-      buffer.writeln('    ${_transform(stmt.toSource())}');
-    }
-    return buffer.toString();
-  }
-
-  String _transform(String source) {
-    source = source.replaceAllMapped(
-      RegExp(r'system\.getComponent\((\w+)\)'),
-      (m) => 'getEntity<${capitalize(m.group(1)!)}Component>()',
-    );
-    source = source.replaceAllMapped(
-      RegExp(r'system\.getDataEvent\((\w+)\)'),
-      (m) => 'getEntity<${capitalize(m.group(1)!)}Event>()',
-    );
-    source = source.replaceAllMapped(
-      RegExp(r'system\.getEvent\((\w+)\)'),
-      (m) => 'getEntity<${capitalize(m.group(1)!)}Event>()',
-    );
-    source = source.replaceAllMapped(
-      RegExp(r'system\.getDependency\((\w+)\)'),
-      (m) => 'getEntity<${capitalize(m.group(1)!)}Dependency>()',
-    );
-    return source;
   }
 }
