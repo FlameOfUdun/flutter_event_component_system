@@ -1,30 +1,32 @@
-// lib/src/generators/feature_generator.dart
-
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:flutter_event_component_system_annotations/flutter_event_component_system_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
-final class FeatureGenerator extends GeneratorForAnnotation<FeatureDefinition> {
+final class ECSFeatureGenerator extends GeneratorForAnnotation<FeatureDefinition> {
   static const _componentChecker = TypeChecker.typeNamed(
-    ComponentDefinition,
+    ECSComponentDefinition,
     inPackage: 'flutter_event_component_system_annotations',
   );
   static const _eventChecker = TypeChecker.typeNamed(
-    EventDefinition,
+    ECSEventDefinition,
     inPackage: 'flutter_event_component_system_annotations',
   );
   static const _dataEventChecker = TypeChecker.typeNamed(
-    DataEventDefinition,
+    ECSDataEventDefinition,
+    inPackage: 'flutter_event_component_system_annotations',
+  );
+  static const _dependencyChecker = TypeChecker.typeNamed(
+    ECSDependencyDefinition,
     inPackage: 'flutter_event_component_system_annotations',
   );
   static const _reactiveSystemChecker = TypeChecker.typeNamed(
-    ReactiveSystemDefinition,
+    ECSReactiveSystemDefinition,
     inPackage: 'flutter_event_component_system_annotations',
   );
 
-  const FeatureGenerator() : super(inPackage: 'flutter_event_component_system_annotations');
+  const ECSFeatureGenerator() : super(inPackage: 'flutter_event_component_system_annotations');
 
   @override
   Future<String?> generateForAnnotatedElement(
@@ -32,7 +34,6 @@ final class FeatureGenerator extends GeneratorForAnnotation<FeatureDefinition> {
     ConstantReader annotation,
     BuildStep buildStep,
   ) async {
-    // ── Case 1: @FeatureDefinition on the library directive ────────────────
     if (element is LibraryElement) {
       return _generateFromLibrary(
         LibraryReader(element),
@@ -40,7 +41,6 @@ final class FeatureGenerator extends GeneratorForAnnotation<FeatureDefinition> {
       );
     }
 
-    // ── Case 2: @FeatureDefinition on a top-level function ─────────────────
     if (element is TopLevelFunctionElement) {
       return _generateFromFunction(element, annotation, buildStep);
     }
@@ -51,8 +51,6 @@ final class FeatureGenerator extends GeneratorForAnnotation<FeatureDefinition> {
     );
   }
 
-  // ── Library-level: auto-scan all annotated elements ──────────────────────
-
   String? _generateFromLibrary(
     LibraryReader library,
     ConstantReader annotation,
@@ -60,16 +58,18 @@ final class FeatureGenerator extends GeneratorForAnnotation<FeatureDefinition> {
     final components = library.annotatedWith(_componentChecker).toList();
     final events = library.annotatedWith(_eventChecker).toList();
     final dataEvents = library.annotatedWith(_dataEventChecker).toList();
+    final dependencies = library.annotatedWith(_dependencyChecker).toList();
     final reactiveSystems = library.annotatedWith(_reactiveSystemChecker).toList();
 
-    if (components.isEmpty && events.isEmpty && dataEvents.isEmpty && reactiveSystems.isEmpty) {
+    if (components.isEmpty && events.isEmpty && dataEvents.isEmpty &&
+        dependencies.isEmpty && reactiveSystems.isEmpty) {
       return null;
     }
 
     final description = annotation.peek('description')?.stringValue;
     final libraryName = library.element.name ?? '';
-    final rawName = libraryName.isNotEmpty ? _capitalize(libraryName) : 'Generated';
-    final className = rawName.endsWith('Feature') ? rawName : '${rawName}Feature';
+    final base = libraryName.isNotEmpty ? _capitalize(libraryName) : 'Generated';
+    final className = base.endsWith('Feature') ? base : '${base}Feature';
 
     final buffer = StringBuffer();
     if (description != null) buffer.writeln('/// $description');
@@ -77,24 +77,30 @@ final class FeatureGenerator extends GeneratorForAnnotation<FeatureDefinition> {
     buffer.writeln('  $className() {');
 
     for (final a in components) {
-      buffer.writeln('    addEntity(${_resolveComponentName(a.element.name!, a.annotation.peek('name')?.stringValue)}());');
+      final raw = _capitalize(a.element.name!);
+      buffer.writeln('    addEntity(${raw.endsWith('Component') ? raw : '${raw}Component'}());');
     }
     for (final a in events) {
-      buffer.writeln('    addEntity(${_resolveEventName(a.element.name!, a.annotation.peek('name')?.stringValue)}());');
+      final raw = _capitalize(a.element.name!);
+      buffer.writeln('    addEntity(${raw.endsWith('Event') ? raw : '${raw}Event'}());');
     }
     for (final a in dataEvents) {
-      buffer.writeln('    addEntity(${_resolveEventName(a.element.name!, a.annotation.peek('name')?.stringValue)}());');
+      final raw = _capitalize(a.element.name!);
+      buffer.writeln('    addEntity(${raw.endsWith('Event') ? raw : '${raw}Event'}());');
+    }
+    for (final a in dependencies) {
+      final raw = _capitalize(a.element.name!);
+      buffer.writeln('    addEntity(${raw.endsWith('Dependency') ? raw : '${raw}Dependency'}());');
     }
     for (final a in reactiveSystems) {
-      buffer.writeln('    addSystem(${_resolveSystemName(a.element.name!, a.annotation.peek('name')?.stringValue)}());');
+      final raw = _capitalize(a.element.name!);
+      buffer.writeln('    addSystem(${raw.endsWith('ReactiveSystem') ? raw : '${raw}ReactiveSystem'}());');
     }
 
     buffer.writeln('  }');
     buffer.writeln('}');
     return buffer.toString();
   }
-
-  // ── Function-level: explicit addXxx calls via AST ────────────────────────
 
   Future<String?> _generateFromFunction(
     TopLevelFunctionElement element,
@@ -115,10 +121,9 @@ final class FeatureGenerator extends GeneratorForAnnotation<FeatureDefinition> {
 
     final unit = astNode.root as CompilationUnit;
     final funcName = element.name!;
-    final customName = annotation.peek('name')?.stringValue;
     final description = annotation.peek('description')?.stringValue;
 
-    final rawName = customName ?? _deriveClassName(funcName);
+    final rawName = _deriveClassName(funcName);
     final className = rawName.endsWith('Feature') ? rawName : '${rawName}Feature';
 
     final allParams = astNode.functionExpression.parameters?.parameters ?? <FormalParameter>[];
@@ -136,31 +141,12 @@ final class FeatureGenerator extends GeneratorForAnnotation<FeatureDefinition> {
     return buffer.toString();
   }
 
-  // ── Name Helpers ──────────────────────────────────────────────────────────
-
   String _deriveClassName(String funcName) {
     if (funcName.startsWith('build') && funcName.length > 5) {
       return funcName.substring(5);
     }
     return _capitalize(funcName);
   }
-
-  String _resolveComponentName(String varName, String? custom) {
-    final raw = custom ?? _capitalize(varName);
-    return raw.endsWith('Component') ? raw : '${raw}Component';
-  }
-
-  String _resolveEventName(String varName, String? custom) {
-    final raw = custom ?? _capitalize(varName);
-    return raw.endsWith('Event') ? raw : '${raw}Event';
-  }
-
-  String _resolveSystemName(String funcName, String? custom) {
-    final raw = custom ?? _capitalize(funcName);
-    return raw.endsWith('ReactiveSystem') ? raw : '${raw}ReactiveSystem';
-  }
-
-  // ── Constructor Params ────────────────────────────────────────────────────
 
   String _formatConstructorParams(List<FormalParameter> params) {
     if (params.isEmpty) return '';
@@ -172,8 +158,6 @@ final class FeatureGenerator extends GeneratorForAnnotation<FeatureDefinition> {
     ];
     return parts.join(', ');
   }
-
-  // ── Body Transform ────────────────────────────────────────────────────────
 
   String _transformBody(FunctionBody body, CompilationUnit unit) {
     if (body is! BlockFunctionBody) return '';
@@ -198,8 +182,28 @@ final class FeatureGenerator extends GeneratorForAnnotation<FeatureDefinition> {
       (m) => 'addEntity(${_resolveVarType(m.group(1)!, unit)}())',
     );
     source = source.replaceAllMapped(
+      RegExp(r'feature\.addDependency\((\w+)\)'),
+      (m) => 'addEntity(${_resolveVarType(m.group(1)!, unit)}())',
+    );
+    source = source.replaceAllMapped(
       RegExp(r'feature\.addReactiveSystem\((\w+)\)'),
-      (m) => 'addSystem(${_resolveSystemVarType(m.group(1)!, unit)}())',
+      (m) => 'addSystem(${_resolveSystemType(m.group(1)!, 'ReactiveSystem')}())',
+    );
+    source = source.replaceAllMapped(
+      RegExp(r'feature\.addInitializeSystem\((\w+)\)'),
+      (m) => 'addSystem(${_resolveSystemType(m.group(1)!, 'InitializeSystem')}())',
+    );
+    source = source.replaceAllMapped(
+      RegExp(r'feature\.addExecuteSystem\((\w+)\)'),
+      (m) => 'addSystem(${_resolveSystemType(m.group(1)!, 'ExecuteSystem')}())',
+    );
+    source = source.replaceAllMapped(
+      RegExp(r'feature\.addCleanupSystem\((\w+)\)'),
+      (m) => 'addSystem(${_resolveSystemType(m.group(1)!, 'CleanupSystem')}())',
+    );
+    source = source.replaceAllMapped(
+      RegExp(r'feature\.addTeardownSystem\((\w+)\)'),
+      (m) => 'addSystem(${_resolveSystemType(m.group(1)!, 'TeardownSystem')}())',
     );
     return source;
   }
@@ -207,38 +211,24 @@ final class FeatureGenerator extends GeneratorForAnnotation<FeatureDefinition> {
   String _resolveVarType(String varName, CompilationUnit unit) {
     for (final decl in unit.declarations) {
       if (decl is TopLevelVariableDeclaration) {
-        for (final v in decl.variables.variables) {
-          if (v.name.lexeme == varName) {
-            for (final ann in decl.metadata) {
-              final name = ann.name.name.toLowerCase();
-              final raw = _capitalize(varName);
-              if (name.contains('component')) {
-                return raw.endsWith('Component') ? raw : '${raw}Component';
-              }
-              if (name.contains('event')) {
-                return raw.endsWith('Event') ? raw : '${raw}Event';
-              }
-            }
-          }
+        final hasVar = decl.variables.variables.any((v) => v.name.lexeme == varName);
+        if (!hasVar) continue;
+        for (final ann in decl.metadata) {
+          final name = ann.name.name.toLowerCase();
+          final raw = _capitalize(varName);
+          if (name.contains('component')) return raw.endsWith('Component') ? raw : '${raw}Component';
+          if (name.contains('dataevent')) return raw.endsWith('Event') ? raw : '${raw}Event';
+          if (name.contains('event')) return raw.endsWith('Event') ? raw : '${raw}Event';
+          if (name.contains('dependency')) return raw.endsWith('Dependency') ? raw : '${raw}Dependency';
         }
       }
     }
     return _capitalize(varName);
   }
 
-  String _resolveSystemVarType(String funcName, CompilationUnit unit) {
-    for (final decl in unit.declarations) {
-      if (decl is FunctionDeclaration && decl.name.lexeme == funcName) {
-        for (final ann in decl.metadata) {
-          if (ann.name.name.toLowerCase().contains('reactivesystem')) {
-            final raw = _capitalize(funcName);
-            return raw.endsWith('ReactiveSystem') ? raw : '${raw}ReactiveSystem';
-          }
-        }
-      }
-    }
+  String _resolveSystemType(String funcName, String suffix) {
     final raw = _capitalize(funcName);
-    return raw.endsWith('ReactiveSystem') ? raw : '${raw}ReactiveSystem';
+    return raw.endsWith(suffix) ? raw : '$raw$suffix';
   }
 
   String _capitalize(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
