@@ -8,29 +8,24 @@ const _outputKey = 'flutter_event_component_system_generator|lib/input.ecs.dart'
 const _annotationAsset = 'flutter_event_component_system_annotations|lib/flutter_event_component_system_annotations.dart';
 
 const _annotationSource = '''
-  class ComponentDefinition {
-    final String? name;
+  class ECSComponentDefinition {
     final String? description;
-    const ComponentDefinition({this.name, this.description});
+    const ECSComponentDefinition({this.description});
   }
-  class EventDefinition {
-    final String? name;
+  class ECSEventDefinition {
     final String? description;
-    const EventDefinition({this.name, this.description});
+    const ECSEventDefinition({this.description});
   }
-  class DataEventDefinition {
-    final String? name;
+  class ECSDataEventDefinition {
     final String? description;
-    const DataEventDefinition({this.name, this.description});
+    const ECSDataEventDefinition({this.description});
   }
-  class ReactiveSystemDefinition {
-    final String? name;
+  class ECSReactiveSystemDefinition {
     final String? description;
     final Set<Object> reactsTo;
     final Set<Object> interactsWith;
     final bool Function(dynamic)? reactsIf;
-    const ReactiveSystemDefinition({
-      this.name,
+    const ECSReactiveSystemDefinition({
       this.description,
       required this.reactsTo,
       this.interactsWith = const {},
@@ -38,9 +33,12 @@ const _annotationSource = '''
     });
   }
   class FeatureDefinition {
-    final String? name;
     final String? description;
-    const FeatureDefinition({this.name, this.description});
+    const FeatureDefinition({this.description});
+  }
+  class ECSDependencyDefinition {
+    final String? description;
+    const ECSDependencyDefinition({this.description});
   }
 ''';
 
@@ -60,7 +58,7 @@ void main() {
     test('generates data event with trigger override for int', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
-        buildSources('@DataEventDefinition() const int addHealth = 10;'),
+        buildSources('@ECSDataEventDefinition() const int addHealth = 10;'),
         outputs: {
           _outputKey: decodedMatches(allOf([
             contains('final class AddHealthEvent extends ECSDataEvent<int>'),
@@ -73,7 +71,7 @@ void main() {
     test('generates data event with trigger override for String', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
-        buildSources('@DataEventDefinition() const String setName = "player";'),
+        buildSources('@ECSDataEventDefinition() const String setName = "player";'),
         outputs: {
           _outputKey: decodedMatches(allOf([
             contains('final class SetNameEvent extends ECSDataEvent<String>'),

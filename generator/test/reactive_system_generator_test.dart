@@ -4,39 +4,33 @@ import 'package:test/test.dart';
 import 'package:flutter_event_component_system_generator/flutter_event_component_system_generator.dart';
 
 const _declarations = '''
-  @ComponentDefinition() const String health = "";
-  @DataEventDefinition() const int addHealth = 0;
+  @ECSComponentDefinition() const String health = "";
+  @ECSDataEventDefinition() const int addHealth = 0;
 ''';
 
 const _outputKey = 'flutter_event_component_system_generator|lib/input.ecs.dart';
 
-
 const _annotationAsset = 'flutter_event_component_system_annotations|lib/flutter_event_component_system_annotations.dart';
 
 const _annotationSource = '''
-  class ComponentDefinition {
-    final String? name;
+  class ECSComponentDefinition {
     final String? description;
-    const ComponentDefinition({this.name, this.description});
+    const ECSComponentDefinition({this.description});
   }
-  class EventDefinition {
-    final String? name;
+  class ECSEventDefinition {
     final String? description;
-    const EventDefinition({this.name, this.description});
+    const ECSEventDefinition({this.description});
   }
-  class DataEventDefinition {
-    final String? name;
+  class ECSDataEventDefinition {
     final String? description;
-    const DataEventDefinition({this.name, this.description});
+    const ECSDataEventDefinition({this.description});
   }
-  class ReactiveSystemDefinition {
-    final String? name;
+  class ECSReactiveSystemDefinition {
     final String? description;
     final Set<Object> reactsTo;
     final Set<Object> interactsWith;
     final bool Function(dynamic)? reactsIf;
-    const ReactiveSystemDefinition({
-      this.name,
+    const ECSReactiveSystemDefinition({
       this.description,
       required this.reactsTo,
       this.interactsWith = const {},
@@ -44,9 +38,12 @@ const _annotationSource = '''
     });
   }
   class FeatureDefinition {
-    final String? name;
     final String? description;
-    const FeatureDefinition({this.name, this.description});
+    const FeatureDefinition({this.description});
+  }
+  class ECSDependencyDefinition {
+    final String? description;
+    const ECSDependencyDefinition({this.description});
   }
 ''';
 
@@ -68,14 +65,14 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           $_declarations
-          @ReactiveSystemDefinition(reactsTo: {addHealth})
-          void applyAddHealth(SystemReference system) {
+          @ECSReactiveSystemDefinition(reactsTo: {addHealth})
+          void applyAddHealth(ECSSystemReference system) {
             final event = system.getDataEvent(addHealth);
           }
         '''),
         outputs: {
           _outputKey: decodedMatches(allOf([
-            contains('final class ApplyAddHealthReactiveSystem extends ReactiveSystem'),
+            contains('final class ApplyAddHealthReactiveSystem extends ECSReactiveSystem'),
             contains('Set<Type> get reactsTo'),
             contains('AddHealthEvent'),
             contains('void react()'),
@@ -90,8 +87,8 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           $_declarations
-          @ReactiveSystemDefinition(reactsTo: {addHealth}, interactsWith: {health})
-          void applyAddHealth(SystemReference system) {
+          @ECSReactiveSystemDefinition(reactsTo: {addHealth}, interactsWith: {health})
+          void applyAddHealth(ECSSystemReference system) {
             final component = system.getComponent(health);
             final event = system.getDataEvent(addHealth);
             component.value += event.value;
@@ -99,6 +96,7 @@ void main() {
         '''),
         outputs: {
           _outputKey: decodedMatches(allOf([
+            contains('extends ECSReactiveSystem'),
             contains('Set<Type> get interactsWith'),
             contains('HealthComponent'),
           ])),
@@ -111,8 +109,8 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           $_declarations
-          @ReactiveSystemDefinition(reactsTo: {addHealth}, interactsWith: {health})
-          void applyAddHealth(SystemReference system) {
+          @ECSReactiveSystemDefinition(reactsTo: {addHealth}, interactsWith: {health})
+          void applyAddHealth(ECSSystemReference system) {
             final component = system.getComponent(health);
             final event = system.getDataEvent(addHealth);
             component.value += event.value;
@@ -127,23 +125,77 @@ void main() {
       );
     });
 
+    test('appends Component suffix in react body', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          $_declarations
+          @ECSReactiveSystemDefinition(reactsTo: {addHealth}, interactsWith: {health})
+          void applyAddHealth(ECSSystemReference system) {
+            final c = system.getComponent(health);
+            final e = system.getDataEvent(addHealth);
+          }
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(allOf([
+            contains('getEntity<HealthComponent>()'),
+            contains('getEntity<AddHealthEvent>()'),
+            isNot(contains('getEntity<Health>()')),
+            isNot(contains('getEntity<AddHealth>()')),
+          ])),
+        },
+      );
+    });
+
+    test('appends Event suffix for getEvent in react body', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @ECSEventDefinition() const reset = null;
+          @ECSReactiveSystemDefinition(reactsTo: {reset})
+          void onReset(ECSSystemReference system) {
+            system.getEvent(reset);
+          }
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(contains('getEntity<ResetEvent>()')),
+        },
+      );
+    });
+
+    test('appends Dependency suffix in react body', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @ECSDependencyDefinition() const String repo = "";
+          @ECSReactiveSystemDefinition(reactsTo: {})
+          void onTick(ECSSystemReference system) {
+            system.getDependency(repo);
+          }
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(contains('getEntity<RepoDependency>()')),
+        },
+      );
+    });
+
     test('generates reactsIf getter when reactsIf is provided', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           $_declarations
-          bool addHealthIf(SystemReference system) {
+          bool addHealthIf(ECSSystemReference system) {
             final component = system.getComponent(health);
             final event = system.getDataEvent(addHealth);
             return component.value + event.value <= 100;
           }
 
-          @ReactiveSystemDefinition(
+          @ECSReactiveSystemDefinition(
             reactsTo: {addHealth},
             interactsWith: {health},
             reactsIf: addHealthIf,
           )
-          void applyAddHealth(SystemReference system) {
+          void applyAddHealth(ECSSystemReference system) {
             final component = system.getComponent(health);
             final event = system.getDataEvent(addHealth);
             component.value += event.value;
@@ -160,18 +212,27 @@ void main() {
       );
     });
 
-    test('uses custom name from annotation', () async {
+    test('transforms system calls inside reactsIf body', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           $_declarations
-          @ReactiveSystemDefinition(name: "HealPlayer", reactsTo: {addHealth})
-          void applyAddHealth(SystemReference system) {}
+          bool canApply(ECSSystemReference system) {
+            return system.getComponent(health).value < 100;
+          }
+          @ECSReactiveSystemDefinition(
+            reactsTo: {addHealth},
+            interactsWith: {health},
+            reactsIf: canApply,
+          )
+          void applyAddHealth(ECSSystemReference system) {}
         '''),
         outputs: {
-          _outputKey: decodedMatches(
-            contains('final class HealPlayerReactiveSystem'),
-          ),
+          _outputKey: decodedMatches(allOf([
+            contains('bool get reactsIf'),
+            contains('getEntity<HealthComponent>()'),
+            isNot(contains('system.getComponent(health)')),
+          ])),
         },
       );
     });
@@ -181,11 +242,11 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           $_declarations
-          @ReactiveSystemDefinition(
+          @ECSReactiveSystemDefinition(
             description: "Applies health to entity",
             reactsTo: {addHealth},
           )
-          void applyAddHealth(SystemReference system) {}
+          void applyAddHealth(ECSSystemReference system) {}
         '''),
         outputs: {
           _outputKey: decodedMatches(

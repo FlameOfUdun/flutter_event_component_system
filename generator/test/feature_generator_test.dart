@@ -6,29 +6,24 @@ import 'package:flutter_event_component_system_generator/flutter_event_component
 const _annotationAsset = 'flutter_event_component_system_annotations|lib/flutter_event_component_system_annotations.dart';
 
 const _annotationSource = '''
-  class ComponentDefinition {
-    final String? name;
+  class ECSComponentDefinition {
     final String? description;
-    const ComponentDefinition({this.name, this.description});
+    const ECSComponentDefinition({this.description});
   }
-  class EventDefinition {
-    final String? name;
+  class ECSEventDefinition {
     final String? description;
-    const EventDefinition({this.name, this.description});
+    const ECSEventDefinition({this.description});
   }
-  class DataEventDefinition {
-    final String? name;
+  class ECSDataEventDefinition {
     final String? description;
-    const DataEventDefinition({this.name, this.description});
+    const ECSDataEventDefinition({this.description});
   }
-  class ReactiveSystemDefinition {
-    final String? name;
+  class ECSReactiveSystemDefinition {
     final String? description;
     final Set<Object> reactsTo;
     final Set<Object> interactsWith;
     final bool Function(dynamic)? reactsIf;
-    const ReactiveSystemDefinition({
-      this.name,
+    const ECSReactiveSystemDefinition({
       this.description,
       required this.reactsTo,
       this.interactsWith = const {},
@@ -36,9 +31,12 @@ const _annotationSource = '''
     });
   }
   class FeatureDefinition {
-    final String? name;
     final String? description;
-    const FeatureDefinition({this.name, this.description});
+    const FeatureDefinition({this.description});
+  }
+  class ECSDependencyDefinition {
+    final String? description;
+    const ECSDependencyDefinition({this.description});
   }
 ''';
 
@@ -68,13 +66,13 @@ void main() {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         _buildSources(
-          libraryDirective: '@FeatureDefinition(name: "Generated") library;',
+          libraryDirective: '@FeatureDefinition() library;',
           body: '''
-            @ComponentDefinition() const String health = "";
-            @DataEventDefinition() const int addHealth = 0;
+            @ECSComponentDefinition() const String health = "";
+            @ECSDataEventDefinition() const int addHealth = 0;
 
-            @ReactiveSystemDefinition(reactsTo: {addHealth}, interactsWith: {health})
-            void applyAddHealth(SystemReference system) {
+            @ECSReactiveSystemDefinition(reactsTo: {addHealth}, interactsWith: {health})
+            void applyAddHealth(ECSSystemReference system) {
               final component = system.getComponent(health);
               final event = system.getDataEvent(addHealth);
               component.value += event.value;
@@ -83,7 +81,7 @@ void main() {
         ),
         outputs: {
           _outputKey: decodedMatches(allOf([
-            contains('final class GeneratedFeature extends ECSFeature'),
+            contains('extends ECSFeature'),
             contains('addEntity(HealthComponent())'),
             contains('addEntity(AddHealthEvent())'),
             contains('addSystem(ApplyAddHealthReactiveSystem())'),
@@ -93,33 +91,21 @@ void main() {
       );
     });
 
-    test('uses custom name from annotation', () async {
+    test('includes ECSDependencyDefinition entities in library-mode feature', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         _buildSources(
-          libraryDirective: '@FeatureDefinition(name: "Combat") library;',
-          body: '@ComponentDefinition() const String health = "";',
+          libraryDirective: '@FeatureDefinition(description: "Player feature") library;',
+          body: '''
+            @ECSComponentDefinition() const int health = 0;
+            @ECSDependencyDefinition() const String repo = "";
+          ''',
         ),
         outputs: {
-          _outputKey: decodedMatches(
-            contains('final class CombatFeature extends ECSFeature'),
-          ),
-        },
-      );
-    });
-
-    test('does not double-append Feature suffix', () async {
-      await testBuilder(
-        ecsBuilder(BuilderOptions.empty),
-        _buildSources(
-          libraryDirective:
-              '@FeatureDefinition(name: "CombatFeature") library;',
-          body: '@ComponentDefinition() const String health = "";',
-        ),
-        outputs: {
-          _outputKey: decodedMatches(
-            isNot(contains('CombatFeatureFeature')),
-          ),
+          _outputKey: decodedMatches(allOf([
+            contains('addEntity(HealthComponent())'),
+            contains('addEntity(RepoDependency())'),
+          ])),
         },
       );
     });
@@ -130,7 +116,7 @@ void main() {
         _buildSources(
           libraryDirective:
               '@FeatureDefinition(description: "Handles health logic") library;',
-          body: '@ComponentDefinition() const String health = "";',
+          body: '@ECSComponentDefinition() const String health = "";',
         ),
         outputs: {
           _outputKey: decodedMatches(contains('/// Handles health logic')),
@@ -142,7 +128,7 @@ void main() {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         _buildSources(
-          body: '@ComponentDefinition() const String health = "";',
+          body: '@ECSComponentDefinition() const String health = "";',
         ),
         outputs: {
           _outputKey: decodedMatches(
@@ -159,11 +145,11 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         _buildSources(
           body: '''
-            @ComponentDefinition() const String health = "";
-            @DataEventDefinition() const int addHealth = 0;
+            @ECSComponentDefinition() const String health = "";
+            @ECSDataEventDefinition() const int addHealth = 0;
 
-            @ReactiveSystemDefinition(reactsTo: {addHealth}, interactsWith: {health})
-            void applyAddHealth(SystemReference system) {}
+            @ECSReactiveSystemDefinition(reactsTo: {addHealth}, interactsWith: {health})
+            void applyAddHealth(ECSSystemReference system) {}
 
             @FeatureDefinition()
             void buildGeneratedFeature(FeatureReference feature) {
@@ -189,7 +175,7 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         _buildSources(
           body: '''
-            @ComponentDefinition() const String health = "";
+            @ECSComponentDefinition() const String health = "";
 
             @FeatureDefinition()
             void buildPlayerFeature(FeatureReference feature) {
@@ -210,7 +196,7 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         _buildSources(
           body: '''
-            @ComponentDefinition() const String health = "";
+            @ECSComponentDefinition() const String health = "";
 
             @FeatureDefinition()
             void buildGeneratedFeature(
@@ -227,6 +213,97 @@ void main() {
             contains('bool mock = false'),
             contains('if (mock) return;'),
           ])),
+        },
+      );
+    });
+
+    test('transforms feature.addDependency call', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        _buildSources(
+          body: '''
+            @ECSDependencyDefinition() const String repo = "";
+
+            @FeatureDefinition()
+            void buildPlayerFeature(FeatureReference feature) {
+              feature.addDependency(repo);
+            }
+          ''',
+        ),
+        outputs: {
+          _outputKey: decodedMatches(contains('addEntity(RepoDependency())')),
+        },
+      );
+    });
+
+    test('transforms feature.addInitializeSystem call', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        _buildSources(
+          body: '''
+            @FeatureDefinition()
+            void buildPlayerFeature(FeatureReference feature) {
+              feature.addInitializeSystem(setupPlayer);
+            }
+            void setupPlayer() {}
+          ''',
+        ),
+        outputs: {
+          _outputKey: decodedMatches(contains('addSystem(SetupPlayerInitializeSystem())')),
+        },
+      );
+    });
+
+    test('transforms feature.addExecuteSystem call', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        _buildSources(
+          body: '''
+            @FeatureDefinition()
+            void buildPlayerFeature(FeatureReference feature) {
+              feature.addExecuteSystem(tickPlayer);
+            }
+            void tickPlayer() {}
+          ''',
+        ),
+        outputs: {
+          _outputKey: decodedMatches(contains('addSystem(TickPlayerExecuteSystem())')),
+        },
+      );
+    });
+
+    test('transforms feature.addCleanupSystem call', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        _buildSources(
+          body: '''
+            @FeatureDefinition()
+            void buildPlayerFeature(FeatureReference feature) {
+              feature.addCleanupSystem(cleanPlayer);
+            }
+            void cleanPlayer() {}
+          ''',
+        ),
+        outputs: {
+          _outputKey: decodedMatches(contains('addSystem(CleanPlayerCleanupSystem())')),
+        },
+      );
+    });
+
+    test('transforms feature.addTeardownSystem call', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        _buildSources(
+          body: '''
+            @FeatureDefinition()
+            void buildPlayerFeature(FeatureReference feature) {
+              feature.addTeardownSystem(disposePlayer);
+            }
+            void disposePlayer() {}
+          ''',
+        ),
+        outputs: {
+          _outputKey: decodedMatches(contains('addSystem(DisposePlayerTeardownSystem())')),
         },
       );
     });

@@ -8,29 +8,24 @@ const _outputKey = 'flutter_event_component_system_generator|lib/input.ecs.dart'
 const _annotationAsset = 'flutter_event_component_system_annotations|lib/flutter_event_component_system_annotations.dart';
 
 const _annotationSource = '''
-  class ComponentDefinition {
-    final String? name;
+  class ECSComponentDefinition {
     final String? description;
-    const ComponentDefinition({this.name, this.description});
+    const ECSComponentDefinition({this.description});
   }
-  class EventDefinition {
-    final String? name;
+  class ECSEventDefinition {
     final String? description;
-    const EventDefinition({this.name, this.description});
+    const ECSEventDefinition({this.description});
   }
-  class DataEventDefinition {
-    final String? name;
+  class ECSDataEventDefinition {
     final String? description;
-    const DataEventDefinition({this.name, this.description});
+    const ECSDataEventDefinition({this.description});
   }
-  class ReactiveSystemDefinition {
-    final String? name;
+  class ECSReactiveSystemDefinition {
     final String? description;
     final Set<Object> reactsTo;
     final Set<Object> interactsWith;
     final bool Function(dynamic)? reactsIf;
-    const ReactiveSystemDefinition({
-      this.name,
+    const ECSReactiveSystemDefinition({
       this.description,
       required this.reactsTo,
       this.interactsWith = const {},
@@ -38,9 +33,12 @@ const _annotationSource = '''
     });
   }
   class FeatureDefinition {
-    final String? name;
     final String? description;
-    const FeatureDefinition({this.name, this.description});
+    const FeatureDefinition({this.description});
+  }
+  class ECSDependencyDefinition {
+    final String? description;
+    const ECSDependencyDefinition({this.description});
   }
 ''';
 
@@ -60,11 +58,11 @@ void main() {
     test('generates component class from const String variable', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
-        buildSources('@ComponentDefinition() const String name = "";'),
+        buildSources('@ECSComponentDefinition() const String playerName = "";'),
         outputs: {
           _outputKey: decodedMatches(allOf([
-            contains('final class NameComponent extends ECSComponent<String>'),
-            contains('NameComponent([super.value = ""])'),
+            contains('final class PlayerNameComponent extends ECSComponent<String>'),
+            contains('PlayerNameComponent([super.value = ""])'),
           ])),
         },
       );
@@ -73,7 +71,7 @@ void main() {
     test('generates component class from const int variable', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
-        buildSources('@ComponentDefinition() const int health = 100;'),
+        buildSources('@ECSComponentDefinition() const int health = 100;'),
         outputs: {
           _outputKey: decodedMatches(allOf([
             contains('final class HealthComponent extends ECSComponent<int>'),
@@ -86,7 +84,7 @@ void main() {
     test('generates component class from const bool variable', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
-        buildSources('@ComponentDefinition() const bool isActive = false;'),
+        buildSources('@ECSComponentDefinition() const bool isActive = false;'),
         outputs: {
           _outputKey: decodedMatches(allOf([
             contains('final class IsActiveComponent extends ECSComponent<bool>'),
@@ -96,20 +94,10 @@ void main() {
       );
     });
 
-    test('uses custom name from annotation', () async {
-      await testBuilder(
-        ecsBuilder(BuilderOptions.empty),
-        buildSources('@ComponentDefinition(name: "PlayerName") const String name = "";'),
-        outputs: {
-          _outputKey: decodedMatches(contains('final class PlayerName')),
-        },
-      );
-    });
-
     test('includes doc comment when description is provided', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
-        buildSources('@ComponentDefinition(description: "Player score") const int score = 0;'),
+        buildSources('@ECSComponentDefinition(description: "Player score") const int score = 0;'),
         outputs: {
           _outputKey: decodedMatches(allOf([
             contains('/// Player score'),
