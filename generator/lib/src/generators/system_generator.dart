@@ -204,7 +204,7 @@ final class ECSTeardownSystemGenerator extends GeneratorForAnnotation<ECSTeardow
     final description = annotation.peek('description')?.stringValue;
     final raw = capitalize(funcName);
     final className = raw.endsWith('TeardownSystem') ? raw : '${raw}TeardownSystem';
-    final body = _extractBody(astNode.functionExpression.body, element);
+    final body = extractBlockBody(astNode.functionExpression.body, element);
 
     final buffer = StringBuffer();
     if (description != null) buffer.writeln('/// $description');
@@ -215,44 +215,6 @@ final class ECSTeardownSystemGenerator extends GeneratorForAnnotation<ECSTeardow
     buffer.writeln('  }');
     buffer.writeln('}');
     return buffer.toString();
-  }
-
-  String _extractBody(FunctionBody body, Element element) {
-    if (body is! BlockFunctionBody) {
-      throw InvalidGenerationSourceError(
-        'System function must use a block body {}. Expression bodies => are not supported.',
-        element: element,
-      );
-    }
-    return _transformStatements(body.block.statements);
-  }
-
-  String _transformStatements(NodeList<Statement> stmts) {
-    final buffer = StringBuffer();
-    for (final stmt in stmts) {
-      buffer.writeln('    ${_transform(stmt.toSource())}');
-    }
-    return buffer.toString();
-  }
-
-  String _transform(String source) {
-    source = source.replaceAllMapped(
-      RegExp(r'system\.getComponent\((\w+)\)'),
-      (m) => 'getEntity<${capitalize(m.group(1)!)}Component>()',
-    );
-    source = source.replaceAllMapped(
-      RegExp(r'system\.getDataEvent\((\w+)\)'),
-      (m) => 'getEntity<${capitalize(m.group(1)!)}Event>()',
-    );
-    source = source.replaceAllMapped(
-      RegExp(r'system\.getEvent\((\w+)\)'),
-      (m) => 'getEntity<${capitalize(m.group(1)!)}Event>()',
-    );
-    source = source.replaceAllMapped(
-      RegExp(r'system\.getDependency\((\w+)\)'),
-      (m) => 'getEntity<${capitalize(m.group(1)!)}Dependency>()',
-    );
-    return source;
   }
 }
 
