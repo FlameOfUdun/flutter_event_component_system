@@ -76,3 +76,15 @@ String? extractNamedFuncBody(String name, CompilationUnit unit) {
   }
   return null;
 }
+
+/// Returns the Dart source literal for the constant default value of [element].
+/// Handles String, int, double, and bool. Returns `'null'` for other types.
+String extractDefault(TopLevelVariableElement element) {
+  final constant = element.computeConstantValue()!;
+  final type = element.type;
+  if (type.isDartCoreString) return '"${constant.toStringValue() ?? ''}"';
+  if (type.isDartCoreInt) return '${constant.toIntValue() ?? 0}';
+  if (type.isDartCoreDouble) return '${constant.toDoubleValue() ?? 0.0}';
+  if (type.isDartCoreBool) return '${constant.toBoolValue() ?? false}';
+  return 'null';
+}
