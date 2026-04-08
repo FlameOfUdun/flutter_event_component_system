@@ -104,7 +104,8 @@ String? extractNamedFuncBody(String name, CompilationUnit unit) {
 }
 
 /// Returns the Dart source literal for the constant default value of [element].
-/// Handles String, int, double, and bool. Returns `'null'` for other types.
+/// Handles String, int, double, and bool.
+/// Throws [InvalidGenerationSourceError] for any other type.
 String extractDefault(TopLevelVariableElement element) {
   final constant = element.computeConstantValue()!;
   final type = element.type;
@@ -112,5 +113,9 @@ String extractDefault(TopLevelVariableElement element) {
   if (type.isDartCoreInt) return '${constant.toIntValue() ?? 0}';
   if (type.isDartCoreDouble) return '${constant.toDoubleValue() ?? 0.0}';
   if (type.isDartCoreBool) return '${constant.toBoolValue() ?? false}';
-  return 'null';
+  throw InvalidGenerationSourceError(
+    'Only primitive types (String, int, double, bool) are supported as default values. '
+    'Found: ${type.getDisplayString()}',
+    element: element,
+  );
 }
