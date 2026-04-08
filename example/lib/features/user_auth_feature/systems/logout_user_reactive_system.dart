@@ -1,6 +1,6 @@
 part of '../user_auth_feature.dart';
 
-final class LogoutUserReactiveSystem extends ReactiveSystem {
+final class LogoutUserReactiveSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
     return {

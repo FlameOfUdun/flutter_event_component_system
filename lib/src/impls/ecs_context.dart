@@ -12,11 +12,11 @@ final class ECSContext implements ECSEntityListener {
 
   /// Map of entity listeners.
   @visibleForTesting
-  final Map<ECSEntity, void Function()> listeners = {};
+  final Map<ECSListenableEntity, void Function()> listeners = {};
 
   /// Set of entities being watched.
   @visibleForTesting
-  final Set<ECSEntity> watchers = {};
+  final Set<ECSListenableEntity> watchers = {};
 
   /// Optional listeners for enter event.
   @visibleForTesting
@@ -34,9 +34,9 @@ final class ECSContext implements ECSEntityListener {
   @visibleForTesting
   bool locked = false;
 
-  /// Set of commonly accessed entities by the ECS context.
+  /// Cache of entities accessed through this context.
   @visibleForTesting
-  Set<ECSEntity> entities = {};
+  Map<Type, ECSEntity> entities = {};
 
   /// Indicates if listener callbacks are currently scheduled for next frame.
   @visibleForTesting
@@ -63,11 +63,12 @@ final class ECSContext implements ECSEntityListener {
   /// If the entity is not found, it will be fetched from the ECS manager and added
   /// to the entities set. Otherwise, it will return the existing entity from the set.
   TEntity _getEntity<TEntity extends ECSEntity>() {
-    for (final entity in entities) {
-      if (entity is TEntity) return entity;
+    final cached = entities[TEntity];
+    if (cached != null) {
+      return cached as TEntity;
     }
     final entity = manager.getEntity<TEntity>();
-    entities.add(entity);
+    entities[TEntity] = entity;
     return entity;
   }
 
@@ -78,7 +79,9 @@ final class ECSContext implements ECSEntityListener {
   ///
   /// Throws [StateError] if called on a disposed context.
   TEntity get<TEntity extends ECSEntity>() {
-    if (disposed) throw StateError('Cannot get entity on disposed context');
+    if (disposed) {
+      throw StateError('Cannot get entity on disposed context');
+    }
     return _getEntity<TEntity>();
   }
 
@@ -89,8 +92,10 @@ final class ECSContext implements ECSEntityListener {
   /// Multiple calls with the same entity type will not create duplicate subscriptions.
   ///
   /// Throws [StateError] if called on a disposed context.
-  TEntity watch<TEntity extends ECSEntity>() {
-    if (disposed) throw StateError('Cannot watch entity on disposed context');
+  TEntity watch<TEntity extends ECSListenableEntity>() {
+    if (disposed) {
+      throw StateError('Cannot watch entity on disposed context');
+    }
     final entity = _getEntity<TEntity>();
     if (watchers.add(entity)) {
       entity.addListener(this);
@@ -107,8 +112,7 @@ final class ECSContext implements ECSEntityListener {
   /// Multiple calls with the same entity type will override the previous listener.
   ///
   /// If called on a disposed context, the operation is silently ignored.
-  void listen<TEntity extends ECSEntity>(
-      void Function(TEntity entity) listener) {
+  void listen<TEntity extends ECSListenableEntity>(void Function(TEntity entity) listener) {
     if (disposed) {
       return;
     }

@@ -4,19 +4,13 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/listener.dart';
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 
-/// Lint rule that ensures `ECSDataEvent.data` is only accessed inside
-/// the `react()` method of a `ReactiveSystem`.
-///
-/// The data property is only valid during the synchronous execution of
-/// `react()` and gets nullified immediately after notifying listeners.
 final class EventDataOnlyInReact extends DartLintRule {
   const EventDataOnlyInReact() : super(code: _code);
 
   static const _code = LintCode(
     name: 'event_data_only_in_react',
     problemMessage: 'ECSDataEvent.data should only be accessed inside react().',
-    correctionMessage:
-        'Move the data access to react() and pass the data as a parameter.',
+    correctionMessage: 'Move the data access to react() and pass the data as a parameter.',
   );
 
   @override

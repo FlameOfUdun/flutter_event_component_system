@@ -5,23 +5,14 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/listener.dart';
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 
-import '../fixes/cache_event_data_fix.dart';
-
-/// Lint rule that flags accessing `.data` on `ECSDataEvent` instances
-/// after an `await` expression, since the data gets nullified after
-/// notifying listeners.
 final class NoEventDataAcrossAsyncGap extends DartLintRule {
   const NoEventDataAcrossAsyncGap() : super(code: _code);
 
   static const _code = LintCode(
     name: 'no_event_data_across_async_gap',
-    problemMessage: "Don't access ECSDataEvent.data after an async gap. "
-        "The data is nullified immediately after notifying listeners.",
+    problemMessage: "Don't access ECSDataEvent.data after an async gap. The data is nullified immediately after notifying listeners.",
     correctionMessage: 'Capture the data in a local variable before the first await.',
   );
-
-  @override
-  List<Fix> getFixes() => [CacheEventDataFix()];
 
   @override
   void run(

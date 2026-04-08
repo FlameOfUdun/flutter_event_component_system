@@ -139,9 +139,6 @@ String transformDslStatement(Statement stmt, DslContext ctx) {
       // Skip if this is a method name in an invocation.
       if (node.parent is MethodInvocation &&
           (node.parent as MethodInvocation).methodName == node) {
-        for (final child in node.childEntities) {
-          if (child is AstNode) visit(child);
-        }
         return;
       }
       final paramReplacement = ctx.paramReplacements[name];

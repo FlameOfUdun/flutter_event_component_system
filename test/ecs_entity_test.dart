@@ -9,6 +9,18 @@ class TestEvent extends ECSEvent {
   TestEvent() : super();
 }
 
+class DummyDependency extends ECSDependency<int> {
+  DummyDependency() : super(42);
+}
+
+class DummyDataEvent extends ECSDataEvent<String> {}
+
+class DummyFeatureForDep extends ECSFeature {
+  DummyFeatureForDep() {
+    addEntity(DummyDependency());
+  }
+}
+
 class TestListener implements ECSEntityListener {
   final void Function() onChanged;
 
@@ -131,6 +143,64 @@ void main() {
       component.addListener(listener);
       component.update(5);
       expect(notificationCount, 1);
+    });
+  });
+
+  group('ECSDependency', () {
+    test('is attached to feature after addEntity', () {
+      final feature = DummyFeatureForDep();
+      final dep = feature.getEntityOfType(DummyDependency) as DummyDependency;
+      expect(dep.feature, isNotNull);
+      expect(dep.isAttached, isTrue);
+      expect(dep.feature, same(feature));
+      expect(dep.identifier, contains('DummyFeatureForDep'));
+    });
+  });
+
+  group('ECSEntityData serialization', () {
+    test('fromEntity uses describe() for ECSComponent value', () {
+      final component = TestComponent(99);
+      final data = ECSEntityData.fromEntity(component);
+      expect(data.type, equals('Component'));
+      expect(data.value, equals('99'));
+    });
+
+    test('fromEntity uses describe() for ECSDataEvent after trigger', () {
+      final event = DummyDataEvent();
+      event.trigger('hello');
+      final data = ECSEntityData.fromEntity(event);
+      expect(data.type, equals('DataEvent'));
+      expect(data.value, equals('hello'));
+    });
+
+    test('fromEntity returns null value for ECSDataEvent before trigger', () {
+      final event = DummyDataEvent();
+      final data = ECSEntityData.fromEntity(event);
+      expect(data.type, equals('DataEvent'));
+      expect(data.value, isNull);
+    });
+
+    test('fromEntity returns null value for plain ECSEvent', () {
+      final event = TestEvent();
+      final data = ECSEntityData.fromEntity(event);
+      expect(data.type, equals('Event'));
+      expect(data.value, isNull);
+    });
+
+    test('fromEntity uses describe() for ECSComponent previous value', () {
+      final component = TestComponent(1);
+      component.update(2);
+      final data = ECSEntityData.fromEntity(component);
+      expect(data.type, equals('Component'));
+      expect(data.value, equals('2'));
+      expect(data.previous, equals('1'));
+    });
+
+    test('fromEntity returns Dependency type with null value for ECSDependency', () {
+      final dep = DummyDependency();
+      final data = ECSEntityData.fromEntity(dep);
+      expect(data.type, equals('Dependency'));
+      expect(data.value, isNull);
     });
   });
 

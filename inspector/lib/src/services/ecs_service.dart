@@ -161,7 +161,7 @@ class ECSService {
     final logs = _lastData.allLogs;
     if (_lastClearTime == null) return logs;
 
-    return logs.where((log) => log.timestamp.isAfter(_lastClearTime!)).toList();
+    return logs.where((log) => log.time.isAfter(_lastClearTime!)).toList();
   }
 
   void _setStatus(ConnectionStatus status) {

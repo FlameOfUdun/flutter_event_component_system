@@ -31,7 +31,7 @@ class TestFeature extends ECSFeature {
 }
 
 // Test system
-class TestReactiveSystem extends ReactiveSystem {
+class TestReactiveSystem extends ECSReactiveSystem {
   @override
   Set<Type> get interactsWith => {};
   @override

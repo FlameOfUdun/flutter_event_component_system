@@ -7,7 +7,7 @@ class DummyComponent extends ECSComponent<int> {
 
 class DummyEvent extends ECSEvent {}
 
-class DummyReactiveSystem extends ReactiveSystem {
+class DummyReactiveSystem extends ECSReactiveSystem {
   bool reacted = false;
   @override
   Set<Type> get interactsWith => {};
@@ -61,7 +61,7 @@ class AnotherDummyFeature extends ECSFeature {
   }
 }
 
-class ComponentReactiveSystem extends ReactiveSystem {
+class ComponentReactiveSystem extends ECSReactiveSystem {
   bool reacted = false;
   @override
   Set<Type> get interactsWith => {};
@@ -69,6 +69,25 @@ class ComponentReactiveSystem extends ReactiveSystem {
   Set<Type> get reactsTo => {DummyComponent};
   @override
   void react() => reacted = true;
+}
+
+class LoggingSystem extends ECSReactiveSystem {
+  @override
+  Set<Type> get interactsWith => {};
+  @override
+  Set<Type> get reactsTo => {DummyEvent};
+  @override
+  void react() {
+    log('system reacted');
+  }
+}
+
+class LoggingFeature extends ECSFeature {
+  LoggingFeature() {
+    addEntity(DummyComponent());
+    addEntity(DummyEvent());
+    addSystem(LoggingSystem());
+  }
 }
 
 void main() {
@@ -215,6 +234,48 @@ void main() {
       final features = manager.features;
       expect(features, contains(feature));
       expect(features.length, 1);
+    });
+  });
+
+  group('ECS log context', () {
+    test('log from system includes featureName and systemName', () {
+      final manager = ECSManager(features: {LoggingFeature()});
+      // ECSManager constructor calls activate() — reactive systems are already registered
+      final event = manager.getEntity<DummyEvent>();
+      manager.initialize();
+      event.trigger();
+
+      final logs = manager.logs;
+      expect(logs, isNotEmpty);
+
+      final systemLog = logs.firstWhere(
+        (l) => l.message == 'system reacted',
+        orElse: () => throw StateError('log not found'),
+      );
+      expect(systemLog.featureName, equals('LoggingFeature'));
+      expect(systemLog.systemName, equals('LoggingSystem'));
+
+      manager.deactivate();
+    });
+
+    test('log from entity includes featureName but not systemName', () {
+      final manager = ECSManager(features: {DummyFeature()});
+      // ECSManager constructor calls activate() — reactive systems are already registered
+      final event = manager.getEntity<DummyEvent>();
+      event.trigger();
+
+      final logs = manager.logs;
+      expect(logs, isNotEmpty);
+
+      // ECSEvent.trigger() calls log() on the entity, which should carry featureName
+      final triggerLog = logs.firstWhere(
+        (l) => l.message.contains('triggered'),
+        orElse: () => throw StateError('trigger log not found'),
+      );
+      expect(triggerLog.featureName, equals('DummyFeature'));
+      expect(triggerLog.systemName, isNull);
+
+      manager.deactivate();
     });
   });
 }

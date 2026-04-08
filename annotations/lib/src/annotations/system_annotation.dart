@@ -1,57 +1,32 @@
-final class ReactiveSystemDefinition {
+/// Marks a top-level function as a reactive system.
+/// `reactsTo` is auto-detected from the @Event function bodies that call this system.
+/// `interactsWith` is auto-detected from writes in the body and its private helpers.
+final class ReactiveSystem {
   final String? description;
-  final Set<Object> reactsTo;
-  final Set<Object> interactsWith;
-  final bool Function(SystemReference system)? reactsIf;
-
-  const ReactiveSystemDefinition({
-    this.description,
-    required this.reactsTo,
-    this.interactsWith = const {},
-    this.reactsIf,
-  });
+  const ReactiveSystem({this.description});
 }
 
-sealed class EntityReference<T> {
-  T get value;
+/// Marks a top-level function as an initialize system.
+final class InitializeSystem {
+  final String? description;
+  const InitializeSystem({this.description});
 }
 
-final class ComponentReference<T> {
-  const ComponentReference(T referece);
-
-  void update(
-    T value, {
-    bool notify = true,
-    bool force = false,
-  }) {}
-  set value(T value) => update(value);
-  T get value => Object() as T;
-  T? get previousValue => null;
+/// Marks a top-level function as a teardown system.
+final class TeardownSystem {
+  final String? description;
+  const TeardownSystem({this.description});
 }
 
-final class DataEventReference<T> {
-  const DataEventReference(T referece);
-
-  T? get data => Object() as T?;
-  void trigger(T data) {}
+/// Marks a top-level function as a cleanup system.
+final class CleanupSystem {
+  final String? description;
+  const CleanupSystem({this.description});
 }
 
-final class EventReference {
-  const EventReference(Object referece);
-
-  void trigger() {}
-}
-
-final class SystemReference {
-  ComponentReference<T> getComponent<T>(T component) {
-    return ComponentReference<T>(component);
-  }
-
-  DataEventReference<T> getDataEvent<T>(T event) {
-    return DataEventReference<T>(event);
-  }
-
-  EventReference getEvent(Object event) {
-    return EventReference(event);
-  }
+/// Marks a top-level function as an execute system.
+/// The function must accept a single `Duration elapsed` parameter.
+final class ExecuteSystem {
+  final String? description;
+  const ExecuteSystem({this.description});
 }

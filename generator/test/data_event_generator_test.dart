@@ -32,9 +32,9 @@ const _annotationSource = '''
       this.reactsIf,
     });
   }
-  class FeatureDefinition {
+  class ECSFeatureDefinition {
     final String? description;
-    const FeatureDefinition({this.description});
+    const ECSFeatureDefinition({this.description});
   }
   class ECSDependencyDefinition {
     final String? description;

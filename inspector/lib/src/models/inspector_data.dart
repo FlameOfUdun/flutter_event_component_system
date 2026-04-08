@@ -2,12 +2,12 @@
 /// These models represent the serialized state from the ECS library.
 library;
 
-enum EntityType { component, event }
+enum EntityType { component, event, dataEvent, dependency }
 
 enum LogLevel { verbose, debug, info, warning, error, fatal }
 
 /// Represents a single entity (Component or Event) in the ECS system.
-class EntityData {
+final class EntityData {
   final String identifier;
   final EntityType type;
   final String? value;
@@ -15,14 +15,7 @@ class EntityData {
   final String featureName;
   final String managerName;
 
-  const EntityData({
-    required this.identifier,
-    required this.type,
-    this.value,
-    this.previous,
-    required this.featureName,
-    required this.managerName,
-  });
+  const EntityData({required this.identifier, required this.type, this.value, this.previous, required this.featureName, required this.managerName});
 
   /// Extract the name from the identifier (last part after the last dot).
   String get name {
@@ -31,12 +24,20 @@ class EntityData {
   }
 
   bool get isComponent => type == EntityType.component;
-  bool get isEvent => type == EntityType.event;
+  bool get isEvent => type == EntityType.event || type == EntityType.dataEvent;
+  bool get isDataEvent => type == EntityType.dataEvent;
+  bool get isDependency => type == EntityType.dependency;
 
   factory EntityData.fromJson(Map<String, dynamic> json, String featureName, String managerName) {
     return EntityData(
       identifier: json['identifier'] as String,
-      type: json['type'] == 'Component' ? EntityType.component : EntityType.event,
+      type: switch (json['type'] as String) {
+        'Component' => EntityType.component,
+        'Event' => EntityType.event,
+        'DataEvent' => EntityType.dataEvent,
+        'Dependency' => EntityType.dependency,
+        final unknown => throw FormatException('Unknown EntityType: $unknown for entity ${json['identifier']}'),
+      },
       value: json['value'] as String?,
       previous: json['previous'] as String?,
       featureName: featureName,
@@ -46,14 +47,19 @@ class EntityData {
 
   Map<String, dynamic> toJson() => {
     'identifier': identifier,
-    'type': type == EntityType.component ? 'Component' : 'Event',
+    'type': switch (type) {
+      EntityType.component => 'Component',
+      EntityType.event => 'Event',
+      EntityType.dataEvent => 'DataEvent',
+      EntityType.dependency => 'Dependency',
+    },
     if (value != null) 'value': value,
     if (previous != null) 'previous': previous,
   };
 }
 
 /// Represents a system in the ECS framework.
-class SystemData {
+final class SystemData {
   final String identifier;
   final String type;
   final List<String> reactsTo;
@@ -87,27 +93,17 @@ class SystemData {
     );
   }
 
-  Map<String, dynamic> toJson() => {
-    'identifier': identifier,
-    'type': type,
-    'reactsTo': reactsTo,
-    'interactsWith': interactsWith,
-  };
+  Map<String, dynamic> toJson() => {'identifier': identifier, 'type': type, 'reactsTo': reactsTo, 'interactsWith': interactsWith};
 }
 
 /// Represents a feature (module) in the ECS framework.
-class FeatureData {
+final class FeatureData {
   final String identifier;
   final List<EntityData> entities;
   final List<SystemData> systems;
   final String managerName;
 
-  const FeatureData({
-    required this.identifier,
-    required this.entities,
-    required this.systems,
-    required this.managerName,
-  });
+  const FeatureData({required this.identifier, required this.entities, required this.systems, required this.managerName});
 
   /// Extract the name from the identifier (last part after the last dot).
   String get name {
@@ -121,12 +117,10 @@ class FeatureData {
     final featureName = identifier.split('.').last;
     return FeatureData(
       identifier: identifier,
-      entities: (json['entities'] as List<dynamic>?)
-          ?.map((e) => EntityData.fromJson(e as Map<String, dynamic>, featureName, managerName))
-          .toList() ?? [],
-      systems: (json['systems'] as List<dynamic>?)
-          ?.map((s) => SystemData.fromJson(s as Map<String, dynamic>, featureName, managerName))
-          .toList() ?? [],
+      entities:
+          (json['entities'] as List<dynamic>?)?.map((e) => EntityData.fromJson(e as Map<String, dynamic>, featureName, managerName)).toList() ?? [],
+      systems:
+          (json['systems'] as List<dynamic>?)?.map((s) => SystemData.fromJson(s as Map<String, dynamic>, featureName, managerName)).toList() ?? [],
       managerName: managerName,
     );
   }
@@ -147,22 +141,15 @@ class FeatureData {
 }
 
 /// Represents a log entry from the ECS system.
-class LogData {
+final class LogData {
   final String message;
   final LogLevel level;
-  final DateTime timestamp;
+  final DateTime time;
   final String? stack;
   final String? featureName;
   final String? systemName;
 
-  const LogData({
-    required this.message,
-    required this.level,
-    required this.timestamp,
-    this.stack,
-    this.featureName,
-    this.systemName,
-  });
+  const LogData({required this.message, required this.level, required this.time, this.stack, this.featureName, this.systemName});
 
   /// Get call stack as a list of frames.
   List<String> get callStack {
@@ -173,16 +160,16 @@ class LogData {
   factory LogData.fromJson(Map<String, dynamic> json) {
     return LogData(
       message: json['message'] as String? ?? '',
-      level: _parseLogLevel(json['level'] as String?),
-      timestamp: DateTime.tryParse(json['time'] as String? ?? '') ?? DateTime.now(),
+      level: _parseLogLevel(json['level'] as String),
+      time: DateTime.parse(json['time'] as String),
       stack: json['stack'] as String?,
       featureName: json['featureName'] as String?,
       systemName: json['systemName'] as String?,
     );
   }
 
-  static LogLevel _parseLogLevel(String? level) {
-    return switch (level?.toLowerCase()) {
+  static LogLevel _parseLogLevel(String level) {
+    return switch (level) {
       'verbose' => LogLevel.verbose,
       'debug' => LogLevel.debug,
       'info' => LogLevel.info,
@@ -196,7 +183,7 @@ class LogData {
   Map<String, dynamic> toJson() => {
     'message': message,
     'level': level.name,
-    'time': timestamp.toIso8601String(),
+    'time': time.toIso8601String(),
     'stack': stack,
     'featureName': featureName,
     'systemName': systemName,
@@ -204,18 +191,13 @@ class LogData {
 }
 
 /// Represents an ECS Manager instance.
-class ManagerData {
+final class ManagerData {
   final String identifier;
   final List<FeatureData> features;
   final List<LogData> logs;
   final bool isActive;
 
-  const ManagerData({
-    required this.identifier,
-    required this.features,
-    required this.logs,
-    this.isActive = false,
-  });
+  const ManagerData({required this.identifier, required this.features, required this.logs, this.isActive = false});
 
   /// Extract the name from the identifier (last part after the last dot).
   String get name {
@@ -229,12 +211,8 @@ class ManagerData {
     final managerName = identifier.split('.').last;
     return ManagerData(
       identifier: identifier,
-      features: (json['features'] as List<dynamic>?)
-          ?.map((f) => FeatureData.fromJson(f as Map<String, dynamic>, managerName))
-          .toList() ?? [],
-      logs: (json['logs'] as List<dynamic>?)
-          ?.map((l) => LogData.fromJson(l as Map<String, dynamic>))
-          .toList() ?? [],
+      features: (json['features'] as List<dynamic>?)?.map((f) => FeatureData.fromJson(f as Map<String, dynamic>, managerName)).toList() ?? [],
+      logs: (json['logs'] as List<dynamic>?)?.map((l) => LogData.fromJson(l as Map<String, dynamic>)).toList() ?? [],
       isActive: json['isActive'] as bool? ?? false,
     );
   }
@@ -258,21 +236,14 @@ class ManagerData {
 }
 
 /// Root data structure for the inspector.
-class InspectorData {
+final class InspectorData {
   final List<ManagerData> managers;
   final DateTime fetchedAt;
 
-  InspectorData({
-    required this.managers,
-    DateTime? fetchedAt,
-  }) : fetchedAt = fetchedAt ?? DateTime.now();
+  InspectorData({required this.managers, DateTime? fetchedAt}) : fetchedAt = fetchedAt ?? DateTime.now();
 
   factory InspectorData.fromJson(Map<String, dynamic> json) {
-    return InspectorData(
-      managers: (json['managers'] as List<dynamic>?)
-          ?.map((m) => ManagerData.fromJson(m as Map<String, dynamic>))
-          .toList() ?? [],
-    );
+    return InspectorData(managers: (json['managers'] as List<dynamic>?)?.map((m) => ManagerData.fromJson(m as Map<String, dynamic>)).toList() ?? []);
   }
 
   /// Get all entities across all managers and features.
@@ -306,7 +277,5 @@ class InspectorData {
   bool get isEmpty => managers.isEmpty;
   bool get isNotEmpty => managers.isNotEmpty;
 
-  Map<String, dynamic> toJson() => {
-    'managers': managers.map((m) => m.toJson()).toList(),
-  };
+  Map<String, dynamic> toJson() => {'managers': managers.map((m) => m.toJson()).toList()};
 }

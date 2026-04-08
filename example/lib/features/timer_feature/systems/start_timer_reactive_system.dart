@@ -1,6 +1,6 @@
 part of '../timer_feature.dart';
 
-final class StartTimerReactiveSystem extends ReactiveSystem {
+final class StartTimerReactiveSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
     return const {

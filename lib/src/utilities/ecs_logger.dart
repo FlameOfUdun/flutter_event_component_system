@@ -7,11 +7,11 @@ mixin _ECSLogger {
   ///
   /// This can be adjusted based on the application's needs.
   ///
-  /// Default is set to 1000 entries.
+  /// Default is set to 100 entries.
   ///
   /// if the number of entries exceeds this limit, the oldest entries will be
   /// removed.
-  final maxEntries = 100;
+  static const maxEntries = 100;
 
   /// Unmodifiable list of log entries.
   List<ECSLog> get logs => List.unmodifiable(_logs);
@@ -20,8 +20,10 @@ mixin _ECSLogger {
   void log(
     String message, {
     ECSLogLevel level = ECSLogLevel.info,
+    String? featureName,
+    String? systemName,
   }) {
-    while (_logs.length >= maxEntries) {
+    if (_logs.length >= maxEntries) {
       _logs.removeAt(0);
     }
     _logs.add(ECSLog(
@@ -29,6 +31,8 @@ mixin _ECSLogger {
       level: level,
       message: message,
       stack: StackTrace.current,
+      featureName: featureName,
+      systemName: systemName,
     ));
   }
 
@@ -52,11 +56,19 @@ final class ECSLog {
   /// The log message.
   final String message;
 
+  /// The name of the feature that generated the log entry.
+  final String? featureName;
+
+  /// The name of the system that generated the log entry.
+  final String? systemName;
+
   const ECSLog({
     required this.time,
     required this.level,
     required this.stack,
     required this.message,
+    this.featureName,
+    this.systemName,
   });
 }
 

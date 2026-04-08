@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 1.0.0-beta.1
+
+* Added ECSDependancy class
+* Created abstraction for listenable entities
+* Minor improvements for entity lookup
+* updates for inspector related models
+
+### Breaking Changes
+
+* all systems renamed to have `ECS` prefix
+
 ## 0.0.6
 
 * Added ECSDataEvent class

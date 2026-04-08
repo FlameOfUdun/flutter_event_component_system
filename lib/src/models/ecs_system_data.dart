@@ -15,20 +15,20 @@ final class ECSSystemData {
 
   factory ECSSystemData.fromSystem(ECSSystem system) {
     final String type;
-    if (system is InitializeSystem) {
+    if (system is ECSInitializeSystem) {
       type = 'InitializeSystem';
-    } else if (system is ExecuteSystem) {
+    } else if (system is ECSExecuteSystem) {
       type = 'ExecuteSystem';
-    } else if (system is CleanupSystem) {
+    } else if (system is ECSCleanupSystem) {
       type = 'CleanupSystem';
-    } else if (system is TeardownSystem) {
+    } else if (system is ECSTeardownSystem) {
       type = 'TeardownSystem';
     } else {
       type = 'ReactiveSystem';
     }
 
     final reactsTo = <String>[];
-    if (system is ReactiveSystem) {
+    if (system is ECSReactiveSystem) {
       for (final type in system.reactsTo) {
         final entity = system.feature!.manager!.getEntityOfType(type);
         reactsTo.add(entity.identifier);

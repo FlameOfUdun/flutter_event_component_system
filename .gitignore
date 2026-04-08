@@ -32,3 +32,6 @@ build/
 
 # Include the build folder for the devtools extension
 !extension/devtools/build/
+
+.claude/
+.code-review-graph/

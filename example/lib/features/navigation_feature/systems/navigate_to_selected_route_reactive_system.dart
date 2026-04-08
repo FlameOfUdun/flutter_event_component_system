@@ -1,6 +1,6 @@
 part of '../navigation_feature.dart';
 
-final class NavigateToSelectedRouteReactiveSystem extends ReactiveSystem {
+final class NavigateToSelectedRouteReactiveSystem extends ECSReactiveSystem {
   final GlobalKey<NavigatorState> navigatorKey;
 
   NavigateToSelectedRouteReactiveSystem({

@@ -7,7 +7,7 @@ import '../components/filter_chip_row.dart';
 import '../components/search_field.dart';
 
 /// Entity browser view for inspecting components and events.
-class EntityBrowser extends StatelessWidget {
+final class EntityBrowser extends StatelessWidget {
   final InspectorState state;
 
   const EntityBrowser({super.key, required this.state});
@@ -69,7 +69,12 @@ class EntityBrowser extends StatelessWidget {
             label: 'Type',
             options: EntityType.values,
             selected: filter.type,
-            labelBuilder: (t) => t == EntityType.component ? 'Components' : 'Events',
+            labelBuilder: (t) => switch (t) {
+              EntityType.component => 'Components',
+              EntityType.event => 'Events',
+              EntityType.dataEvent => 'Data Events',
+              EntityType.dependency => 'Dependencies',
+            },
             onSelected: (t) {
               state.setEntityFilter(
                 t == null
@@ -123,17 +128,33 @@ class EntityBrowser extends StatelessWidget {
   }
 }
 
-class _EntityCard extends StatelessWidget {
+final class _EntityCard extends StatelessWidget {
   final EntityData entity;
 
   const _EntityCard({required this.entity});
 
   @override
   Widget build(BuildContext context) {
-    final isComponent = entity.isComponent;
-    final color = isComponent
-        ? InspectorTheme.componentColor
-        : InspectorTheme.eventColor;
+    final color = switch (entity.type) {
+      EntityType.component => InspectorTheme.componentColor,
+      EntityType.event => InspectorTheme.eventColor,
+      EntityType.dataEvent => InspectorTheme.eventColor,
+      EntityType.dependency => InspectorTheme.secondaryText,
+    };
+
+    final icon = switch (entity.type) {
+      EntityType.component   => Icons.inventory_2_outlined,
+      EntityType.event       => Icons.bolt_outlined,
+      EntityType.dataEvent   => Icons.data_object_outlined,
+      EntityType.dependency  => Icons.link_outlined,
+    };
+
+    final typeLabel = switch (entity.type) {
+      EntityType.component => 'Component',
+      EntityType.event => 'Event',
+      EntityType.dataEvent => 'Data Event',
+      EntityType.dependency => 'Dependency',
+    };
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -145,11 +166,7 @@ class _EntityCard extends StatelessWidget {
             color: color.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            isComponent ? Icons.inventory_2_outlined : Icons.bolt_outlined,
-            color: color,
-            size: 20,
-          ),
+          child: Icon(icon, color: color, size: 20),
         ),
         title: Text(
           entity.name,
@@ -160,10 +177,7 @@ class _EntityCard extends StatelessWidget {
         ),
         subtitle: Row(
           children: [
-            _TypeBadge(
-              label: isComponent ? 'Component' : 'Event',
-              color: color,
-            ),
+            _TypeBadge(label: typeLabel, color: color),
             const SizedBox(width: 8),
             _TypeBadge(
               label: entity.featureName,
@@ -191,7 +205,7 @@ class _EntityCard extends StatelessWidget {
   }
 }
 
-class _TypeBadge extends StatelessWidget {
+final class _TypeBadge extends StatelessWidget {
   final String label;
   final Color color;
 
@@ -217,7 +231,7 @@ class _TypeBadge extends StatelessWidget {
   }
 }
 
-class _DetailRow extends StatelessWidget {
+final class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
 

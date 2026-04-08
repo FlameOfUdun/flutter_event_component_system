@@ -4,7 +4,7 @@
 part of 'generated_feature.dart';
 
 // **************************************************************************
-// ComponentGenerator
+// ECSComponentGenerator
 // **************************************************************************
 
 final class HealthComponent extends ECSComponent<int> {
@@ -12,14 +12,14 @@ final class HealthComponent extends ECSComponent<int> {
 }
 
 // **************************************************************************
-// EventGenerator
+// ECSEventGenerator
 // **************************************************************************
 
 /// Resets health to 0 for testing purposes.
 final class ResetHealthEvent extends ECSEvent {}
 
 // **************************************************************************
-// DataEventGenerator
+// ECSDataEventGenerator
 // **************************************************************************
 
 final class AddHealthEvent extends ECSDataEvent<int> {
@@ -28,44 +28,44 @@ final class AddHealthEvent extends ECSDataEvent<int> {
 }
 
 // **************************************************************************
-// ReactiveSystemGenerator
+// ECSReactiveSystemGenerator
 // **************************************************************************
 
-final class ApplyAddHealthReactiveSystem extends ReactiveSystem {
+final class ApplyAddHealthReactiveSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
-    return {AddHealthEvent};
+    return const {AddHealthEvent};
   }
 
   @override
   bool get reactsIf {
     final component = getEntity<HealthComponent>();
     final event = getEntity<AddHealthEvent>();
-    return component.value + event.data! <= 100;
+    return component.value + event.data <= 100;
   }
 
   @override
   Set<Type> get interactsWith {
-    return {HealthComponent};
+    return const {HealthComponent};
   }
 
   @override
   void react() {
     final component = getEntity<HealthComponent>();
     final event = getEntity<AddHealthEvent>();
-    component.value += event.data!;
+    component.value += event.data;
   }
 }
 
-final class ApplyResetHealthReactiveSystem extends ReactiveSystem {
+final class ApplyResetHealthReactiveSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
-    return {ResetHealthEvent};
+    return const {ResetHealthEvent};
   }
 
   @override
   Set<Type> get interactsWith {
-    return {HealthComponent};
+    return const {HealthComponent};
   }
 
   @override
@@ -76,7 +76,7 @@ final class ApplyResetHealthReactiveSystem extends ReactiveSystem {
 }
 
 // **************************************************************************
-// FeatureGenerator
+// ECSFeatureGenerator
 // **************************************************************************
 
 final class GeneratedFeature extends ECSFeature {
@@ -89,5 +89,6 @@ final class GeneratedFeature extends ECSFeature {
     addEntity(HealthComponent());
     addEntity(AddHealthEvent());
     addSystem(ApplyAddHealthReactiveSystem());
+    addSystem(ApplyResetHealthReactiveSystem());
   }
 }

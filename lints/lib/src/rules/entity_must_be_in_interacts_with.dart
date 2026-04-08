@@ -5,12 +5,6 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/listener.dart';
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 
-/// Lint rule that enforces entities updated anywhere in an ECSSystem
-/// must be declared in the `interactsWith` getter.
-///
-/// Update actions detected:
-/// - ECSDataEvent/ECSEvent → trigger()
-/// - ECSComponent → update() or .value setter
 final class EntityMustBeInInteractsWith extends DartLintRule {
   const EntityMustBeInInteractsWith() : super(code: _code);
 

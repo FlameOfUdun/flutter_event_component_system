@@ -28,7 +28,7 @@ class DecrementEvent extends ECSEvent {}
 
 class ResetCounterEvent extends ECSEvent {}
 
-class IncrementCounterSystem extends ReactiveSystem {
+class IncrementCounterSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo => {IncrementEvent};
 
@@ -39,7 +39,7 @@ class IncrementCounterSystem extends ReactiveSystem {
   }
 }
 
-class DecrementCounterSystem extends ReactiveSystem {
+class DecrementCounterSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo => {DecrementEvent};
 
@@ -50,7 +50,7 @@ class DecrementCounterSystem extends ReactiveSystem {
   }
 }
 
-class ResetCounterSystem extends ReactiveSystem {
+class ResetCounterSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo => {ResetCounterEvent};
 
@@ -122,7 +122,7 @@ class SetFilterEvent extends ECSEvent {
 
 class ClearCompletedEvent extends ECSEvent {}
 
-class AddTodoSystem extends ReactiveSystem {
+class AddTodoSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo => {AddTodoEvent};
 
@@ -134,7 +134,7 @@ class AddTodoSystem extends ReactiveSystem {
   }
 }
 
-class RemoveTodoSystem extends ReactiveSystem {
+class RemoveTodoSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo => {RemoveTodoEvent};
 
@@ -146,7 +146,7 @@ class RemoveTodoSystem extends ReactiveSystem {
   }
 }
 
-class ToggleTodoSystem extends ReactiveSystem {
+class ToggleTodoSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo => {ToggleTodoEvent};
 
@@ -158,7 +158,7 @@ class ToggleTodoSystem extends ReactiveSystem {
   }
 }
 
-class SetFilterSystem extends ReactiveSystem {
+class SetFilterSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo => {SetFilterEvent};
 
@@ -170,7 +170,7 @@ class SetFilterSystem extends ReactiveSystem {
   }
 }
 
-class ClearCompletedSystem extends ReactiveSystem {
+class ClearCompletedSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo => {ClearCompletedEvent};
 
@@ -220,7 +220,7 @@ class LoginEvent extends ECSEvent {
 
 class LogoutEvent extends ECSEvent {}
 
-class UpdateUserSystem extends ReactiveSystem {
+class UpdateUserSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo => {UpdateUserEvent};
 
@@ -232,7 +232,7 @@ class UpdateUserSystem extends ReactiveSystem {
   }
 }
 
-class LoginSystem extends ReactiveSystem {
+class LoginSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo => {LoginEvent};
 
@@ -244,7 +244,7 @@ class LoginSystem extends ReactiveSystem {
   }
 }
 
-class LogoutSystem extends ReactiveSystem {
+class LogoutSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo => {LogoutEvent};
 
@@ -276,7 +276,7 @@ class StartLoadingEvent extends ECSEvent {}
 
 class StopLoadingEvent extends ECSEvent {}
 
-class StartLoadingSystem extends ReactiveSystem {
+class StartLoadingSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo => {StartLoadingEvent};
 
@@ -287,7 +287,7 @@ class StartLoadingSystem extends ReactiveSystem {
   }
 }
 
-class StopLoadingSystem extends ReactiveSystem {
+class StopLoadingSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo => {StopLoadingEvent};
 

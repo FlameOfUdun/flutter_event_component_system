@@ -14,14 +14,30 @@ final class ECSEntityData {
   });
 
   factory ECSEntityData.fromEntity(ECSEntity entity) {
-    final type = entity is ECSEvent ? 'Event' : 'Component';
+    final String type;
+    if (entity is ECSComponent) {
+      type = 'Component';
+    } else if (entity is ECSDataEvent) {
+      type = 'DataEvent';
+    } else if (entity is ECSEvent) {
+      type = 'Event';
+    } else {
+      type = 'Dependency';
+    }
 
     return ECSEntityData(
       identifier: entity.identifier,
       type: type,
-      value: entity is ECSComponent ? entity.describe(entity.value) : null,
-      previous:
-          entity is ECSComponent ? entity.describe(entity.previous) : null,
+      value: switch (entity) {
+        ECSComponent<dynamic> e => e.describe(e.value),
+        ECSDataEvent<dynamic> e when e.dataOrNull != null =>
+          e.describe(e.dataOrNull),
+        _ => null,
+      },
+      previous: switch (entity) {
+        ECSComponent<dynamic> e => e.describe(e.previous),
+        _ => null,
+      },
     );
   }
 

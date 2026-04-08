@@ -30,7 +30,7 @@ final class ECSFeatureData {
     }
 
     final entities = <ECSEntityData>[];
-    for (final entity in feature.entities) {
+    for (final entity in feature.entities.values) {
       entities.add(ECSEntityData.fromEntity(entity));
     }
     return ECSFeatureData(

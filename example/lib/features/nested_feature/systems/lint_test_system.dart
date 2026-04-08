@@ -1,6 +1,6 @@
 part of '../nested_feature.dart';
 
-final class LintTestSystem extends ReactiveSystem {
+final class LintTestSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
     return {

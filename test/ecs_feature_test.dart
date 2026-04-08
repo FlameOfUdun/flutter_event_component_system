@@ -7,7 +7,7 @@ class DummyComponent extends ECSComponent<int> {
 
 class DummyEvent extends ECSEvent {}
 
-class DummyInitSystem extends InitializeSystem {
+class DummyInitSystem extends ECSInitializeSystem {
   bool initialized = false;
   @override
   Set<Type> get interactsWith => {};
@@ -15,7 +15,7 @@ class DummyInitSystem extends InitializeSystem {
   void initialize() => initialized = true;
 }
 
-class DummyTeardownSystem extends TeardownSystem {
+class DummyTeardownSystem extends ECSTeardownSystem {
   bool tornDown = false;
   @override
   Set<Type> get interactsWith => {};
@@ -23,7 +23,7 @@ class DummyTeardownSystem extends TeardownSystem {
   void teardown() => tornDown = true;
 }
 
-class DummyCleanupSystem extends CleanupSystem {
+class DummyCleanupSystem extends ECSCleanupSystem {
   bool cleaned = false;
   @override
   Set<Type> get interactsWith => {};
@@ -31,7 +31,7 @@ class DummyCleanupSystem extends CleanupSystem {
   void cleanup() => cleaned = true;
 }
 
-class DummyExecuteSystem extends ExecuteSystem {
+class DummyExecuteSystem extends ECSExecuteSystem {
   Duration? lastElapsed;
   @override
   Set<Type> get interactsWith => {};
@@ -39,7 +39,7 @@ class DummyExecuteSystem extends ExecuteSystem {
   void execute(Duration elapsed) => lastElapsed = elapsed;
 }
 
-class DummyReactiveSystem extends ReactiveSystem {
+class DummyReactiveSystem extends ECSReactiveSystem {
   bool reacted = false;
   @override
   Set<Type> get interactsWith => {};
@@ -53,7 +53,7 @@ class TestFeature extends ECSFeature {
   TestFeature();
 }
 
-class MultiReactiveSystem extends ReactiveSystem {
+class MultiReactiveSystem extends ECSReactiveSystem {
   bool reacted = false;
   @override
   Set<Type> get interactsWith => {};
@@ -229,6 +229,20 @@ void main() {
       feature.addSystem(multiReactiveSystem);
       expect(feature.reactiveSystems, contains(multiReactiveSystem));
       expect(feature.reactiveSystems, contains(multiReactiveSystem));
+    });
+
+    test('addSystem registers ECSCleanupSystem', () {
+      final feature = TestFeature();
+      final cleanup = DummyCleanupSystem();
+      feature.addSystem(cleanup);
+      expect(feature.cleanupSystems, contains(cleanup));
+    });
+
+    test('addSystem does not throw for a single ECSReactiveSystem', () {
+      final feature = TestFeature();
+      final reactive = DummyReactiveSystem();
+      expect(() => feature.addSystem(reactive), returnsNormally);
+      expect(feature.reactiveSystems, contains(reactive));
     });
   });
 }

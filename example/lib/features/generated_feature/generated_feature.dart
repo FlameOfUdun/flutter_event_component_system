@@ -3,39 +3,39 @@ import 'package:flutter_event_component_system_annotations/flutter_event_compone
 
 part 'generated_feature.ecs.dart';
 
-@ComponentDefinition()
+@ECSComponentDefinition()
 const int health = 0;
 
-@EventDefinition(
+@ECSEventDefinition(
   description: 'Resets health to 0 for testing purposes.',
 )
 const Object resetHealth = Object();
 
-@DataEventDefinition()
+@ECSDataEventDefinition()
 const int addHealth = 10;
 
-@ReactiveSystemDefinition(reactsTo: {addHealth}, interactsWith: {health}, reactsIf: addHealthIf)
-void applyAddHealth(SystemReference system) {
+@ECSReactiveSystemDefinition(reactsTo: {addHealth}, interactsWith: {health}, reactsIf: addHealthIf)
+void applyAddHealth(ECSSystemReference system) {
   final component = system.getComponent(health);
   final event = system.getDataEvent(addHealth);
-  component.value += event.data!;
+  component.value += event.data;
 }
 
-bool addHealthIf(SystemReference system) {
+bool addHealthIf(ECSSystemReference system) {
   final component = system.getComponent(health);
   final event = system.getDataEvent(addHealth);
-  return component.value + event.data! <= 100;
+  return component.value + event.data <= 100;
 }
 
-@ReactiveSystemDefinition(reactsTo: {resetHealth}, interactsWith: {health})
-void applyResetHealth(SystemReference system) {
+@ECSReactiveSystemDefinition(reactsTo: {resetHealth}, interactsWith: {health})
+void applyResetHealth(ECSSystemReference system) {
   final component = system.getComponent(health);
   component.update(0, force: true);
 }
 
-@FeatureDefinition()
+@ECSFeatureDefinition()
 void buildGeneratedFeature(
-  FeatureReference feature, {
+  ECSFeatureReference feature, {
   bool mock = false,
 }) {
   if (mock) {

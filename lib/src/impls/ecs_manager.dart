@@ -1,6 +1,6 @@
 part of '../ecs_base.dart';
 
-/// ECSFeature is a base class for creating features in the ECS system.
+/// ECSManager is a base class for managing features in the ECS system.
 final class ECSManager with _ECSLogger {
   /// An optional name for this ECS manager.
   final String? name;
@@ -23,7 +23,7 @@ final class ECSManager with _ECSLogger {
   /// Indicates if the ECS manager is active.
   bool _isActive = false;
 
-  ECSManager._internal({
+  ECSManager({
     this.name,
     Set<ECSFeature>? features,
   }) {
@@ -35,34 +35,12 @@ final class ECSManager with _ECSLogger {
     activate();
   }
 
-  /// Factory constructor for creating or retrieving an ECS manager.
-  factory ECSManager({
-    String? name,
-    Set<ECSFeature>? features,
-  }) {
-    if (name != null) {
-      for (final manager in _managers) {
-        if (manager.name == name) {
-          return manager;
-        }
-      }
-    }
-
-    final manager = ECSManager._internal(
-      name: name,
-      features: features,
-    );
-
-    return manager;
-  }
-
   /// Indicates if the ECS manager is active.
   @visibleForTesting
   bool get isActive => _isActive;
 
   /// Indicates if any feature has execute or cleanup systems.
-  bool get hasExecuteOrCleanupSystems =>
-      _features.any((feature) => feature.hasExecuteOrCleanupSystems);
+  bool get hasExecuteOrCleanupSystems => _features.any((feature) => feature.hasExecuteOrCleanupSystems);
 
   /// Unmodifiable set of features in the ECS manager.
   @visibleForTesting
@@ -70,8 +48,7 @@ final class ECSManager with _ECSLogger {
 
   /// Unmodifiable set of all entities across all features.
   @visibleForTesting
-  Set<ECSEntity> get entities =>
-      Set.unmodifiable(features.expand((feature) => feature.entities));
+  Set<ECSEntity> get entities => Set.unmodifiable(features.expand((feature) => feature.entities.values));
 
   /// Unique identifier for this ECS manager.
   String get identifier => name ?? 'ECSManager_$index';
@@ -96,8 +73,7 @@ final class ECSManager with _ECSLogger {
       return;
     }
 
-    developer.registerExtension('ext.ecs.requestInspectorData',
-        (method, parameters) async {
+    developer.registerExtension('ext.ecs.requestInspectorData', (method, parameters) async {
       final managers = _managers.map(ECSManagerData.fromManager).toList();
       final data = ECSInspectorData(managers: managers);
       final encoded = jsonEncode(data.toJson());
@@ -167,27 +143,34 @@ final class ECSManager with _ECSLogger {
   ///
   /// Throws a [StateError] if the entity of type [TEntity] is not found.
   TEntity getEntity<TEntity extends ECSEntity>() {
-    TEntity? getEntityFromManager(ECSManager manager) {
-      for (final feature in manager._features) {
-        try {
-          return feature.getEntity<TEntity>();
-        } catch (_) {
-          continue;
-        }
-      }
-      return null;
+    final current = _getEntityFromManager<TEntity>(this);
+    if (current != null) {
+      return current;
     }
 
-    final current = getEntityFromManager(this);
-    if (current != null) return current;
-
     for (final manager in _managers) {
-      if (manager == this) continue;
-      final entity = getEntityFromManager(manager);
-      if (entity != null) return entity;
+      if (manager == this) {
+        continue;
+      }
+
+      final entity = _getEntityFromManager<TEntity>(manager);
+      if (entity != null) {
+        return entity;
+      }
     }
 
     throw StateError("Entity of type $TEntity not found");
+  }
+
+  /// Helper function to get an entity of type [TEntity] from a specific [manager].
+  TEntity? _getEntityFromManager<TEntity extends ECSEntity>(ECSManager manager) {
+    for (final feature in manager._features) {
+      final entity = feature.entities[TEntity];
+      if (entity != null) {
+        return entity as TEntity;
+      }
+    }
+    return null;
   }
 
   /// Gets an entity of the specified [type] from all features.
@@ -195,26 +178,33 @@ final class ECSManager with _ECSLogger {
   /// Throws a [StateError] if the entity of the specified [type] is not found.
   @visibleForTesting
   ECSEntity getEntityOfType(Type type) {
-    ECSEntity? getEntityFromManager(ECSManager manager) {
-      for (final feature in manager._features) {
-        try {
-          return feature.getEntityOfType(type);
-        } catch (_) {
-          continue;
-        }
-      }
-      return null;
+    final current = _getEntityOfTypeFromManager(this, type);
+    if (current != null) {
+      return current;
     }
 
-    final current = getEntityFromManager(this);
-    if (current != null) return current;
-
     for (final manager in _managers) {
-      if (manager == this) continue;
-      final entity = getEntityFromManager(manager);
-      if (entity != null) return entity;
+      if (manager == this) {
+        continue;
+      }
+
+      final entity = _getEntityOfTypeFromManager(manager, type);
+      if (entity != null) {
+        return entity;
+      }
     }
 
     throw StateError("Entity of type $type not found");
+  }
+
+  /// Helper function to get an entity of the specified [type] from a specific [manager].
+  ECSEntity? _getEntityOfTypeFromManager(ECSManager manager, Type type) {
+    for (final feature in manager._features) {
+      final entity = feature.entities[type];
+      if (entity != null) {
+        return entity;
+      }
+    }
+    return null;
   }
 }

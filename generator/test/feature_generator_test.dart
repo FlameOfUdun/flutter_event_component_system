@@ -30,13 +30,31 @@ const _annotationSource = '''
       this.reactsIf,
     });
   }
-  class FeatureDefinition {
+  class ECSFeatureDefinition {
     final String? description;
-    const FeatureDefinition({this.description});
+    const ECSFeatureDefinition({this.description});
   }
   class ECSDependencyDefinition {
     final String? description;
     const ECSDependencyDefinition({this.description});
+  }
+  class ECSInitializeSystemDefinition {
+    final String? description;
+    const ECSInitializeSystemDefinition({this.description});
+  }
+  class ECSTeardownSystemDefinition {
+    final String? description;
+    const ECSTeardownSystemDefinition({this.description});
+  }
+  class ECSCleanupSystemDefinition {
+    final String? description;
+    final bool Function(dynamic)? cleansIf;
+    const ECSCleanupSystemDefinition({this.description, this.cleansIf});
+  }
+  class ECSExecuteSystemDefinition {
+    final String? description;
+    final bool Function(dynamic)? executesIf;
+    const ECSExecuteSystemDefinition({this.description, this.executesIf});
   }
 ''';
 
@@ -66,7 +84,7 @@ void main() {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         _buildSources(
-          libraryDirective: '@FeatureDefinition() library;',
+          libraryDirective: '@ECSFeatureDefinition() library;',
           body: '''
             @ECSComponentDefinition() const String health = "";
             @ECSDataEventDefinition() const int addHealth = 0;
@@ -87,7 +105,6 @@ void main() {
             contains('addSystem(ApplyAddHealthReactiveSystem())'),
           ])),
         },
-        onLog: print,
       );
     });
 
@@ -95,7 +112,7 @@ void main() {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         _buildSources(
-          libraryDirective: '@FeatureDefinition(description: "Player feature") library;',
+          libraryDirective: '@ECSFeatureDefinition(description: "Player feature") library;',
           body: '''
             @ECSComponentDefinition() const int health = 0;
             @ECSDependencyDefinition() const String repo = "";
@@ -115,7 +132,7 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         _buildSources(
           libraryDirective:
-              '@FeatureDefinition(description: "Handles health logic") library;',
+              '@ECSFeatureDefinition(description: "Handles health logic") library;',
           body: '@ECSComponentDefinition() const String health = "";',
         ),
         outputs: {
@@ -124,7 +141,7 @@ void main() {
       );
     });
 
-    test('returns null when no @FeatureDefinition on library', () async {
+    test('returns null when no @ECSFeatureDefinition on library', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         _buildSources(
@@ -134,6 +151,35 @@ void main() {
           _outputKey: decodedMatches(
             isNot(contains('extends ECSFeature')),
           ),
+        },
+      );
+    });
+
+    test('includes all system types in library-mode feature', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        _buildSources(
+          libraryDirective: '@ECSFeatureDefinition() library;',
+          body: '''
+            @ECSComponentDefinition() const int health = 0;
+            @ECSInitializeSystemDefinition()
+            void setupPlayer(ECSSystemReference system) {}
+            @ECSTeardownSystemDefinition()
+            void teardownPlayer(ECSSystemReference system) {}
+            @ECSCleanupSystemDefinition()
+            void cleanupPlayer(ECSSystemReference system) {}
+            @ECSExecuteSystemDefinition()
+            void tickPlayer(ECSSystemReference system, Duration elapsed) {}
+          ''',
+        ),
+        outputs: {
+          _outputKey: decodedMatches(allOf([
+            contains('addEntity(HealthComponent())'),
+            contains('addSystem(SetupPlayerInitializeSystem())'),
+            contains('addSystem(TeardownPlayerTeardownSystem())'),
+            contains('addSystem(CleanupPlayerCleanupSystem())'),
+            contains('addSystem(TickPlayerExecuteSystem())'),
+          ])),
         },
       );
     });
@@ -151,8 +197,8 @@ void main() {
             @ECSReactiveSystemDefinition(reactsTo: {addHealth}, interactsWith: {health})
             void applyAddHealth(ECSSystemReference system) {}
 
-            @FeatureDefinition()
-            void buildGeneratedFeature(FeatureReference feature) {
+            @ECSFeatureDefinition()
+            void buildGeneratedFeature(ECSFeatureReference feature) {
               feature.addComponent(health);
               feature.addDataEvent(addHealth);
               feature.addReactiveSystem(applyAddHealth);
@@ -177,8 +223,8 @@ void main() {
           body: '''
             @ECSComponentDefinition() const String health = "";
 
-            @FeatureDefinition()
-            void buildPlayerFeature(FeatureReference feature) {
+            @ECSFeatureDefinition()
+            void buildPlayerFeature(ECSFeatureReference feature) {
               feature.addComponent(health);
             }
           ''',
@@ -198,9 +244,9 @@ void main() {
           body: '''
             @ECSComponentDefinition() const String health = "";
 
-            @FeatureDefinition()
+            @ECSFeatureDefinition()
             void buildGeneratedFeature(
-              FeatureReference feature, {
+              ECSFeatureReference feature, {
               bool mock = false,
             }) {
               if (mock) return;
@@ -224,8 +270,8 @@ void main() {
           body: '''
             @ECSDependencyDefinition() const String repo = "";
 
-            @FeatureDefinition()
-            void buildPlayerFeature(FeatureReference feature) {
+            @ECSFeatureDefinition()
+            void buildPlayerFeature(ECSFeatureReference feature) {
               feature.addDependency(repo);
             }
           ''',
@@ -241,8 +287,8 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         _buildSources(
           body: '''
-            @FeatureDefinition()
-            void buildPlayerFeature(FeatureReference feature) {
+            @ECSFeatureDefinition()
+            void buildPlayerFeature(ECSFeatureReference feature) {
               feature.addInitializeSystem(setupPlayer);
             }
             void setupPlayer() {}
@@ -259,8 +305,8 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         _buildSources(
           body: '''
-            @FeatureDefinition()
-            void buildPlayerFeature(FeatureReference feature) {
+            @ECSFeatureDefinition()
+            void buildPlayerFeature(ECSFeatureReference feature) {
               feature.addExecuteSystem(tickPlayer);
             }
             void tickPlayer() {}
@@ -277,8 +323,8 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         _buildSources(
           body: '''
-            @FeatureDefinition()
-            void buildPlayerFeature(FeatureReference feature) {
+            @ECSFeatureDefinition()
+            void buildPlayerFeature(ECSFeatureReference feature) {
               feature.addCleanupSystem(cleanPlayer);
             }
             void cleanPlayer() {}
@@ -295,8 +341,8 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         _buildSources(
           body: '''
-            @FeatureDefinition()
-            void buildPlayerFeature(FeatureReference feature) {
+            @ECSFeatureDefinition()
+            void buildPlayerFeature(ECSFeatureReference feature) {
               feature.addTeardownSystem(disposePlayer);
             }
             void disposePlayer() {}

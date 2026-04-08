@@ -27,12 +27,12 @@ final class ComponentGenerator extends GeneratorForAnnotation<Component> {
       resolve: true,
     );
 
-    final varDecl = _findVarDecl(astNode, element.name!);
+    final varDecl = _findVarDecl(astNode, element.name!, element);
     final defaultValue = extractInitializerSource(varDecl, element);
     final varName = element.name!;
     final type = element.type.getDisplayString();
     final description = annotation.peek('description')?.stringValue;
-    final className = '${capitalize(varName)}Component';
+    final className = '${toPascalCase(varName)}Component';
 
     final buffer = StringBuffer();
     if (description != null) buffer.writeln('/// $description');
@@ -65,12 +65,12 @@ final class DependencyGenerator extends GeneratorForAnnotation<Dependency> {
       resolve: true,
     );
 
-    final varDecl = _findVarDecl(astNode, element.name!);
+    final varDecl = _findVarDecl(astNode, element.name!, element);
     final defaultValue = extractInitializerSource(varDecl, element);
     final varName = element.name!;
     final type = element.type.getDisplayString();
     final description = annotation.peek('description')?.stringValue;
-    final className = '${capitalize(varName)}Dependency';
+    final className = '${toPascalCase(varName)}Dependency';
 
     final buffer = StringBuffer();
     if (description != null) buffer.writeln('/// $description');
@@ -109,7 +109,7 @@ final class EventGenerator extends GeneratorForAnnotation<Event> {
 
     final funcName = element.name!;
     final description = annotation.peek('description')?.stringValue;
-    final raw = capitalize(funcName);
+    final raw = toPascalCase(funcName);
     final className = raw.endsWith('Event') ? raw : '${raw}Event';
 
     final buffer = StringBuffer();
@@ -148,7 +148,7 @@ final class EventGenerator extends GeneratorForAnnotation<Event> {
 
 /// Finds the [VariableDeclaration] AST node for [varName].
 /// [astNode] is the result of [resolver.astNodeFor] for a [TopLevelVariableElement].
-VariableDeclaration _findVarDecl(AstNode? astNode, String varName) {
+VariableDeclaration _findVarDecl(AstNode? astNode, String varName, Element element) {
   if (astNode is VariableDeclaration && astNode.name.lexeme == varName) {
     return astNode;
   }
@@ -157,5 +157,8 @@ VariableDeclaration _findVarDecl(AstNode? astNode, String varName) {
       if (v.name.lexeme == varName) return v;
     }
   }
-  throw StateError('Could not find VariableDeclaration for $varName');
+  throw InvalidGenerationSourceError(
+    'Could not find VariableDeclaration for $varName — this is an internal error, please report it.',
+    element: element,
+  );
 }

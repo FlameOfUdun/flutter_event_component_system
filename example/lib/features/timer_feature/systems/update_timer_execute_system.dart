@@ -1,6 +1,6 @@
 part of '../timer_feature.dart';
 
-final class UpdateTimerExecuteSystem extends ExecuteSystem {
+final class UpdateTimerExecuteSystem extends ECSExecuteSystem {
   Duration? duration;
 
   @override

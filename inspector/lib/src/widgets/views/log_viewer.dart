@@ -7,7 +7,7 @@ import '../components/filter_chip_row.dart';
 import '../components/search_field.dart';
 
 /// Log viewer for inspecting ECS system logs.
-class LogViewer extends StatelessWidget {
+final class LogViewer extends StatelessWidget {
   final InspectorState state;
 
   const LogViewer({super.key, required this.state});
@@ -24,9 +24,7 @@ class LogViewer extends StatelessWidget {
           children: [
             _buildToolbar(context, filter),
             const Divider(height: 1),
-            Expanded(
-              child: logs.isEmpty ? _buildEmptyState() : _buildLogList(logs),
-            ),
+            Expanded(child: logs.isEmpty ? _buildEmptyState() : _buildLogList(logs)),
           ],
         );
       },
@@ -53,12 +51,12 @@ class LogViewer extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               OutlinedButton.icon(
-                onPressed: state.clearLogs,
+                onPressed: () {
+                  state.setLogFilter(filter.copyWith(clearTime: DateTime.now()));
+                },
                 icon: const Icon(Icons.clear_all, size: 18),
                 label: const Text('Clear'),
-                style: OutlinedButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                ),
+                style: OutlinedButton.styleFrom(visualDensity: VisualDensity.compact),
               ),
             ],
           ),
@@ -70,11 +68,7 @@ class LogViewer extends StatelessWidget {
               selected: filter.featureName,
               labelBuilder: (f) => f,
               onSelected: (f) {
-                state.setLogFilter(
-                  f == null
-                      ? filter.copyWith(clearFeature: true)
-                      : filter.copyWith(featureName: f),
-                );
+                state.setLogFilter(f == null ? filter.copyWith(clearFeature: true) : filter.copyWith(featureName: f));
               },
             ),
           const SizedBox(height: 8),
@@ -97,27 +91,11 @@ class LogViewer extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.article_outlined,
-            size: 64,
-            color: InspectorTheme.mutedText,
-          ),
+          Icon(Icons.article_outlined, size: 64, color: InspectorTheme.mutedText),
           const SizedBox(height: 16),
-          Text(
-            'No logs found',
-            style: TextStyle(
-              color: InspectorTheme.secondaryText,
-              fontSize: 16,
-            ),
-          ),
+          Text('No logs found', style: TextStyle(color: InspectorTheme.secondaryText, fontSize: 16)),
           const SizedBox(height: 8),
-          Text(
-            'Logs will appear here as they are generated',
-            style: TextStyle(
-              color: InspectorTheme.mutedText,
-              fontSize: 14,
-            ),
-          ),
+          Text('Logs will appear here as they are generated', style: TextStyle(color: InspectorTheme.mutedText, fontSize: 14)),
         ],
       ),
     );
@@ -132,7 +110,7 @@ class LogViewer extends StatelessWidget {
   }
 }
 
-class _LogEntry extends StatelessWidget {
+final class _LogEntry extends StatelessWidget {
   final LogData log;
 
   const _LogEntry({required this.log});
@@ -147,30 +125,15 @@ class _LogEntry extends StatelessWidget {
         leading: _LevelIndicator(level: log.level, color: levelColor),
         title: Text(
           log.message,
-          style: const TextStyle(
-            fontSize: 13,
-            fontFamily: 'monospace',
-          ),
+          style: const TextStyle(fontSize: 13, fontFamily: 'monospace'),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Row(
           children: [
-            Text(
-              _formatTime(log.timestamp),
-              style: TextStyle(
-                color: InspectorTheme.mutedText,
-                fontSize: 11,
-              ),
-            ),
-            if (log.featureName != null) ...[
-              const SizedBox(width: 8),
-              _Badge(label: log.featureName!),
-            ],
-            if (log.systemName != null) ...[
-              const SizedBox(width: 8),
-              _Badge(label: log.systemName!),
-            ],
+            Text(_formatTime(log.time), style: TextStyle(color: InspectorTheme.mutedText, fontSize: 11)),
+            if (log.featureName != null) ...[const SizedBox(width: 8), _Badge(label: log.featureName!)],
+            if (log.systemName != null) ...[const SizedBox(width: 8), _Badge(label: log.systemName!)],
           ],
         ),
         children: [
@@ -179,42 +142,27 @@ class _LogEntry extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              decoration: BoxDecoration(
-                color: InspectorTheme.elevatedBackground,
-                borderRadius: BorderRadius.circular(8),
-              ),
+              decoration: BoxDecoration(color: InspectorTheme.elevatedBackground, borderRadius: BorderRadius.circular(8)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Call Stack',
-                    style: TextStyle(
-                      color: InspectorTheme.secondaryText,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(color: InspectorTheme.secondaryText, fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
-                  ...log.callStack.take(10).map(
+                  ...log.callStack
+                      .take(10)
+                      .map(
                         (frame) => Padding(
                           padding: const EdgeInsets.only(bottom: 4),
-                          child: SelectableText(
-                            frame,
-                            style: const TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 11,
-                            ),
-                          ),
+                          child: SelectableText(frame, style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
                         ),
                       ),
                   if (log.callStack.length > 10)
                     Text(
                       '... and ${log.callStack.length - 10} more frames',
-                      style: TextStyle(
-                        color: InspectorTheme.mutedText,
-                        fontSize: 11,
-                        fontStyle: FontStyle.italic,
-                      ),
+                      style: TextStyle(color: InspectorTheme.mutedText, fontSize: 11, fontStyle: FontStyle.italic),
                     ),
                 ],
               ),
@@ -243,7 +191,7 @@ class _LogEntry extends StatelessWidget {
   }
 }
 
-class _LevelIndicator extends StatelessWidget {
+final class _LevelIndicator extends StatelessWidget {
   final LogLevel level;
   final Color color;
 
@@ -263,16 +211,13 @@ class _LevelIndicator extends StatelessWidget {
     return Container(
       width: 36,
       height: 36,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-      ),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
       child: Icon(icon, color: color, size: 18),
     );
   }
 }
 
-class _Badge extends StatelessWidget {
+final class _Badge extends StatelessWidget {
   final String label;
 
   const _Badge({required this.label});
@@ -281,17 +226,8 @@ class _Badge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: InspectorTheme.elevatedBackground,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: InspectorTheme.secondaryText,
-          fontSize: 10,
-        ),
-      ),
+      decoration: BoxDecoration(color: InspectorTheme.elevatedBackground, borderRadius: BorderRadius.circular(8)),
+      child: Text(label, style: TextStyle(color: InspectorTheme.secondaryText, fontSize: 10)),
     );
   }
 }

@@ -1,6 +1,6 @@
 part of '../user_auth_feature.dart';
 
-final class LoginUserReactiveSystem extends ReactiveSystem {
+final class LoginUserReactiveSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
     return {
@@ -19,7 +19,7 @@ final class LoginUserReactiveSystem extends ReactiveSystem {
   @override
   void react() {
     final event = getEntity<LoginEvent>();
-    _performLogin(event.data!).ignore();
+    _performLogin(event.data).ignore();
   }
 
   Future<void> _performLogin(LoginCredentials credentials) async {

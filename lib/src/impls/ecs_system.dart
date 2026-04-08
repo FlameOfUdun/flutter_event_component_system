@@ -2,9 +2,8 @@ part of '../ecs_base.dart';
 
 /// Base class for ECS systems.
 sealed class ECSSystem {
-  /// Set of cached entities for this system.
-  @visibleForTesting
-  Set<ECSEntity> entities = {};
+  /// Cached entities that this system interacts with.
+  Map<Type, ECSEntity> entities = {};
 
   /// The parent feature of this system.
   @visibleForTesting
@@ -43,7 +42,12 @@ sealed class ECSSystem {
   @visibleForTesting
   @protected
   void log(String message, {ECSLogLevel level = ECSLogLevel.info}) {
-    feature?.manager?.log(message, level: level);
+    feature?.manager?.log(
+      message,
+      level: level,
+      featureName: feature?.runtimeType.toString(),
+      systemName: runtimeType.toString(),
+    );
   }
 
   /// Gets an entity of type [TEntity] from the ECS system.
@@ -58,8 +62,9 @@ sealed class ECSSystem {
   @visibleForTesting
   @protected
   TEntity getEntity<TEntity extends ECSEntity>() {
-    for (final entity in entities) {
-      if (entity is TEntity) return entity;
+    final cached = entities[TEntity];
+    if (cached != null) {
+      return cached as TEntity;
     }
     TEntity entity;
     try {
@@ -67,7 +72,7 @@ sealed class ECSSystem {
     } catch (_) {
       entity = feature!.manager!.getEntity<TEntity>();
     }
-    entities.add(entity);
+    entities[TEntity] = entity;
     return entity;
   }
 }
@@ -81,9 +86,7 @@ sealed class ECSSystem {
 ///
 /// The [initialize] method is called once after the first frame is rendered and
 /// before any other systems are executed.
-abstract class InitializeSystem extends ECSSystem {
-  InitializeSystem();
-
+abstract class ECSInitializeSystem extends ECSSystem {
   /// Initialize logic for the system.
   @visibleForTesting
   void initialize();
@@ -96,11 +99,9 @@ abstract class InitializeSystem extends ECSSystem {
 /// The [cleanup] method should be overridden in subclasses to perform the
 /// actual cleanup logic.
 ///
-/// The [cleanup] method is called after all [ExecuteSystem]s have been executed
+/// The [cleanup] method is called after all [ECSExecuteSystem]s have been executed
 /// and before the next frame is rendered.
-abstract class CleanupSystem extends ECSSystem {
-  CleanupSystem();
-
+abstract class ECSCleanupSystem extends ECSSystem {
   /// Whether the system should be executed or not.
   ///
   /// This is used to determine whether the system should be executed on every
@@ -123,9 +124,7 @@ abstract class CleanupSystem extends ECSSystem {
 ///
 /// The [teardown] method is called once after the last frame is rendered and
 /// before the application is disposed.
-abstract class TeardownSystem extends ECSSystem {
-  TeardownSystem();
-
+abstract class ECSTeardownSystem extends ECSSystem {
   /// Teardown logic for the system.
   @visibleForTesting
   void teardown();
@@ -140,9 +139,7 @@ abstract class TeardownSystem extends ECSSystem {
 /// actual execution logic.
 ///
 /// The [execute] method is called every frame.
-abstract class ExecuteSystem extends ECSSystem {
-  ExecuteSystem();
-
+abstract class ECSExecuteSystem extends ECSSystem {
   /// Whether the system should be executed or not.
   ///
   /// This is used to determine whether the system should be executed on every
@@ -162,7 +159,7 @@ abstract class ExecuteSystem extends ECSSystem {
 ///
 /// The [react] method should be overridden in subclasses to perform the
 /// actual reaction logic.
-abstract class ReactiveSystem extends ECSSystem implements ECSEntityListener {
+abstract class ECSReactiveSystem extends ECSSystem implements ECSEntityListener {
   /// Indicates whether this system is active.
   @visibleForTesting
   bool isActive = false;
@@ -196,7 +193,11 @@ abstract class ReactiveSystem extends ECSSystem implements ECSEntityListener {
     if (isActive) return;
     for (final type in reactsTo) {
       final entity = feature!.manager!.getEntityOfType(type);
-      entity.addListener(this);
+      if (entity is ECSListenableEntity) {
+        entity.addListener(this);
+      } else {
+        log('Entity of type $type is not listenable and cannot be reacted to', level: ECSLogLevel.warning);
+      }
     }
     isActive = true;
   }
@@ -209,7 +210,11 @@ abstract class ReactiveSystem extends ECSSystem implements ECSEntityListener {
     if (!isActive) return;
     for (final type in reactsTo) {
       final entity = feature!.manager!.getEntityOfType(type);
-      entity.removeListener(this);
+      if (entity is ECSListenableEntity) {
+        entity.removeListener(this);
+      } else {
+        log('Entity of type $type is not listenable and cannot be reacted to', level: ECSLogLevel.warning);
+      }
     }
     isActive = false;
   }
@@ -220,7 +225,9 @@ abstract class ReactiveSystem extends ECSSystem implements ECSEntityListener {
     if (reactsIf) {
       if (entity is ECSComponent) {
         log('$identifier reacted to changes in ${entity.identifier}');
-      } else {
+      } else if (entity is ECSDataEvent) {
+        log('$identifier reacted to trigger of ${entity.identifier}');
+      } else if (entity is ECSEvent) {
         log('$identifier reacted to trigger of ${entity.identifier}');
       }
       react();

@@ -2,7 +2,7 @@ name: flutter_event_component_system
 description: Powerful Event-Component-System state management for Flutter. Promotes clean architecture, testability, and includes visual debugging with Inspector
 issue_tracker: https://github.com/FlameOfUdun/flutter_event_component_system/issues
 repository: https://github.com/FlameOfUdun/flutter_event_component_system
-version: 0.0.6
+version: 1.0.0-beta.1
 
 environment:
   sdk: ^3.6.2

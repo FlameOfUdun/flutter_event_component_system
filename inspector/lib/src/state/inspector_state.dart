@@ -10,7 +10,7 @@ import '../services/ecs_service.dart';
 enum InspectorView { graph, entities, logs }
 
 /// Filter state for entities.
-class EntityFilter {
+final class EntityFilter {
   final String searchQuery;
   final String? featureName;
   final EntityType? type;
@@ -57,12 +57,14 @@ class EntityFilter {
 }
 
 /// Filter state for logs.
-class LogFilter {
+final class LogFilter {
+  final DateTime? clearTime;
   final String searchQuery;
   final Set<LogLevel> levels;
   final String? featureName;
 
   const LogFilter({
+    this.clearTime,
     this.searchQuery = '',
     this.levels = const {},
     this.featureName,
@@ -72,11 +74,13 @@ class LogFilter {
     String? searchQuery,
     Set<LogLevel>? levels,
     String? featureName,
+    DateTime? clearTime,
     bool clearFeature = false,
   }) {
     return LogFilter(
       searchQuery: searchQuery ?? this.searchQuery,
       levels: levels ?? this.levels,
+      clearTime: clearTime ?? this.clearTime,
       featureName: clearFeature ? null : (featureName ?? this.featureName),
     );
   }
@@ -97,12 +101,16 @@ class LogFilter {
       return false;
     }
 
+    if (clearTime != null && log.time.isBefore(clearTime!)) {
+      return false;
+    }
+
     return true;
   }
 }
 
 /// Filter state for graph view.
-class GraphFilter {
+final class GraphFilter {
   final String searchQuery;
   final Set<String> selectedFeatures;
   final bool showComponents;
@@ -146,7 +154,7 @@ class GraphFilter {
 }
 
 /// Central state manager for the inspector.
-class InspectorState extends ChangeNotifier {
+final class InspectorState extends ChangeNotifier {
   final ECSService _service;
 
   InspectorView _currentView = InspectorView.graph;
@@ -159,7 +167,6 @@ class InspectorState extends ChangeNotifier {
   GraphFilter _graphFilter = const GraphFilter();
 
   String? _selectedNodeId;
-  DateTime? _logClearTime;
 
   StreamSubscription? _statusSubscription;
   StreamSubscription? _dataSubscription;
@@ -229,13 +236,6 @@ class InspectorState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Clear logs (set filter timestamp).
-  void clearLogs() {
-    _logClearTime = DateTime.now();
-    _service.setLogClearTime(_logClearTime!);
-    notifyListeners();
-  }
-
   /// Get filtered entities.
   List<EntityData> get filteredEntities {
     return _data.allEntities.where(_entityFilter.matches).toList();
@@ -245,7 +245,7 @@ class InspectorState extends ChangeNotifier {
   List<LogData> get filteredLogs {
     var logs = _service.getFilteredLogs();
     return logs.where(_logFilter.matches).toList()
-      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      ..sort((a, b) => b.time.compareTo(a.time));
   }
 
   /// Manually refresh data.

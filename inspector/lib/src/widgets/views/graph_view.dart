@@ -8,7 +8,7 @@ import '../components/filter_chip_row.dart';
 import '../components/search_field.dart';
 
 /// Graph visualization view for the ECS system.
-class ECSGraphView extends StatefulWidget {
+final class ECSGraphView extends StatefulWidget {
   final InspectorState state;
 
   const ECSGraphView({super.key, required this.state});
@@ -17,7 +17,7 @@ class ECSGraphView extends StatefulWidget {
   State<ECSGraphView> createState() => _ECSGraphViewState();
 }
 
-class _ECSGraphViewState extends State<ECSGraphView> {
+final class _ECSGraphViewState extends State<ECSGraphView> {
   final _graph = gv.Graph();
   final _builder = gv.SugiyamaConfiguration()
     ..nodeSeparation = 50
@@ -255,10 +255,12 @@ class _ECSGraphViewState extends State<ECSGraphView> {
 
   Widget _buildNodeContent(_NodeData data, bool isSelected, bool inCascade, {bool inFilter = true}) {
     final color = switch (data.type) {
-      _NodeType.component => InspectorTheme.componentColor,
-      _NodeType.event => InspectorTheme.eventColor,
-      _NodeType.system => InspectorTheme.systemColor,
-      _NodeType.lifecycle => InspectorTheme.lifecycleColor,
+      _NodeType.component  => InspectorTheme.componentColor,
+      _NodeType.event      => InspectorTheme.eventColor,
+      _NodeType.dataEvent  => InspectorTheme.eventColor,
+      _NodeType.system     => InspectorTheme.systemColor,
+      _NodeType.lifecycle  => InspectorTheme.lifecycleColor,
+      _NodeType.dependency => InspectorTheme.secondaryText,
     };
 
     return Container(
@@ -323,6 +325,8 @@ class _ECSGraphViewState extends State<ECSGraphView> {
           _LegendItem(color: InspectorTheme.systemColor, label: 'System'),
           const SizedBox(width: 24),
           _LegendItem(color: InspectorTheme.lifecycleColor, label: 'Lifecycle'),
+          const SizedBox(width: 24),
+          _LegendItem(color: InspectorTheme.secondaryText, label: 'Dependency'),
           const Spacer(),
           if (_selectedNode != null)
             TextButton.icon(
@@ -367,7 +371,12 @@ class _ECSGraphViewState extends State<ECSGraphView> {
       _nodeDataMap[entity.identifier] = _NodeData(
         id: entity.identifier,
         name: entity.name,
-        type: entity.isComponent ? _NodeType.component : _NodeType.event,
+        type: switch (entity.type) {
+          EntityType.component   => _NodeType.component,
+          EntityType.event       => _NodeType.event,
+          EntityType.dataEvent   => _NodeType.dataEvent,
+          EntityType.dependency  => _NodeType.dependency,
+        },
         featureName: entity.featureName,
         value: entity.value,
       );
@@ -475,7 +484,7 @@ class _ECSGraphViewState extends State<ECSGraphView> {
   }
 }
 
-class _LegendItem extends StatelessWidget {
+final class _LegendItem extends StatelessWidget {
   final Color color;
   final String label;
 
@@ -507,9 +516,9 @@ class _LegendItem extends StatelessWidget {
   }
 }
 
-enum _NodeType { component, event, system, lifecycle }
+enum _NodeType { component, event, dataEvent, system, lifecycle, dependency }
 
-class _NodeData {
+final class _NodeData {
   final String id;
   final String name;
   final _NodeType type;

@@ -5,29 +5,29 @@ part of '../ecs_base.dart';
 /// Features can contain entities and systems, and they provide a way to organize
 /// and manage different parts of the ECS architecture.
 abstract class ECSFeature {
-  /// Set of entities in this feature.
+  /// Map of entities in this feature, keyed by their type.
   @visibleForTesting
-  final Set<ECSEntity> entities = {};
+  final Map<Type, ECSEntity> entities = {};
 
   /// Set of initialize systems in this feature.
   @visibleForTesting
-  final Set<InitializeSystem> initializeSystems = {};
+  final Set<ECSInitializeSystem> initializeSystems = {};
 
   /// Set of teardown systems in this feature.
   @visibleForTesting
-  final Set<TeardownSystem> teardownSystems = {};
+  final Set<ECSTeardownSystem> teardownSystems = {};
 
   /// Set of cleanup systems in this feature.
   @visibleForTesting
-  final Set<CleanupSystem> cleanupSystems = {};
+  final Set<ECSCleanupSystem> cleanupSystems = {};
 
   /// Set of execute systems in this feature.
   @visibleForTesting
-  final Set<ExecuteSystem> executeSystems = {};
+  final Set<ECSExecuteSystem> executeSystems = {};
 
   /// Map of reactive systems by entity type.
   @visibleForTesting
-  final Set<ReactiveSystem> reactiveSystems = {};
+  final Set<ECSReactiveSystem> reactiveSystems = {};
 
   /// The manager that this feature is associated with.
   @visibleForTesting
@@ -44,16 +44,13 @@ abstract class ECSFeature {
   bool get isAttached => manager != null;
 
   /// Unique identifier for this feature.
-  String get identifier => "${manager?.identifier}.$runtimeType";
+  String get identifier => manager != null ? "${manager!.identifier}.$runtimeType" : "$runtimeType";
+
 
   /// Number of systems in this feature.
   @visibleForTesting
   int get systemsCount {
-    return initializeSystems.length +
-        teardownSystems.length +
-        reactiveSystems.length +
-        cleanupSystems.length +
-        executeSystems.length;
+    return initializeSystems.length + teardownSystems.length + reactiveSystems.length + cleanupSystems.length + executeSystems.length;
   }
 
   /// Indicates whether this feature has execute or cleanup systems.
@@ -78,7 +75,11 @@ abstract class ECSFeature {
   @protected
   @visibleForTesting
   void addEntity(ECSEntity entity) {
-    entities.add(entity);
+    final existing = entities[entity.runtimeType];
+    if (existing != null) {
+      throw StateError("Entity of type ${entity.runtimeType} already exists in this feature");
+    }
+    entities[entity.runtimeType] = entity;
     entity.attach(this);
   }
 
@@ -92,19 +93,39 @@ abstract class ECSFeature {
   @protected
   @visibleForTesting
   void addSystem(ECSSystem system) {
-    if (system is InitializeSystem) {
-      initializeSystems.add(system);
-    } else if (system is TeardownSystem) {
-      teardownSystems.add(system);
-    } else if (system is CleanupSystem) {
-      cleanupSystems.add(system);
-    } else if (system is ExecuteSystem) {
-      executeSystems.add(system);
-    } else if (system is ReactiveSystem) {
-      reactiveSystems.add(system);
-    } else {
-      throw ArgumentError(
-          "System of type ${system.runtimeType} is not supported");
+    bool registered = false;
+    if (system is ECSInitializeSystem) {
+      if (!initializeSystems.add(system)) {
+        throw StateError("System of type ${system.runtimeType} is already added to this feature");
+      }
+      registered = true;
+    }
+    if (system is ECSTeardownSystem) {
+      if (!teardownSystems.add(system)) {
+        throw StateError("System of type ${system.runtimeType} is already added to this feature");
+      }
+      registered = true;
+    }
+    if (system is ECSCleanupSystem) {
+      if (!cleanupSystems.add(system)) {
+        throw StateError("System of type ${system.runtimeType} is already added to this feature");
+      }
+      registered = true;
+    }
+    if (system is ECSExecuteSystem) {
+      if (!executeSystems.add(system)) {
+        throw StateError("System of type ${system.runtimeType} is already added to this feature");
+      }
+      registered = true;
+    }
+    if (system is ECSReactiveSystem) {
+      if (!reactiveSystems.add(system)) {
+        throw StateError("System of type ${system.runtimeType} is already added to this feature");
+      }
+      registered = true;
+    }
+    if (!registered) {
+      throw ArgumentError("System of type ${system.runtimeType} is not supported");
     }
     system.attach(this);
   }
@@ -171,12 +192,11 @@ abstract class ECSFeature {
   ///
   /// Throws a [StateError] if the entity is not found.
   TEntity getEntity<TEntity extends ECSEntity>() {
-    for (final entity in entities) {
-      if (entity is TEntity) {
-        return entity;
-      }
+    final entity = entities[TEntity];
+    if (entity == null) {
+      throw StateError("Entity of type $TEntity not found");
     }
-    throw StateError("Entity of type $TEntity not found");
+    return entity as TEntity;
   }
 
   /// Gets an entity of the specified [type].
@@ -184,11 +204,10 @@ abstract class ECSFeature {
   /// Throws a [StateError] if the entity is not found.
   @visibleForTesting
   ECSEntity getEntityOfType(Type type) {
-    for (final entity in entities) {
-      if (entity.runtimeType == type) {
-        return entity;
-      }
+    final entity = entities[type];
+    if (entity == null) {
+      throw StateError("Entity of type $type not found");
     }
-    throw StateError("Entity of type $type not found");
+    return entity;
   }
 }
