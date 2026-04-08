@@ -4,34 +4,60 @@ import 'package:source_gen/source_gen.dart';
 
 String capitalize(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
-/// Rewrites `system.getX(varName)` calls in a raw source string to
-/// the generated `getEntity<XClassName>()` form.
-String transformSource(String source) {
-  source = source.replaceAllMapped(
-    RegExp(r'system\.getComponent\((\w+)\)'),
-    (m) => 'getEntity<${capitalize(m.group(1)!)}Component>()',
-  );
-  source = source.replaceAllMapped(
-    RegExp(r'system\.getDataEvent\((\w+)\)'),
-    (m) => 'getEntity<${capitalize(m.group(1)!)}Event>()',
-  );
-  source = source.replaceAllMapped(
-    RegExp(r'system\.getEvent\((\w+)\)'),
-    (m) => 'getEntity<${capitalize(m.group(1)!)}Event>()',
-  );
-  source = source.replaceAllMapped(
-    RegExp(r'system\.getDependency\((\w+)\)'),
-    (m) => 'getEntity<${capitalize(m.group(1)!)}Dependency>()',
-  );
-  return source;
+/// Rewrites all `system.getX(varName)` method invocations in [stmt] to
+/// `getEntity<XClassName>()` using AST offsets. Handles any whitespace
+/// formatting and multiline calls correctly.
+String transformStatement(Statement stmt) {
+  final source = stmt.toSource();
+  final replacements = <(int start, int end, String text)>[];
+
+  void visit(AstNode node) {
+    if (node is MethodInvocation) {
+      final target = node.target;
+      if (target is SimpleIdentifier && target.name == 'system') {
+        final method = node.methodName.name;
+        final args = node.argumentList.arguments;
+        if (args.length == 1 && args.first is SimpleIdentifier) {
+          final argName = (args.first as SimpleIdentifier).name;
+          final suffix = switch (method) {
+            'getComponent' => 'Component',
+            'getDataEvent' => 'Event',
+            'getEvent' => 'Event',
+            'getDependency' => 'Dependency',
+            _ => null,
+          };
+          if (suffix != null) {
+            final relStart = node.offset - stmt.offset;
+            final relEnd = node.end - stmt.offset;
+            replacements.add((relStart, relEnd, 'getEntity<${capitalize(argName)}$suffix>()'));
+          }
+        }
+      }
+    }
+    for (final child in node.childEntities) {
+      if (child is AstNode) visit(child);
+    }
+  }
+
+  visit(stmt);
+
+  if (replacements.isEmpty) return source;
+
+  // Apply back-to-front so earlier offsets remain valid after each splice.
+  replacements.sort((a, b) => b.$1.compareTo(a.$1));
+  var result = source;
+  for (final (start, end, text) in replacements) {
+    result = result.substring(0, start) + text + result.substring(end);
+  }
+  return result;
 }
 
 /// Transforms a list of statements, indenting each by 4 spaces and
-/// applying [transformSource] to each statement's source text.
+/// applying [transformStatement] to rewrite `system.getX()` calls.
 String transformStatements(NodeList<Statement> stmts) {
   final buffer = StringBuffer();
   for (final stmt in stmts) {
-    buffer.writeln('    ${transformSource(stmt.toSource())}');
+    buffer.writeln('    ${transformStatement(stmt)}');
   }
   return buffer.toString();
 }
