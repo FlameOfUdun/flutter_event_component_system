@@ -46,9 +46,6 @@ final class ECSReactiveSystemGenerator extends GeneratorForAnnotation<ECSReactiv
     final reactBody = extractBlockBody(astNode.functionExpression.body, element);
     final reactsIfBody = reactsIfName != null
         ? extractNamedFuncBody(reactsIfName, unit)
-            ?.split('\n')
-            .map(transformSource)
-            .join('\n')
         : null;
 
     final buffer = StringBuffer();
@@ -255,9 +252,6 @@ final class ECSCleanupSystemGenerator extends GeneratorForAnnotation<ECSCleanupS
     final body = extractBlockBody(astNode.functionExpression.body, element);
     final cleansIfBody = cleansIfName != null
         ? extractNamedFuncBody(cleansIfName, unit)
-            ?.split('\n')
-            .map(transformSource)
-            .join('\n')
         : null;
 
     final buffer = StringBuffer();
@@ -318,9 +312,6 @@ final class ECSExecuteSystemGenerator extends GeneratorForAnnotation<ECSExecuteS
     final body = extractBlockBody(astNode.functionExpression.body, element);
     final executesIfBody = executesIfName != null
         ? extractNamedFuncBody(executesIfName, unit)
-            ?.split('\n')
-            .map(transformSource)
-            .join('\n')
         : null;
 
     final buffer = StringBuffer();
