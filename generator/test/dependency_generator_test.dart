@@ -30,43 +30,18 @@ Map<String, String> buildSources(String body) {
 }
 
 void main() {
-  group('EventGenerator', () {
-    test('generates no-data event from zero-parameter void function', () async {
-      await testBuilder(
-        ecsBuilder(BuilderOptions.empty),
-        buildSources('@Event() void logout() {}'),
-        outputs: {
-          _outputKey: decodedMatches(contains(
-            'final class LogoutEvent extends ECSEvent {}',
-          )),
-        },
-      );
-    });
-
-    test('generates data event from one-parameter void function', () async {
+  group('DependencyGenerator', () {
+    test('generates dependency class for typed variable', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
-          class LoginCredentials {}
-          @Event() void login(LoginCredentials credentials) {}
+          class AuthRepository {}
+          @Dependency() AuthRepository authRepo = AuthRepository();
         '''),
         outputs: {
           _outputKey: decodedMatches(allOf([
-            contains('final class LoginEvent extends ECSDataEvent<LoginCredentials>'),
-            contains('void trigger(LoginCredentials data)'),
-          ])),
-        },
-      );
-    });
-
-    test('generates data event with int type', () async {
-      await testBuilder(
-        ecsBuilder(BuilderOptions.empty),
-        buildSources('@Event() void addHealth(int amount) {}'),
-        outputs: {
-          _outputKey: decodedMatches(allOf([
-            contains('final class AddHealthEvent extends ECSDataEvent<int>'),
-            contains('void trigger([int data = 0])'),
+            contains('final class AuthRepoDependency extends ECSDependency<AuthRepository>'),
+            contains('AuthRepoDependency([super.value = AuthRepository()])'),
           ])),
         },
       );
@@ -75,27 +50,16 @@ void main() {
     test('includes doc comment when description is provided', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
-        buildSources('@Event(description: "User logged out") void logout() {}'),
+        buildSources('''
+          class AuthRepository {}
+          @Dependency(description: "Auth repo") AuthRepository authRepo = AuthRepository();
+        '''),
         outputs: {
           _outputKey: decodedMatches(allOf([
-            contains('/// User logged out'),
-            contains('final class LogoutEvent'),
+            contains('/// Auth repo'),
+            contains('final class AuthRepoDependency'),
           ])),
         },
-      );
-    });
-
-    test('throws for multi-parameter event function', () async {
-      final logs = <String>[];
-      await testBuilder(
-        ecsBuilder(BuilderOptions.empty),
-        buildSources('@Event() void login(String user, String pass) {}'),
-        onLog: (r) => logs.add(r.message),
-      );
-      expect(
-        logs.any((m) => m.contains('zero or one parameter')),
-        isTrue,
-        reason: 'Expected build error for multi-parameter event',
       );
     });
   });

@@ -3,42 +3,42 @@ import 'package:build_test/build_test.dart';
 import 'package:test/test.dart';
 import 'package:flutter_event_component_system_generator/flutter_event_component_system_generator.dart';
 
-const _outputKey = 'flutter_event_component_system_generator|lib/input.ecs.dart';
-
-const _annotationAsset = 'flutter_event_component_system_annotations|lib/flutter_event_component_system_annotations.dart';
-
+const _outputKey =
+    'flutter_event_component_system_generator|lib/input.ecs.g.dart';
+const _annotationAsset =
+    'flutter_event_component_system_annotations|lib/flutter_event_component_system_annotations.dart';
 const _annotationSource = '''
-  class ECSComponentDefinition {
+  final class Component {
     final String? description;
-    const ECSComponentDefinition({this.description});
+    const Component({this.description});
   }
-  class ECSEventDefinition {
+  final class Event {
     final String? description;
-    const ECSEventDefinition({this.description});
+    const Event({this.description});
   }
-  class ECSDataEventDefinition {
+  final class Dependency {
     final String? description;
-    const ECSDataEventDefinition({this.description});
+    const Dependency({this.description});
   }
-  class ECSReactiveSystemDefinition {
+  final class ReactiveSystem {
     final String? description;
-    final Set<Object> reactsTo;
-    final Set<Object> interactsWith;
-    final bool Function(dynamic)? reactsIf;
-    const ECSReactiveSystemDefinition({
-      this.description,
-      required this.reactsTo,
-      this.interactsWith = const {},
-      this.reactsIf,
-    });
+    const ReactiveSystem({this.description});
   }
-  class FeatureDefinition {
+  final class InitializeSystem {
     final String? description;
-    const FeatureDefinition({this.description});
+    const InitializeSystem({this.description});
   }
-  class ECSDependencyDefinition {
+  final class TeardownSystem {
     final String? description;
-    const ECSDependencyDefinition({this.description});
+    const TeardownSystem({this.description});
+  }
+  final class CleanupSystem {
+    final String? description;
+    const CleanupSystem({this.description});
+  }
+  final class ExecuteSystem {
+    final String? description;
+    const ExecuteSystem({this.description});
   }
 ''';
 
@@ -47,7 +47,7 @@ Map<String, String> buildSources(String body) {
     _annotationAsset: _annotationSource,
     'flutter_event_component_system_generator|lib/input.dart': '''
         import 'package:flutter_event_component_system_annotations/flutter_event_component_system_annotations.dart';
-        part 'input.ecs.dart';
+        part 'input.ecs.g.dart';
         $body
       ''',
   };
@@ -55,10 +55,23 @@ Map<String, String> buildSources(String body) {
 
 void main() {
   group('ComponentGenerator', () {
-    test('generates component class from const String variable', () async {
+    test('generates component class for int variable', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
-        buildSources('@ECSComponentDefinition() const String playerName = "";'),
+        buildSources('@Component() int health = 0;'),
+        outputs: {
+          _outputKey: decodedMatches(allOf([
+            contains('final class HealthComponent extends ECSComponent<int>'),
+            contains('HealthComponent([super.value = 0])'),
+          ])),
+        },
+      );
+    });
+
+    test('generates component class for String variable', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('@Component() String playerName = "";'),
         outputs: {
           _outputKey: decodedMatches(allOf([
             contains('final class PlayerNameComponent extends ECSComponent<String>'),
@@ -68,27 +81,17 @@ void main() {
       );
     });
 
-    test('generates component class from const int variable', () async {
+    test('generates component class for enum-typed variable', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
-        buildSources('@ECSComponentDefinition() const int health = 100;'),
+        buildSources('''
+          enum AuthState { unknown, loggedIn }
+          @Component() AuthState authState = AuthState.unknown;
+        '''),
         outputs: {
           _outputKey: decodedMatches(allOf([
-            contains('final class HealthComponent extends ECSComponent<int>'),
-            contains('HealthComponent([super.value = 100])'),
-          ])),
-        },
-      );
-    });
-
-    test('generates component class from const bool variable', () async {
-      await testBuilder(
-        ecsBuilder(BuilderOptions.empty),
-        buildSources('@ECSComponentDefinition() const bool isActive = false;'),
-        outputs: {
-          _outputKey: decodedMatches(allOf([
-            contains('final class IsActiveComponent extends ECSComponent<bool>'),
-            contains('IsActiveComponent([super.value = false])'),
+            contains('final class AuthStateComponent extends ECSComponent<AuthState>'),
+            contains('AuthStateComponent([super.value = AuthState.unknown])'),
           ])),
         },
       );
@@ -97,13 +100,27 @@ void main() {
     test('includes doc comment when description is provided', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
-        buildSources('@ECSComponentDefinition(description: "Player score") const int score = 0;'),
+        buildSources('@Component(description: "Player health") int health = 0;'),
         outputs: {
           _outputKey: decodedMatches(allOf([
-            contains('/// Player score'),
-            contains('final class ScoreComponent'),
+            contains('/// Player health'),
+            contains('final class HealthComponent'),
           ])),
         },
+      );
+    });
+
+    test('throws error for variable without initializer', () async {
+      final logs = <String>[];
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('@Component() int health;'),
+        onLog: (r) => logs.add(r.message),
+      );
+      expect(
+        logs.any((m) => m.contains('must have an initializer')),
+        isTrue,
+        reason: 'Expected a build error for missing initializer',
       );
     });
   });
