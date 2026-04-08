@@ -6,6 +6,23 @@ import 'package:source_gen/source_gen.dart';
 import '_helpers.dart';
 
 final class ECSReactiveSystemGenerator extends GeneratorForAnnotation<ECSReactiveSystemDefinition> {
+  static const _componentChecker = TypeChecker.typeNamed(
+    ECSComponentDefinition,
+    inPackage: 'flutter_event_component_system_annotations',
+  );
+  static const _eventChecker = TypeChecker.typeNamed(
+    ECSEventDefinition,
+    inPackage: 'flutter_event_component_system_annotations',
+  );
+  static const _dataEventChecker = TypeChecker.typeNamed(
+    ECSDataEventDefinition,
+    inPackage: 'flutter_event_component_system_annotations',
+  );
+  static const _dependencyChecker = TypeChecker.typeNamed(
+    ECSDependencyDefinition,
+    inPackage: 'flutter_event_component_system_annotations',
+  );
+
   const ECSReactiveSystemGenerator() : super(inPackage: 'flutter_event_component_system_annotations');
 
   @override
@@ -39,8 +56,8 @@ final class ECSReactiveSystemGenerator extends GeneratorForAnnotation<ECSReactiv
 
     final raw = capitalize(funcName);
     final className = raw.endsWith('ReactiveSystem') ? raw : '${raw}ReactiveSystem';
-    final reactsToTypes = _extractSetEntityClassNames(astNode, 'reactsTo', unit);
-    final interactsWithTypes = _extractSetEntityClassNames(astNode, 'interactsWith', unit);
+    final reactsToTypes = _resolveEntityNamesFromAnnotation(annotation, 'reactsTo', astNode, unit);
+    final interactsWithTypes = _resolveEntityNamesFromAnnotation(annotation, 'interactsWith', astNode, unit);
     final reactsIfName = extractFuncRef(astNode, 'reactsIf');
 
     final reactBody = extractBlockBody(astNode.functionExpression.body, element);
@@ -83,25 +100,56 @@ final class ECSReactiveSystemGenerator extends GeneratorForAnnotation<ECSReactiv
     return buffer.toString();
   }
 
-  List<String> _extractSetEntityClassNames(FunctionDeclaration funcDecl, String param, CompilationUnit unit) {
-    for (final ann in funcDecl.metadata) {
-      for (final arg in ann.arguments?.arguments ?? <Expression>[]) {
-        if (arg is NamedExpression && arg.name.label.name == param) {
-          if (arg.expression is SetOrMapLiteral) {
-            return (arg.expression as SetOrMapLiteral)
-                .elements
-                .whereType<SimpleIdentifier>()
-                .map((id) => _resolveEntityClassNameFromId(id, unit))
-                .toList();
-          }
+  /// Resolves entity class names for a Set-typed annotation field (e.g. `reactsTo`, `interactsWith`).
+  ///
+  /// Primary path: reads the fully-evaluated [DartObject]s from [annotation] via
+  /// [ConstantReader.setValue], then uses each object's [VariableElement] to check
+  /// annotations with [TypeChecker] — works for entities declared in imported files.
+  ///
+  /// Fallback path: for any object whose [variable] is null, falls back to the local
+  /// AST scan in [_resolveEntityTypeName] using the identifier name from [funcDecl].
+  List<String> _resolveEntityNamesFromAnnotation(
+    ConstantReader annotation,
+    String param,
+    FunctionDeclaration funcDecl,
+    CompilationUnit unit,
+  ) {
+    final field = annotation.peek(param);
+    if (field != null && field.isSet) {
+      return field.setValue.map((obj) {
+        final varEl = obj.variable;
+        if (varEl != null && varEl.name != null) {
+          final raw = capitalize(varEl.name!);
+          if (_componentChecker.hasAnnotationOf(varEl)) return '${raw}Component';
+          if (_dataEventChecker.hasAnnotationOf(varEl)) return '${raw}Event';
+          if (_eventChecker.hasAnnotationOf(varEl)) return '${raw}Event';
+          if (_dependencyChecker.hasAnnotationOf(varEl)) return '${raw}Dependency';
+          return raw;
         }
-      }
+        // Fallback: find the name via AST and scan the local unit.
+        final name = _findIdentifierNameInAst(funcDecl, param, obj);
+        return name != null ? _resolveEntityTypeName(name, unit) : '';
+      }).toList();
     }
     return [];
   }
 
-  String _resolveEntityClassNameFromId(SimpleIdentifier id, CompilationUnit unit) {
-    return _resolveEntityTypeName(id.name, unit);
+  /// Walks the annotation AST for [param] to find an identifier whose constant
+  /// value matches [obj], returning its source name. Used only as a fallback
+  /// when [DartObject.variable] is null.
+  String? _findIdentifierNameInAst(FunctionDeclaration funcDecl, String param, Object obj) {
+    for (final ann in funcDecl.metadata) {
+      for (final arg in ann.arguments?.arguments ?? <Expression>[]) {
+        if (arg is NamedExpression && arg.name.label.name == param) {
+          if (arg.expression is SetOrMapLiteral) {
+            for (final el in (arg.expression as SetOrMapLiteral).elements) {
+              if (el is SimpleIdentifier) return el.name;
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   String _resolveEntityTypeName(String varName, CompilationUnit unit) {

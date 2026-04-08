@@ -37,9 +37,9 @@ const _annotationSource = '''
       this.reactsIf,
     });
   }
-  class FeatureDefinition {
+  class ECSFeatureDefinition {
     final String? description;
-    const FeatureDefinition({this.description});
+    const ECSFeatureDefinition({this.description});
   }
   class ECSDependencyDefinition {
     final String? description;
@@ -252,6 +252,38 @@ void main() {
           _outputKey: decodedMatches(
             contains('/// Applies health to entity'),
           ),
+        },
+      );
+    });
+
+    test('resolves reactsTo and interactsWith from imported file', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        {
+          _annotationAsset: _annotationSource,
+          'flutter_event_component_system_generator|lib/entities.dart': '''
+            import 'package:flutter_event_component_system_annotations/flutter_event_component_system_annotations.dart';
+            @ECSComponentDefinition() const String health = "";
+            @ECSDataEventDefinition() const int addHealth = 0;
+          ''',
+          'flutter_event_component_system_generator|lib/input.dart': '''
+            import 'package:flutter_event_component_system_annotations/flutter_event_component_system_annotations.dart';
+            import 'entities.dart';
+            part 'input.ecs.dart';
+
+            @ECSReactiveSystemDefinition(reactsTo: {addHealth}, interactsWith: {health})
+            void applyAddHealth(ECSSystemReference system) {
+              final component = system.getComponent(health);
+              final event = system.getDataEvent(addHealth);
+              component.value += event.value;
+            }
+          ''',
+        },
+        outputs: {
+          _outputKey: decodedMatches(allOf([
+            contains('return const {AddHealthEvent'),
+            contains('return const {HealthComponent'),
+          ])),
         },
       );
     });
