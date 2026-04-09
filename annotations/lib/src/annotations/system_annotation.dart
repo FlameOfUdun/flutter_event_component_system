@@ -22,9 +22,12 @@ final class TeardownSystem {
 }
 
 /// Marks a top-level function as a cleanup system.
+/// `cleansIf` is an optional reference to a no-parameter `bool` function;
+/// if provided, its body is inlined as the `bool get cleansIf` getter override.
 final class CleanupSystem {
   final String? description;
-  const CleanupSystem({this.description});
+  final Function? cleansIf;
+  const CleanupSystem({this.description, this.cleansIf});
 }
 
 /// Marks a top-level function as an execute system.
