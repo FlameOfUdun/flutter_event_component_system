@@ -37,7 +37,7 @@ final class ComponentGenerator extends GeneratorForAnnotation<Component> {
     final buffer = StringBuffer();
     if (description != null) buffer.writeln('/// $description');
     buffer.writeln('final class $className extends ECSComponent<$type> {');
-    buffer.writeln('  $className([super.value = $defaultValue]);');
+    buffer.writeln('  $className() : super($defaultValue);');
     buffer.writeln('}');
     return buffer.toString();
   }
@@ -75,7 +75,7 @@ final class DependencyGenerator extends GeneratorForAnnotation<Dependency> {
     final buffer = StringBuffer();
     if (description != null) buffer.writeln('/// $description');
     buffer.writeln('final class $className extends ECSDependency<$type> {');
-    buffer.writeln('  $className([super.value = $defaultValue]);');
+    buffer.writeln('  $className() : super($defaultValue);');
     buffer.writeln('}');
     return buffer.toString();
   }

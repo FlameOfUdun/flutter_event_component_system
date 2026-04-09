@@ -41,7 +41,7 @@ void main() {
         outputs: {
           _outputKey: decodedMatches(allOf([
             contains('final class AuthRepoDependency extends ECSDependency<AuthRepository>'),
-            contains('AuthRepoDependency([super.value = AuthRepository()])'),
+            contains('AuthRepoDependency() : super(AuthRepository())'),
           ])),
         },
       );

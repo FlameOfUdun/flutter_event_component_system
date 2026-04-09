@@ -62,7 +62,7 @@ void main() {
         outputs: {
           _outputKey: decodedMatches(allOf([
             contains('final class HealthComponent extends ECSComponent<int>'),
-            contains('HealthComponent([super.value = 0])'),
+            contains('HealthComponent() : super(0)'),
           ])),
         },
       );
@@ -75,7 +75,7 @@ void main() {
         outputs: {
           _outputKey: decodedMatches(allOf([
             contains('final class PlayerNameComponent extends ECSComponent<String>'),
-            contains('PlayerNameComponent([super.value = ""])'),
+            contains('PlayerNameComponent() : super("")'),
           ])),
         },
       );
@@ -91,7 +91,7 @@ void main() {
         outputs: {
           _outputKey: decodedMatches(allOf([
             contains('final class AuthStateComponent extends ECSComponent<AuthState>'),
-            contains('AuthStateComponent([super.value = AuthState.unknown])'),
+            contains('AuthStateComponent() : super(AuthState.unknown)'),
           ])),
         },
       );
