@@ -1,29 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_event_component_system/flutter_event_component_system.dart';
+import 'package:flutter_event_component_system_annotations/flutter_event_component_system_annotations.dart';
 
 import '../user_auth_feature/user_auth_feature.dart';
 
-part 'components/app_route_component.dart';
-
-part 'systems/navigate_to_selected_route_reactive_system.dart';
-part 'systems/navigate_to_dashboard_when_logged_in_reactive_system.dart';
-part 'systems/navigate_to_login_when_logged_out_reactive_system.dart';
-
 part 'models/app_routes.dart';
+part 'navigation_feature.ecs.g.dart';
 
-final class NavigationFeature extends ECSFeature {
-  NavigationFeature({
-    required GlobalKey<NavigatorState> navigatorKey,
-  }) {
-    addEntity(AppRouteComponent());
+@Component()
+AppRoutes appRoute = AppRoutes.home;
 
-    addSystem(NavigateToDashboardWhenLoggedInReactiveSystem());
-    addSystem(NavigateToLoginWhenLoggedOutReactiveSystem());
+@Dependency()
+GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-    addSystem(
-      NavigateToSelectedRouteReactiveSystem(
-        navigatorKey: navigatorKey,
-      ),
-    );
-  }
+@ReactiveSystem(reactsIf: navigateToDashboardWhenLoggedInIf)
+void handleNavigateToDashboardWhenLoggedIn() {
+  appRoute = AppRoutes.dashboard;
+}
+
+bool navigateToDashboardWhenLoggedInIf() {
+  return authState == AuthState.loggedIn;
+}
+
+@ReactiveSystem(reactsIf: navigateToLoginWhenLoggedOutIf)
+void navigateToLoginWhenLoggedOut() {
+  appRoute = AppRoutes.login;
+}
+
+bool navigateToLoginWhenLoggedOutIf() {
+  return authState == AuthState.loggedOut;
+}
+
+@ReactiveSystem()
+void handleNavigateToSelectedRoute(AppRoutes selectedRoute) {
+  final routeName = appRoute.path;
+  navigatorKey.currentState?.pushReplacementNamed(routeName);
 }

@@ -8,15 +8,15 @@ part of 'user_auth_feature.dart';
 // **************************************************************************
 
 final class AuthStateComponent extends ECSComponent<AuthState> {
-  AuthStateComponent([super.value = AuthState.loggedOut]);
+  AuthStateComponent() : super(AuthState.loggedOut);
 }
 
 final class LoginProcessComponent extends ECSComponent<LoginProcess> {
-  LoginProcessComponent([super.value = const LoginProcess.idle()]);
+  LoginProcessComponent() : super(const LoginProcess.idle());
 }
 
 final class LogoutProcessComponent extends ECSComponent<LogoutProcess> {
-  LogoutProcessComponent([super.value = const LogoutProcess.idle()]);
+  LogoutProcessComponent() : super(const LogoutProcess.idle());
 }
 
 // **************************************************************************
@@ -28,6 +28,8 @@ final class LoginEvent extends ECSDataEvent<LoginCredentials> {}
 final class LogoutEvent extends ECSEvent {}
 
 final class ReloadUserEvent extends ECSEvent {}
+
+final class NotifyAuthStateChangeEvent extends ECSEvent {}
 
 // **************************************************************************
 // ReactiveSystemGenerator
@@ -41,7 +43,16 @@ final class HandleLoginReactiveSystem extends ECSReactiveSystem {
 
   @override
   Set<Type> get interactsWith {
-    return const {LoginProcessComponent, AuthStateComponent};
+    return const {
+      LoginProcessComponent,
+      AuthStateComponent,
+      NotifyAuthStateChangeEvent
+    };
+  }
+
+  @override
+  bool get reactsIf {
+    return getEntity<LoginProcessComponent>().value.isRunning == false;
   }
 
   @override
@@ -49,7 +60,7 @@ final class HandleLoginReactiveSystem extends ECSReactiveSystem {
     _performLogin(getEntity<LoginEvent>().data).ignore();
   }
 
-  Future<void> _performLogin(LoginCredentials credentials) {
+  Future<void> _performLogin(LoginCredentials credentials) async {
     getEntity<LoginProcessComponent>().value = const LoginProcess.running();
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString('auth_state', AuthState.loggedIn.name);
@@ -57,18 +68,28 @@ final class HandleLoginReactiveSystem extends ECSReactiveSystem {
     getEntity<LoginProcessComponent>().value =
         const LoginProcess.success('mock_token');
     getEntity<AuthStateComponent>().value = AuthState.loggedIn;
+    getEntity<NotifyAuthStateChangeEvent>().trigger();
   }
 }
 
 final class HandleLogoutReactiveSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
-    return const {};
+    return const {LogoutEvent};
   }
 
   @override
   Set<Type> get interactsWith {
-    return const {LogoutProcessComponent, AuthStateComponent};
+    return const {
+      LogoutProcessComponent,
+      AuthStateComponent,
+      NotifyAuthStateChangeEvent
+    };
+  }
+
+  @override
+  bool get reactsIf {
+    return getEntity<LogoutProcessComponent>().value.isRunning == false;
   }
 
   @override
@@ -76,25 +97,26 @@ final class HandleLogoutReactiveSystem extends ECSReactiveSystem {
     _performLogout().ignore();
   }
 
-  Future<void> _performLogout() {
+  Future<void> _performLogout() async {
     getEntity<LogoutProcessComponent>().value = const LogoutProcess.running();
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString('auth_state', AuthState.loggedOut.name);
     await Future.delayed(const Duration(seconds: 1));
     getEntity<LogoutProcessComponent>().value = const LogoutProcess.success();
     getEntity<AuthStateComponent>().value = AuthState.loggedOut;
+    getEntity<NotifyAuthStateChangeEvent>().trigger();
   }
 }
 
 final class HandleReloadReactiveSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
-    return const {};
+    return const {ReloadUserEvent};
   }
 
   @override
   Set<Type> get interactsWith {
-    return const {AuthStateComponent};
+    return const {AuthStateComponent, NotifyAuthStateChangeEvent};
   }
 
   @override
@@ -102,11 +124,12 @@ final class HandleReloadReactiveSystem extends ECSReactiveSystem {
     _performReload().ignore();
   }
 
-  Future<void> _performReload() {
+  Future<void> _performReload() async {
     final preferences = await SharedPreferences.getInstance();
     final value = preferences.getString('auth_state');
     getEntity<AuthStateComponent>().value =
         value == null ? AuthState.loggedOut : AuthState.values.byName(value);
+    getEntity<NotifyAuthStateChangeEvent>().trigger();
   }
 }
 
@@ -122,6 +145,7 @@ final class UserAuthFeature extends ECSFeature {
     addEntity(LoginEvent());
     addEntity(LogoutEvent());
     addEntity(ReloadUserEvent());
+    addEntity(NotifyAuthStateChangeEvent());
     addSystem(HandleLoginReactiveSystem());
     addSystem(HandleLogoutReactiveSystem());
     addSystem(HandleReloadReactiveSystem());

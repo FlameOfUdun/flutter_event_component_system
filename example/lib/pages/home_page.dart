@@ -9,7 +9,6 @@ class HomePage extends ECSWidget {
   @override
   Widget build(BuildContext context, ECSContext ecs) {
     ecs.onEnter(() {
-      debugPrint('HomePage entered');
       ecs.get<ReloadUserEvent>().trigger();
     });
 
