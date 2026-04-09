@@ -394,10 +394,18 @@ final class CleanupSystemGenerator
     }
     final transformed = transformDslStatements(body.block.statements, ctx);
     final privateHelpers = collectPrivateHelpers(body.block.statements, unit);
+    final cleansIfBody = await _resolveCleansIfBody(annotation, buildStep, ctx);
 
     final buffer = StringBuffer();
     if (description != null) buffer.writeln('/// $description');
     buffer.writeln('final class $className extends ECSCleanupSystem {');
+    if (cleansIfBody != null) {
+      buffer.writeln('  @override');
+      buffer.writeln('  bool get cleansIf {');
+      buffer.write(cleansIfBody);
+      buffer.writeln('  }');
+      buffer.writeln();
+    }
     buffer.writeln('  @override');
     buffer.writeln('  void cleanup() {');
     buffer.write(transformed);
@@ -408,6 +416,32 @@ final class CleanupSystemGenerator
     }
     buffer.writeln('}');
     return buffer.toString();
+  }
+
+  /// Reads the `cleansIf` function reference from [annotation], resolves its AST,
+  /// transforms its body using [ctx] with reads rewritten, and returns the indented
+  /// body string. Returns null if `cleansIf` was not provided.
+  Future<String?> _resolveCleansIfBody(
+    ConstantReader annotation,
+    BuildStep buildStep,
+    DslContext ctx,
+  ) async {
+    final cleansIfReader = annotation.peek('cleansIf');
+    if (cleansIfReader == null || cleansIfReader.isNull) return null;
+
+    final funcElement = cleansIfReader.objectValue.toFunctionValue();
+    if (funcElement == null) return null;
+
+    final astNode = await buildStep.resolver.astNodeFor(
+      funcElement.firstFragment,
+      resolve: true,
+    );
+    if (astNode is! FunctionDeclaration) return null;
+
+    final body = astNode.functionExpression.body;
+    if (body is! BlockFunctionBody) return null;
+
+    return transformDslStatements(body.block.statements, ctx, rewriteReads: true);
   }
 }
 
