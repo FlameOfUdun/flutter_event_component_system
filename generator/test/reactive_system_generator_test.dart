@@ -11,7 +11,7 @@ const _annotationSource = '''
   final class Component { final String? description; const Component({this.description}); }
   final class Event { final String? description; const Event({this.description}); }
   final class Dependency { final String? description; const Dependency({this.description}); }
-  final class ReactiveSystem { final String? description; final Function? reactsIf; const ReactiveSystem({this.description, this.reactsIf}); }
+  final class ReactiveSystem { final String? description; final List<Function>? reactsTo; final Function? reactsIf; const ReactiveSystem({this.description, this.reactsTo, this.reactsIf}); }
   final class InitializeSystem { final String? description; const InitializeSystem({this.description}); }
   final class TeardownSystem { final String? description; const TeardownSystem({this.description}); }
   final class CleanupSystem { final String? description; const CleanupSystem({this.description}); }
@@ -31,14 +31,14 @@ Map<String, String> buildSources(String body) {
 
 void main() {
   group('ReactiveSystemGenerator', () {
-    test('auto-detects reactsTo from @Event function body', () async {
+    test('explicit reactsTo populates reactsTo set (same library)', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           @Component() int health = 0;
-          @Event() void addHealth(int amount) { applyAddHealth(amount); }
+          @Event() void addHealth(int amount) {}
 
-          @ReactiveSystem()
+          @ReactiveSystem(reactsTo: [addHealth])
           void applyAddHealth(int amount) {
             health += amount;
           }
@@ -58,9 +58,9 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           @Component() int health = 0;
-          @Event() void addHealth(int amount) { applyAddHealth(amount); }
+          @Event() void addHealth(int amount) {}
 
-          @ReactiveSystem()
+          @ReactiveSystem(reactsTo: [addHealth])
           void applyAddHealth(int amount) {
             health += amount;
           }
@@ -79,9 +79,9 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           @Component() int health = 0;
-          @Event() void addHealth(int amount) { applyAddHealth(amount); }
+          @Event() void addHealth(int amount) {}
 
-          @ReactiveSystem()
+          @ReactiveSystem(reactsTo: [addHealth])
           void applyAddHealth(int amount) {
             health += amount;
           }
@@ -99,9 +99,9 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           @Component() int health = 0;
-          @Event() void addHealth(int amount) { applyAddHealth(amount); }
+          @Event() void addHealth(int amount) {}
 
-          @ReactiveSystem()
+          @ReactiveSystem(reactsTo: [addHealth])
           void applyAddHealth(int amount) {
             health += amount;
           }
@@ -120,9 +120,9 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           @Component() int health = 100;
-          @Event() void logout() { logoutSystem(); }
+          @Event() void logout() {}
 
-          @ReactiveSystem()
+          @ReactiveSystem(reactsTo: [logout])
           void logoutSystem() {
             health = 0;
           }
@@ -141,9 +141,9 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           @Component() int health = 0;
-          @Event() void addHealth(int amount) { applyAddHealth(amount); }
+          @Event() void addHealth(int amount) {}
 
-          @ReactiveSystem()
+          @ReactiveSystem(reactsTo: [addHealth])
           void applyAddHealth(int amount) {
             _doApply(amount);
           }
@@ -166,9 +166,9 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           @Component() int health = 0;
-          @Event() void addHealth(int amount) { applyAddHealth(amount); }
+          @Event() void addHealth(int amount) {}
 
-          @ReactiveSystem()
+          @ReactiveSystem(reactsTo: [addHealth])
           void applyAddHealth(int amount) {
             _doApply(amount);
           }
@@ -189,9 +189,9 @@ void main() {
         buildSources('''
           @Component() int health = 0;
           @Component() int maxHealth = 100;
-          @Event() void checkHealth() { checkSystem(); }
+          @Event() void checkHealth() {}
 
-          @ReactiveSystem()
+          @ReactiveSystem(reactsTo: [checkHealth])
           void checkSystem() {
             if (health < maxHealth) {}
           }
@@ -208,9 +208,9 @@ void main() {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
-          @Event() void logout() { logoutSystem(); }
+          @Event() void logout() {}
 
-          @ReactiveSystem(description: "Handles logout")
+          @ReactiveSystem(description: "Handles logout", reactsTo: [logout])
           void logoutSystem() {}
         '''),
         outputs: {
@@ -224,13 +224,13 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           @Component() int health = 0;
-          @Event() void addHealth(int amount) { applyAddHealth(amount); }
+          @Event() void addHealth(int amount) {}
 
           bool applyAddHealthIf(int amount) {
             return health + amount <= 100;
           }
 
-          @ReactiveSystem(reactsIf: applyAddHealthIf)
+          @ReactiveSystem(reactsTo: [addHealth], reactsIf: applyAddHealthIf)
           void applyAddHealth(int amount) {
             health += amount;
           }
@@ -249,9 +249,9 @@ void main() {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
-          @Event() void logout() { logoutSystem(); }
+          @Event() void logout() {}
 
-          @ReactiveSystem()
+          @ReactiveSystem(reactsTo: [logout])
           void logoutSystem() {}
         '''),
         outputs: {
@@ -265,9 +265,9 @@ void main() {
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           @Component() int loginProcess = 0;
-          @Event() void login(int id) { loginSystem(id); }
+          @Event() void login(int id) {}
 
-          @ReactiveSystem()
+          @ReactiveSystem(reactsTo: [login])
           void loginSystem(int id) {
             _doLogin(id).ignore();
           }
@@ -279,6 +279,50 @@ void main() {
         '''),
         outputs: {
           _outputKey: decodedMatches(contains('Future<void> _doLogin(int id) async {')),
+        },
+      );
+    });
+
+    test('uses explicit reactsTo to populate reactsTo set', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @Component() int health = 0;
+          @Event() void addHealth(int amount) {}
+
+          @ReactiveSystem(reactsTo: [addHealth])
+          void applyAddHealth(int amount) {
+            health += amount;
+          }
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(allOf([
+            contains('Set<Type> get reactsTo'),
+            contains('AddHealthEvent'),
+            contains('getEntity<AddHealthEvent>().data'),
+          ])),
+        },
+      );
+    });
+
+    test('supports multiple events in reactsTo', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @Component() int health = 0;
+          @Event() void addHealth(int amount) {}
+          @Event() void healFull() {}
+
+          @ReactiveSystem(reactsTo: [addHealth, healFull])
+          void applyHeal(int amount) {
+            health += amount;
+          }
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(allOf([
+            contains('AddHealthEvent'),
+            contains('HealFullEvent'),
+          ])),
         },
       );
     });
