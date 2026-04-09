@@ -10,29 +10,52 @@ part 'navigation_feature.ecs.g.dart';
 @Component()
 AppRoutes appRoute = AppRoutes.home;
 
+@Component()
+AppRoutes selectedRoute = AppRoutes.home;
+
 @Dependency()
 GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-@ReactiveSystem(reactsIf: navigateToDashboardWhenLoggedInIf)
-void handleNavigateToDashboardWhenLoggedIn() {
-  appRoute = AppRoutes.dashboard;
-}
+@ReactiveSystem()
+class HandleNavigateToDashboardWhenLoggedIn {
+  List get reactsTo {
+    return [authState];
+  }
 
-bool navigateToDashboardWhenLoggedInIf() {
-  return authState == AuthState.loggedIn;
-}
+  bool get reactsIf {
+    return authState == AuthState.loggedIn;
+  }
 
-@ReactiveSystem(reactsIf: navigateToLoginWhenLoggedOutIf)
-void navigateToLoginWhenLoggedOut() {
-  appRoute = AppRoutes.login;
-}
-
-bool navigateToLoginWhenLoggedOutIf() {
-  return authState == AuthState.loggedOut;
+  void react() {
+    selectedRoute = AppRoutes.dashboard;
+  }
 }
 
 @ReactiveSystem()
-void handleNavigateToSelectedRoute(AppRoutes selectedRoute) {
-  final routeName = appRoute.path;
-  navigatorKey.currentState?.pushReplacementNamed(routeName);
+class HandleNavigateToLoginWhenLoggedOut {
+  List get reactsTo {
+    return [authState];
+  }
+
+  bool get reactsIf {
+    return authState == AuthState.loggedOut;
+  }
+
+  void react() {
+    selectedRoute = AppRoutes.login;
+  }
 }
+
+@ReactiveSystem()
+class HandleNavigateToSelectedRoute {
+  List get reactsTo {
+    return [selectedRoute];
+  }
+
+  void react(AppRoutes route) {
+    final key = navigatorKey.currentState!;
+    key.pushReplacementNamed(route.path);
+  }
+}
+
+

@@ -17,19 +17,22 @@ final class _Application extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ECSScope(
-      name: "Main",
       features: {
         NavigationFeature(),
         UserAuthFeature(),
         TimerFeature(),
       },
-      child: MaterialApp(
-        navigatorKey: navigatorKey,
-        routes: {
-          '/': (context) => const HomePage(),
-          '/dashboard': (context) => const DashboardPage(),
-          '/login': (context) => const LoginPage(),
-        },
+      child: ECSBuilder(
+        builder: (context, ecs) {
+          return MaterialApp(
+            navigatorKey: ecs.get<NavigatorKeyDependency>().value,
+            routes: {
+              '/': (context) => const HomePage(),
+              '/dashboard': (context) => const DashboardPage(),
+              '/login': (context) => const LoginPage(),
+            },
+          );
+        }
       ),
     );
   }

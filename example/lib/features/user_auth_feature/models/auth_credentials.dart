@@ -1,10 +1,10 @@
 part of '../user_auth_feature.dart';
 
-final class LoginCredentials {
+final class AuthCredentials {
   final String username;
   final String password;
 
-  const LoginCredentials({
+  const AuthCredentials({
     required this.username,
     required this.password,
   });

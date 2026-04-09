@@ -85,6 +85,11 @@ final class HandleResetTimerReactiveSystem extends ECSReactiveSystem {
   }
 
   @override
+  bool get reactsIf {
+    return true;
+  }
+
+  @override
   void react() {
     getEntity<TimerValueComponent>().value = Duration.zero;
   }

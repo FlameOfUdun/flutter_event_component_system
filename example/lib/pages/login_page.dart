@@ -31,7 +31,7 @@ class _LoginButton extends ECSWidget {
       onPressed: process.isRunning
           ? null
           : () {
-              login(LoginCredentials(
+              login(AuthCredentials(
                 username: 'username',
                 password: 'password',
               ));

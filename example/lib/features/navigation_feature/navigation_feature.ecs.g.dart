@@ -11,6 +11,10 @@ final class AppRouteComponent extends ECSComponent<AppRoutes> {
   AppRouteComponent() : super(AppRoutes.home);
 }
 
+final class SelectedRouteComponent extends ECSComponent<AppRoutes> {
+  SelectedRouteComponent() : super(AppRoutes.home);
+}
+
 // **************************************************************************
 // DependencyGenerator
 // **************************************************************************
@@ -28,45 +32,45 @@ final class HandleNavigateToDashboardWhenLoggedInReactiveSystem
     extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
-    return const {};
+    return const {AuthStateComponent};
   }
 
   @override
   Set<Type> get interactsWith {
-    return const {AppRouteComponent};
+    return const {SelectedRouteComponent};
   }
 
   @override
   bool get reactsIf {
-    return authState == AuthState.loggedIn;
+    return getEntity<AuthStateComponent>().value == AuthState.loggedIn;
   }
 
   @override
   void react() {
-    getEntity<AppRouteComponent>().value = AppRoutes.dashboard;
+    getEntity<SelectedRouteComponent>().value = AppRoutes.dashboard;
   }
 }
 
-final class NavigateToLoginWhenLoggedOutReactiveSystem
+final class HandleNavigateToLoginWhenLoggedOutReactiveSystem
     extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
-    return const {};
+    return const {AuthStateComponent};
   }
 
   @override
   Set<Type> get interactsWith {
-    return const {AppRouteComponent};
+    return const {SelectedRouteComponent};
   }
 
   @override
   bool get reactsIf {
-    return authState == AuthState.loggedOut;
+    return getEntity<AuthStateComponent>().value == AuthState.loggedOut;
   }
 
   @override
   void react() {
-    getEntity<AppRouteComponent>().value = AppRoutes.login;
+    getEntity<SelectedRouteComponent>().value = AppRoutes.login;
   }
 }
 
@@ -74,13 +78,13 @@ final class HandleNavigateToSelectedRouteReactiveSystem
     extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
-    return const {};
+    return const {SelectedRouteComponent};
   }
 
   @override
   void react() {
-    final routeName = appRoute.path;
-    navigatorKey.currentState?.pushReplacementNamed(routeName);
+    final key = getEntity<NavigatorKeyDependency>().value.currentState!;
+    key.pushReplacementNamed(getEntity<SelectedRouteComponent>().value.path);
   }
 }
 
@@ -91,9 +95,10 @@ final class HandleNavigateToSelectedRouteReactiveSystem
 final class NavigationFeature extends ECSFeature {
   NavigationFeature() {
     addEntity(AppRouteComponent());
+    addEntity(SelectedRouteComponent());
     addEntity(NavigatorKeyDependency());
     addSystem(HandleNavigateToDashboardWhenLoggedInReactiveSystem());
-    addSystem(NavigateToLoginWhenLoggedOutReactiveSystem());
+    addSystem(HandleNavigateToLoginWhenLoggedOutReactiveSystem());
     addSystem(HandleNavigateToSelectedRouteReactiveSystem());
   }
 }

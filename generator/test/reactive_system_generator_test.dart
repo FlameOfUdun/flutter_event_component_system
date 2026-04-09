@@ -11,7 +11,7 @@ const _annotationSource = '''
   final class Component { final String? description; const Component({this.description}); }
   final class Event { final String? description; const Event({this.description}); }
   final class Dependency { final String? description; const Dependency({this.description}); }
-  final class ReactiveSystem { final String? description; final List<Function>? reactsTo; final Function? reactsIf; const ReactiveSystem({this.description, this.reactsTo, this.reactsIf}); }
+  final class ReactiveSystem { final String? description; final Function? reactsTo; final Function? reactsIf; const ReactiveSystem({this.description, this.reactsTo, this.reactsIf}); }
   final class InitializeSystem { final String? description; const InitializeSystem({this.description}); }
   final class TeardownSystem { final String? description; const TeardownSystem({this.description}); }
   final class CleanupSystem { final String? description; const CleanupSystem({this.description}); }
@@ -31,14 +31,18 @@ Map<String, String> buildSources(String body) {
 
 void main() {
   group('ReactiveSystemGenerator', () {
-    test('explicit reactsTo populates reactsTo set (same library)', () async {
+    test('event reactsTo populates reactsTo set', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
           @Component() int health = 0;
           @Event() void addHealth(int amount) {}
 
-          @ReactiveSystem(reactsTo: [addHealth])
+          List applyAddHealthReactsTo() {
+            return [addHealth];
+          }
+
+          @ReactiveSystem(reactsTo: applyAddHealthReactsTo)
           void applyAddHealth(int amount) {
             health += amount;
           }
@@ -60,7 +64,11 @@ void main() {
           @Component() int health = 0;
           @Event() void addHealth(int amount) {}
 
-          @ReactiveSystem(reactsTo: [addHealth])
+          List applyAddHealthReactsTo() {
+            return [addHealth];
+          }
+
+          @ReactiveSystem(reactsTo: applyAddHealthReactsTo)
           void applyAddHealth(int amount) {
             health += amount;
           }
@@ -81,7 +89,11 @@ void main() {
           @Component() int health = 0;
           @Event() void addHealth(int amount) {}
 
-          @ReactiveSystem(reactsTo: [addHealth])
+          List applyAddHealthReactsTo() {
+            return [addHealth];
+          }
+
+          @ReactiveSystem(reactsTo: applyAddHealthReactsTo)
           void applyAddHealth(int amount) {
             health += amount;
           }
@@ -101,7 +113,11 @@ void main() {
           @Component() int health = 0;
           @Event() void addHealth(int amount) {}
 
-          @ReactiveSystem(reactsTo: [addHealth])
+          List applyAddHealthReactsTo() {
+            return [addHealth];
+          }
+
+          @ReactiveSystem(reactsTo: applyAddHealthReactsTo)
           void applyAddHealth(int amount) {
             health += amount;
           }
@@ -122,7 +138,11 @@ void main() {
           @Component() int health = 100;
           @Event() void logout() {}
 
-          @ReactiveSystem(reactsTo: [logout])
+          List logoutSystemReactsTo() {
+            return [logout];
+          }
+
+          @ReactiveSystem(reactsTo: logoutSystemReactsTo)
           void logoutSystem() {
             health = 0;
           }
@@ -143,7 +163,11 @@ void main() {
           @Component() int health = 0;
           @Event() void addHealth(int amount) {}
 
-          @ReactiveSystem(reactsTo: [addHealth])
+          List applyAddHealthReactsTo() {
+            return [addHealth];
+          }
+
+          @ReactiveSystem(reactsTo: applyAddHealthReactsTo)
           void applyAddHealth(int amount) {
             _doApply(amount);
           }
@@ -168,7 +192,11 @@ void main() {
           @Component() int health = 0;
           @Event() void addHealth(int amount) {}
 
-          @ReactiveSystem(reactsTo: [addHealth])
+          List applyAddHealthReactsTo() {
+            return [addHealth];
+          }
+
+          @ReactiveSystem(reactsTo: applyAddHealthReactsTo)
           void applyAddHealth(int amount) {
             _doApply(amount);
           }
@@ -191,7 +219,11 @@ void main() {
           @Component() int maxHealth = 100;
           @Event() void checkHealth() {}
 
-          @ReactiveSystem(reactsTo: [checkHealth])
+          List checkSystemReactsTo() {
+            return [checkHealth];
+          }
+
+          @ReactiveSystem(reactsTo: checkSystemReactsTo)
           void checkSystem() {
             if (health < maxHealth) {}
           }
@@ -210,7 +242,11 @@ void main() {
         buildSources('''
           @Event() void logout() {}
 
-          @ReactiveSystem(description: "Handles logout", reactsTo: [logout])
+          List logoutSystemReactsTo() {
+            return [logout];
+          }
+
+          @ReactiveSystem(description: "Handles logout", reactsTo: logoutSystemReactsTo)
           void logoutSystem() {}
         '''),
         outputs: {
@@ -226,11 +262,15 @@ void main() {
           @Component() int health = 0;
           @Event() void addHealth(int amount) {}
 
+          List applyAddHealthReactsTo() {
+            return [addHealth];
+          }
+
           bool applyAddHealthIf(int amount) {
             return health + amount <= 100;
           }
 
-          @ReactiveSystem(reactsTo: [addHealth], reactsIf: applyAddHealthIf)
+          @ReactiveSystem(reactsTo: applyAddHealthReactsTo, reactsIf: applyAddHealthIf)
           void applyAddHealth(int amount) {
             health += amount;
           }
@@ -251,7 +291,11 @@ void main() {
         buildSources('''
           @Event() void logout() {}
 
-          @ReactiveSystem(reactsTo: [logout])
+          List logoutSystemReactsTo() {
+            return [logout];
+          }
+
+          @ReactiveSystem(reactsTo: logoutSystemReactsTo)
           void logoutSystem() {}
         '''),
         outputs: {
@@ -267,7 +311,11 @@ void main() {
           @Component() int loginProcess = 0;
           @Event() void login(int id) {}
 
-          @ReactiveSystem(reactsTo: [login])
+          List loginSystemReactsTo() {
+            return [login];
+          }
+
+          @ReactiveSystem(reactsTo: loginSystemReactsTo)
           void loginSystem(int id) {
             _doLogin(id).ignore();
           }
@@ -283,28 +331,6 @@ void main() {
       );
     });
 
-    test('uses explicit reactsTo to populate reactsTo set', () async {
-      await testBuilder(
-        ecsBuilder(BuilderOptions.empty),
-        buildSources('''
-          @Component() int health = 0;
-          @Event() void addHealth(int amount) {}
-
-          @ReactiveSystem(reactsTo: [addHealth])
-          void applyAddHealth(int amount) {
-            health += amount;
-          }
-        '''),
-        outputs: {
-          _outputKey: decodedMatches(allOf([
-            contains('Set<Type> get reactsTo'),
-            contains('AddHealthEvent'),
-            contains('getEntity<AddHealthEvent>().data'),
-          ])),
-        },
-      );
-    });
-
     test('supports multiple events in reactsTo', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
@@ -313,7 +339,11 @@ void main() {
           @Event() void addHealth(int amount) {}
           @Event() void healFull() {}
 
-          @ReactiveSystem(reactsTo: [addHealth, healFull])
+          List applyHealReactsTo() {
+            return [addHealth, healFull];
+          }
+
+          @ReactiveSystem(reactsTo: applyHealReactsTo)
           void applyHeal(int amount) {
             health += amount;
           }
@@ -322,6 +352,130 @@ void main() {
           _outputKey: decodedMatches(allOf([
             contains('AddHealthEvent'),
             contains('HealFullEvent'),
+          ])),
+        },
+      );
+    });
+
+    test('component in reactsTo populates reactsTo set', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @Component() int health = 0;
+
+          List onHealthChangedReactsTo() {
+            return [health];
+          }
+
+          @ReactiveSystem(reactsTo: onHealthChangedReactsTo)
+          void onHealthChanged() {}
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(allOf([
+            contains('Set<Type> get reactsTo'),
+            contains('HealthComponent'),
+          ])),
+        },
+      );
+    });
+
+    test('mixes events and components in reactsTo', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @Component() int health = 0;
+          @Event() void requestSync() {}
+
+          List syncHealthReactsTo() {
+            return [requestSync, health];
+          }
+
+          @ReactiveSystem(reactsTo: syncHealthReactsTo)
+          void syncHealth() {}
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(allOf([
+            contains('RequestSyncEvent'),
+            contains('HealthComponent'),
+          ])),
+        },
+      );
+    });
+
+    test('reactsTo function with arrow body works', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @Component() int health = 0;
+          @Event() void addHealth(int amount) {}
+
+          List applyAddHealthReactsTo() => [addHealth];
+
+          @ReactiveSystem(reactsTo: applyAddHealthReactsTo)
+          void applyAddHealth(int amount) {
+            health += amount;
+          }
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(contains('AddHealthEvent')),
+        },
+      );
+    });
+
+    test('handles try-catch in react body', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @Component() int counter = 0;
+          @Event() void inc() {}
+
+          List incReactsTo() { return [inc]; }
+
+          @ReactiveSystem(reactsTo: incReactsTo)
+          void handleInc() {
+            try {
+              counter += 1;
+            } catch (e) {
+              counter = 0;
+            }
+          }
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(allOf([
+            contains('try {'),
+            contains('getEntity<CounterComponent>().value'),
+          ])),
+        },
+      );
+    });
+
+    test('handles nested blocks and try-catch', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @Component() int counter = 0;
+          @Event() void inc() {}
+
+          List incReactsTo() => [inc];
+
+          @ReactiveSystem(reactsTo: incReactsTo)
+          void handleIncNested() {
+            if (counter < 10) {
+              try {
+                counter += 2;
+              } catch (e) {
+                counter -= 1;
+              }
+            } else {
+              counter = 0;
+            }
+          }
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(allOf([
+            contains('getEntity<CounterComponent>().value'),
+            contains('try {'),
+            contains('if ('),
           ])),
         },
       );

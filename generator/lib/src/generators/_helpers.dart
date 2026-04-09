@@ -13,15 +13,27 @@ String toPascalCase(String stem) {
   return capitalize(stem);
 }
 
+// Helper to compute a safe relative range for [node] against [baseOffset].
+(int, int) _relRangeNode(AstNode node, int baseOffset, int maxLen) {
+  final rawStart = node.offset - baseOffset;
+  final rawEnd = node.end - baseOffset;
+  final s = rawStart.clamp(0, maxLen);
+  final e = rawEnd.clamp(0, maxLen);
+  return (s, e);
+}
+
 /// Holds entity maps for DSL rewriting within a single source file.
 class DslContext {
   /// varName → component class name, e.g. "health" → "HealthComponent"
   final Map<String, String> components;
+
   /// funcName → event class name, e.g. "logout" → "LogoutEvent"
   final Map<String, String> events;
+
   /// varName → dependency class name, e.g. "authRepo" → "AuthRepoDependency"
   final Map<String, String> dependencies;
-  /// paramName → replacement expression, e.g. "amount" → "getEntity<AddHealthEvent>().data"
+
+  /// paramName → replacement expression, e.g. "amount" → "getEntity&lt;AddHealthEvent&gt;().data"
   final Map<String, String> paramReplacements;
 
   const DslContext({
@@ -48,21 +60,34 @@ String _transformExpr(Expression expr, DslContext ctx) {
   final replacements = <(int start, int end, String text)>[];
 
   void visit(AstNode node) {
+    // Explicitly handle try/catch/finally blocks by visiting their inner bodies
+    // rather than using the catch/clause header offsets which may not align
+    // with the statement's `toSource()` string. This avoids out-of-range
+    // replacement indices for complex blocks.
+    if (node is TryStatement) {
+      visit(node.body);
+      for (final c in node.catchClauses) {
+        visit(c.body);
+      }
+      if (node.finallyBlock != null) visit(node.finallyBlock!);
+      return;
+    }
     if (node is SimpleIdentifier) {
       final name = node.name;
       // Skip if this is a method name.
-      if (node.parent is MethodInvocation &&
-          (node.parent as MethodInvocation).methodName == node) return;
+      if (node.parent is MethodInvocation && (node.parent as MethodInvocation).methodName == node) {
+        return;
+      }
       final paramReplacement = ctx.paramReplacements[name];
       if (paramReplacement != null) {
-        replacements.add(
-            (node.offset - expr.offset, node.end - expr.offset, paramReplacement));
+        final (s, e) = _relRangeNode(node, expr.offset, source.length);
+        replacements.add((s, e, paramReplacement));
         return;
       }
       final className = ctx.components[name] ?? ctx.dependencies[name];
       if (className != null) {
-        replacements.add((node.offset - expr.offset, node.end - expr.offset,
-            'getEntity<$className>().value'));
+        final (s, e) = _relRangeNode(node, expr.offset, source.length);
+        replacements.add((s, e, 'getEntity<$className>().value'));
         return;
       }
     }
@@ -93,6 +118,27 @@ String transformDslStatement(Statement stmt, DslContext ctx, {bool rewriteReads 
   final source = stmt.toSource();
   final replacements = <(int start, int end, String text)>[];
 
+  // Special-case TryStatement: transform inner blocks separately to avoid
+  // offset/alignment issues when performing substring replacements on the
+  // entire try/catch/finally source.
+  if (stmt is TryStatement) {
+    final buffer = StringBuffer();
+    buffer.writeln('try {');
+    buffer.write(transformDslStatements(stmt.body.statements, ctx, rewriteReads: rewriteReads));
+    buffer.writeln('  }');
+    for (final c in stmt.catchClauses) {
+      final oldBody = c.body.toSource();
+      final newBody = '{\n${transformDslStatements((c.body).statements, ctx, rewriteReads: rewriteReads)}  }';
+      final catchSrc = c.toSource().replaceFirst(oldBody, newBody);
+      buffer.writeln(catchSrc);
+    }
+    if (stmt.finallyBlock != null) {
+      final newBody = '{\n${transformDslStatements((stmt.finallyBlock!).statements, ctx, rewriteReads: rewriteReads)}  }';
+      buffer.writeln(' finally $newBody');
+    }
+    return buffer.toString();
+  }
+
   void visit(AstNode node) {
     // Assignment expression: rewrite lhs only, let rhs be visited normally.
     if (node is AssignmentExpression) {
@@ -101,11 +147,8 @@ String transformDslStatement(Statement stmt, DslContext ctx, {bool rewriteReads 
         final name = lhs.name;
         final className = ctx.components[name] ?? ctx.dependencies[name];
         if (className != null) {
-          replacements.add((
-            lhs.offset - stmt.offset,
-            lhs.end - stmt.offset,
-            'getEntity<$className>().value',
-          ));
+          final (s, e) = _relRangeNode(lhs, stmt.offset, source.length);
+          replacements.add((s, e, 'getEntity<$className>().value'));
         }
       }
       // Visit rhs only.
@@ -119,15 +162,12 @@ String transformDslStatement(Statement stmt, DslContext ctx, {bool rewriteReads 
       final className = ctx.events[name];
       if (className != null) {
         final args = node.argumentList.arguments;
-        final relStart = node.offset - stmt.offset;
-        final relEnd = node.end - stmt.offset;
+        final (s, e) = _relRangeNode(node, stmt.offset, source.length);
         if (args.isEmpty) {
-          replacements.add((relStart, relEnd, 'getEntity<$className>().trigger()'));
+          replacements.add((s, e, 'getEntity<$className>().trigger()'));
         } else {
-          final transformedArgs =
-              args.map((a) => _transformExpr(a, ctx)).join(', ');
-          replacements
-              .add((relStart, relEnd, 'getEntity<$className>().trigger($transformedArgs)'));
+          final transformedArgs = args.map((a) => _transformExpr(a, ctx)).join(', ');
+          replacements.add((s, e, 'getEntity<$className>().trigger($transformedArgs)'));
         }
         return;
       }
@@ -137,27 +177,20 @@ String transformDslStatement(Statement stmt, DslContext ctx, {bool rewriteReads 
     if (node is SimpleIdentifier) {
       final name = node.name;
       // Skip if this is a method name in an invocation.
-      if (node.parent is MethodInvocation &&
-          (node.parent as MethodInvocation).methodName == node) {
+      if (node.parent is MethodInvocation && (node.parent as MethodInvocation).methodName == node) {
         return;
       }
       final paramReplacement = ctx.paramReplacements[name];
       if (paramReplacement != null) {
-        replacements.add((
-          node.offset - stmt.offset,
-          node.end - stmt.offset,
-          paramReplacement,
-        ));
+        final (s, e) = _relRangeNode(node, stmt.offset, source.length);
+        replacements.add((s, e, paramReplacement));
         return;
       }
       if (rewriteReads) {
         final className = ctx.components[name] ?? ctx.dependencies[name];
         if (className != null) {
-          replacements.add((
-            node.offset - stmt.offset,
-            node.end - stmt.offset,
-            'getEntity<$className>().value',
-          ));
+          final (s, e) = _relRangeNode(node, stmt.offset, source.length);
+          replacements.add((s, e, 'getEntity<$className>().value'));
           return;
         }
       }
@@ -174,6 +207,14 @@ String transformDslStatement(Statement stmt, DslContext ctx, {bool rewriteReads 
   replacements.sort((a, b) => b.$1.compareTo(a.$1));
   var result = source;
   for (final (start, end, text) in replacements) {
+    // Bounds check to prevent RangeError
+    if (start < 0 || end > source.length || start > end) {
+      throw InvalidGenerationSourceError(
+        'transformDslStatement: Replacement indices out of bounds: '
+        'start=$start, end=$end, source.length=${source.length}\n'
+        'Source: $source',
+      );
+    }
     result = result.substring(0, start) + text + result.substring(end);
   }
   return result;
@@ -305,7 +346,7 @@ String emitPrivateMethod(String name, CompilationUnit unit, DslContext ctx) {
       final params = func.parameters?.toSource() ?? '()';
       final body = func.body;
       if (body is BlockFunctionBody) {
-        final transformed = transformDslStatements(body.block.statements, ctx);
+        final transformed = transformDslStatements(body.block.statements, ctx, rewriteReads: true);
         final modifier = '${body.keyword?.lexeme ?? ''}${body.star?.lexeme ?? ''}';
         final asyncStr = modifier.isNotEmpty ? ' $modifier' : '';
         final buffer = StringBuffer();

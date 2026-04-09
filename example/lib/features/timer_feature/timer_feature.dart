@@ -11,48 +11,66 @@ TimerState timerState = TimerState.stopped;
 Duration timerValue = Duration.zero;
 
 @Event()
-void resetTimer() {
-  handleResetTimer();
-}
+void resetTimer() {}
 
 @Event()
-void startTimer() {
-  handleStartTimer();
-}
+void startTimer() {}
 
 @Event()
-void stopTimer() {
-  handleStopTimer();
-}
+void stopTimer() {}
 
-@ReactiveSystem(reactsIf: startTimerIf)
-void handleStartTimer() {
-  timerState = TimerState.running;
-}
+@ReactiveSystem()
+class HandleStartTimer {
+  List get reactsTo {
+    return [startTimer];
+  }
 
-bool startTimerIf() {
-  return timerState == TimerState.stopped;
-}
+  bool get reactsIf {
+    return timerState == TimerState.stopped;
+  }
 
-@ReactiveSystem(reactsIf: stopTimerIf)
-void handleStopTimer() {
-  timerState = TimerState.stopped;
-}
-
-bool stopTimerIf() {
-  return timerState == TimerState.running;
+  void react() {
+    timerState = TimerState.running;
+  }
 }
 
 @ReactiveSystem()
-void handleResetTimer() {
-  timerValue = Duration.zero;
+class HandleStopTimer {
+  List get reactsTo {
+    return [stopTimer];
+  }
+
+  bool get reactsIf {
+    return timerState == TimerState.running;
+  }
+
+  void react() {
+    timerState = TimerState.stopped;
+  }
 }
 
-@ExecuteSystem(executesIf: updateTimerIf)
-void handleUpdateTimer(Duration elapsed) {
-  timerValue += elapsed;
+@ReactiveSystem()
+class HandleResetTimer {
+  List get reactsTo {
+    return [resetTimer];
+  }
+
+  bool get reactsIf {
+    return true;
+  }
+
+  void react() {
+    timerValue = Duration.zero;
+  }
 }
 
-bool updateTimerIf() {
-  return timerState == TimerState.running;
+@ExecuteSystem()
+class HandleUpdateTimer {
+  bool get executesIf {
+    return timerState == TimerState.running;
+  }
+
+  void execute(Duration elapsed) {
+    timerValue += elapsed;
+  }
 }
