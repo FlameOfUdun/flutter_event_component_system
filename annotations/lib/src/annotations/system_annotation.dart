@@ -29,7 +29,11 @@ final class CleanupSystem {
 
 /// Marks a top-level function as an execute system.
 /// The function must accept a single `Duration elapsed` parameter.
+/// `executesIf` is an optional reference to a `bool` function with the same
+/// `Duration elapsed` parameter; if provided, its body is inlined as the
+/// `bool get executesIf` getter override.
 final class ExecuteSystem {
   final String? description;
-  const ExecuteSystem({this.description});
+  final Function? executesIf;
+  const ExecuteSystem({this.description, this.executesIf});
 }
