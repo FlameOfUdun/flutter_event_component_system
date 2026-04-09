@@ -99,6 +99,7 @@ final class ReactiveSystemGenerator
     final reactBody = transformDslStatements(body.block.statements, ctx);
     final interactsWith = detectInteractsWith(body.block.statements, unit, ctx);
     final privateHelpers = collectPrivateHelpers(body.block.statements, unit);
+    final reactsIfBody = await _resolveReactsIfBody(annotation, buildStep, ctx);
 
     final buffer = StringBuffer();
     if (description != null) buffer.writeln('/// $description');
@@ -114,6 +115,14 @@ final class ReactiveSystemGenerator
       buffer.writeln('  @override');
       buffer.writeln('  Set<Type> get interactsWith {');
       buffer.writeln('    return const {${interactsWith.join(', ')}};');
+      buffer.writeln('  }');
+    }
+
+    if (reactsIfBody != null) {
+      buffer.writeln();
+      buffer.writeln('  @override');
+      buffer.writeln('  bool get reactsIf {');
+      buffer.write(reactsIfBody);
       buffer.writeln('  }');
     }
 
@@ -181,6 +190,32 @@ final class ReactiveSystemGenerator
     return {
       for (final p in params) p.name!: 'getEntity<$eventClass>().data',
     };
+  }
+
+  /// Reads the `reactsIf` function reference from [annotation], resolves its AST,
+  /// transforms its body using [ctx], and returns the indented body string.
+  /// Returns null if `reactsIf` was not provided.
+  Future<String?> _resolveReactsIfBody(
+    ConstantReader annotation,
+    BuildStep buildStep,
+    DslContext ctx,
+  ) async {
+    final reactsIfReader = annotation.peek('reactsIf');
+    if (reactsIfReader == null || reactsIfReader.isNull) return null;
+
+    final funcElement = reactsIfReader.objectValue.toFunctionValue();
+    if (funcElement == null) return null;
+
+    final astNode = await buildStep.resolver.astNodeFor(
+      funcElement.firstFragment,
+      resolve: true,
+    );
+    if (astNode is! FunctionDeclaration) return null;
+
+    final body = astNode.functionExpression.body;
+    if (body is! BlockFunctionBody) return null;
+
+    return transformDslStatements(body.block.statements, ctx, rewriteReads: true);
   }
 }
 

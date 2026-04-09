@@ -11,7 +11,7 @@ const _annotationSource = '''
   final class Component { final String? description; const Component({this.description}); }
   final class Event { final String? description; const Event({this.description}); }
   final class Dependency { final String? description; const Dependency({this.description}); }
-  final class ReactiveSystem { final String? description; const ReactiveSystem({this.description}); }
+  final class ReactiveSystem { final String? description; final Function? reactsIf; const ReactiveSystem({this.description, this.reactsIf}); }
   final class InitializeSystem { final String? description; const InitializeSystem({this.description}); }
   final class TeardownSystem { final String? description; const TeardownSystem({this.description}); }
   final class CleanupSystem { final String? description; const CleanupSystem({this.description}); }
@@ -215,6 +215,47 @@ void main() {
         '''),
         outputs: {
           _outputKey: decodedMatches(contains('/// Handles logout')),
+        },
+      );
+    });
+
+    test('generates reactsIf getter when reactsIf is provided', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @Component() int health = 0;
+          @Event() void addHealth(int amount) { applyAddHealth(amount); }
+
+          bool applyAddHealthIf(int amount) {
+            return health + amount <= 100;
+          }
+
+          @ReactiveSystem(reactsIf: applyAddHealthIf)
+          void applyAddHealth(int amount) {
+            health += amount;
+          }
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(allOf([
+            contains('bool get reactsIf'),
+            contains('getEntity<HealthComponent>().value'),
+            contains('getEntity<AddHealthEvent>().data'),
+          ])),
+        },
+      );
+    });
+
+    test('does not generate reactsIf getter when reactsIf is not provided', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @Event() void logout() { logoutSystem(); }
+
+          @ReactiveSystem()
+          void logoutSystem() {}
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(isNot(contains('bool get reactsIf'))),
         },
       );
     });

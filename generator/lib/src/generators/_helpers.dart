@@ -88,8 +88,8 @@ String _transformExpr(Expression expr, DslContext ctx) {
 ///   - No-data event calls: `logout()` → `getEntity<LogoutEvent>().trigger()`
 ///   - Data event calls: `login(creds)` → `getEntity<LoginEvent>().trigger(creds)`
 ///   - Param replacements: `amount` → `getEntity<AddHealthEvent>().data`
-///   - Component/dependency reads: `health` → `getEntity<HealthComponent>().value`
-String transformDslStatement(Statement stmt, DslContext ctx) {
+///   - Component/dependency reads: `health` → `getEntity<HealthComponent>().value` (only when [rewriteReads] is true)
+String transformDslStatement(Statement stmt, DslContext ctx, {bool rewriteReads = false}) {
   final source = stmt.toSource();
   final replacements = <(int start, int end, String text)>[];
 
@@ -133,7 +133,7 @@ String transformDslStatement(Statement stmt, DslContext ctx) {
       }
     }
 
-    // Simple identifier: param replacement only (reads are NOT rewritten).
+    // Simple identifier: param replacement, and optionally component reads.
     if (node is SimpleIdentifier) {
       final name = node.name;
       // Skip if this is a method name in an invocation.
@@ -149,6 +149,17 @@ String transformDslStatement(Statement stmt, DslContext ctx) {
           paramReplacement,
         ));
         return;
+      }
+      if (rewriteReads) {
+        final className = ctx.components[name] ?? ctx.dependencies[name];
+        if (className != null) {
+          replacements.add((
+            node.offset - stmt.offset,
+            node.end - stmt.offset,
+            'getEntity<$className>().value',
+          ));
+          return;
+        }
       }
     }
 
@@ -169,10 +180,10 @@ String transformDslStatement(Statement stmt, DslContext ctx) {
 }
 
 /// Transforms a list of statements, indenting each by 4 spaces.
-String transformDslStatements(NodeList<Statement> stmts, DslContext ctx) {
+String transformDslStatements(NodeList<Statement> stmts, DslContext ctx, {bool rewriteReads = false}) {
   final buffer = StringBuffer();
   for (final stmt in stmts) {
-    buffer.writeln('    ${transformDslStatement(stmt, ctx)}');
+    buffer.writeln('    ${transformDslStatement(stmt, ctx, rewriteReads: rewriteReads)}');
   }
   return buffer.toString();
 }

@@ -1,9 +1,12 @@
 /// Marks a top-level function as a reactive system.
 /// `reactsTo` is auto-detected from the @Event function bodies that call this system.
 /// `interactsWith` is auto-detected from writes in the body and its private helpers.
+/// `reactsIf` is an optional reference to a `bool` function with the same parameters
+/// as the system; if provided, its body is inlined as the `bool get reactsIf` getter.
 final class ReactiveSystem {
   final String? description;
-  const ReactiveSystem({this.description});
+  final Function? reactsIf;
+  const ReactiveSystem({this.description, this.reactsIf});
 }
 
 /// Marks a top-level function as an initialize system.
