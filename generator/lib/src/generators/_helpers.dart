@@ -133,7 +133,7 @@ String transformDslStatement(Statement stmt, DslContext ctx) {
       }
     }
 
-    // Simple identifier: param replacement or component/dependency read.
+    // Simple identifier: param replacement only (reads are NOT rewritten).
     if (node is SimpleIdentifier) {
       final name = node.name;
       // Skip if this is a method name in an invocation.
@@ -147,15 +147,6 @@ String transformDslStatement(Statement stmt, DslContext ctx) {
           node.offset - stmt.offset,
           node.end - stmt.offset,
           paramReplacement,
-        ));
-        return;
-      }
-      final className = ctx.components[name] ?? ctx.dependencies[name];
-      if (className != null) {
-        replacements.add((
-          node.offset - stmt.offset,
-          node.end - stmt.offset,
-          'getEntity<$className>().value',
         ));
         return;
       }

@@ -3,17 +3,19 @@ import 'package:build_test/build_test.dart';
 import 'package:test/test.dart';
 import 'package:flutter_event_component_system_generator/flutter_event_component_system_generator.dart';
 
-const _outputKey = 'flutter_event_component_system_generator|lib/input.ecs.dart';
-const _annotationAsset = 'flutter_event_component_system_annotations|lib/flutter_event_component_system_annotations.dart';
+const _outputKey =
+    'flutter_event_component_system_generator|lib/input.ecs.g.dart';
+const _annotationAsset =
+    'flutter_event_component_system_annotations|lib/flutter_event_component_system_annotations.dart';
 const _annotationSource = '''
-  class ECSComponentDefinition {
-    final String? description;
-    const ECSComponentDefinition({this.description});
-  }
-  class ECSInitializeSystemDefinition {
-    final String? description;
-    const ECSInitializeSystemDefinition({this.description});
-  }
+  final class Component { final String? description; const Component({this.description}); }
+  final class Event { final String? description; const Event({this.description}); }
+  final class Dependency { final String? description; const Dependency({this.description}); }
+  final class ReactiveSystem { final String? description; const ReactiveSystem({this.description}); }
+  final class InitializeSystem { final String? description; const InitializeSystem({this.description}); }
+  final class TeardownSystem { final String? description; const TeardownSystem({this.description}); }
+  final class CleanupSystem { final String? description; const CleanupSystem({this.description}); }
+  final class ExecuteSystem { final String? description; const ExecuteSystem({this.description}); }
 ''';
 
 Map<String, String> buildSources(String body) {
@@ -21,7 +23,7 @@ Map<String, String> buildSources(String body) {
     _annotationAsset: _annotationSource,
     'flutter_event_component_system_generator|lib/input.dart': '''
         import 'package:flutter_event_component_system_annotations/flutter_event_component_system_annotations.dart';
-        part 'input.ecs.dart';
+        part 'input.ecs.g.dart';
         $body
       ''',
   };
@@ -29,68 +31,57 @@ Map<String, String> buildSources(String body) {
 
 void main() {
   group('InitializeSystemGenerator', () {
-    test('generates class extending ECSInitializeSystem', () async {
+    test('generates initialize system class', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
-          @ECSComponentDefinition() const int health = 0;
-          @ECSInitializeSystemDefinition()
-          void setupPlayer(ECSSystemReference system) {
-            system.getComponent(health);
+          @Event() void timerStart() {}
+
+          @InitializeSystem()
+          void startTimerInitialize() {
+            timerStart();
           }
         '''),
         outputs: {
           _outputKey: decodedMatches(allOf([
-            contains('final class SetupPlayerInitializeSystem extends ECSInitializeSystem'),
+            contains('final class StartTimerInitializeInitializeSystem extends ECSInitializeSystem'),
             contains('void initialize()'),
-            contains('getEntity<HealthComponent>()'),
+            contains('getEntity<TimerStartEvent>().trigger()'),
           ])),
         },
       );
     });
 
-    test('appends InitializeSystem suffix to class name', () async {
+    test('rewrites component write in initialize body', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
-          @ECSInitializeSystemDefinition()
-          void setup(ECSSystemReference system) {}
+          @Component() int health = 0;
+
+          @InitializeSystem()
+          void initHealth() {
+            health = 100;
+          }
         '''),
         outputs: {
           _outputKey: decodedMatches(
-            contains('final class SetupInitializeSystem extends ECSInitializeSystem'),
+            contains('getEntity<HealthComponent>().value = 100'),
           ),
         },
       );
     });
 
-    test('does not double-append InitializeSystem suffix', () async {
+    test('includes doc comment when description is provided', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
-          @ECSInitializeSystemDefinition()
-          void setupPlayerInitializeSystem(ECSSystemReference system) {}
+          @InitializeSystem(description: "Set up timer")
+          void startTimer() {}
         '''),
         outputs: {
-          _outputKey: decodedMatches(
-            isNot(contains('InitializeSystemInitializeSystem')),
-          ),
+          _outputKey: decodedMatches(contains('/// Set up timer')),
         },
       );
     });
-
-    test('includes doc comment when description provided', () async {
-      await testBuilder(
-        ecsBuilder(BuilderOptions.empty),
-        buildSources('''
-          @ECSInitializeSystemDefinition(description: "Sets up the player")
-          void setupPlayer(ECSSystemReference system) {}
-        '''),
-        outputs: {
-          _outputKey: decodedMatches(contains('/// Sets up the player')),
-        },
-      );
-    });
-
   });
 }

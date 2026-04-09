@@ -3,18 +3,19 @@ import 'package:build_test/build_test.dart';
 import 'package:test/test.dart';
 import 'package:flutter_event_component_system_generator/flutter_event_component_system_generator.dart';
 
-const _outputKey = 'flutter_event_component_system_generator|lib/input.ecs.dart';
-const _annotationAsset = 'flutter_event_component_system_annotations|lib/flutter_event_component_system_annotations.dart';
+const _outputKey =
+    'flutter_event_component_system_generator|lib/input.ecs.g.dart';
+const _annotationAsset =
+    'flutter_event_component_system_annotations|lib/flutter_event_component_system_annotations.dart';
 const _annotationSource = '''
-  class ECSComponentDefinition {
-    final String? description;
-    const ECSComponentDefinition({this.description});
-  }
-  class ECSExecuteSystemDefinition {
-    final String? description;
-    final bool Function(dynamic)? executesIf;
-    const ECSExecuteSystemDefinition({this.description, this.executesIf});
-  }
+  final class Component { final String? description; const Component({this.description}); }
+  final class Event { final String? description; const Event({this.description}); }
+  final class Dependency { final String? description; const Dependency({this.description}); }
+  final class ReactiveSystem { final String? description; const ReactiveSystem({this.description}); }
+  final class InitializeSystem { final String? description; const InitializeSystem({this.description}); }
+  final class TeardownSystem { final String? description; const TeardownSystem({this.description}); }
+  final class CleanupSystem { final String? description; const CleanupSystem({this.description}); }
+  final class ExecuteSystem { final String? description; const ExecuteSystem({this.description}); }
 ''';
 
 Map<String, String> buildSources(String body) {
@@ -22,7 +23,7 @@ Map<String, String> buildSources(String body) {
     _annotationAsset: _annotationSource,
     'flutter_event_component_system_generator|lib/input.dart': '''
         import 'package:flutter_event_component_system_annotations/flutter_event_component_system_annotations.dart';
-        part 'input.ecs.dart';
+        part 'input.ecs.g.dart';
         $body
       ''',
   };
@@ -30,85 +31,48 @@ Map<String, String> buildSources(String body) {
 
 void main() {
   group('ExecuteSystemGenerator', () {
-    test('generates class extending ECSExecuteSystem', () async {
+    test('generates execute system class with elapsed parameter', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
-          @ECSComponentDefinition() const int timerMs = 0;
-          @ECSExecuteSystemDefinition()
-          void tickTimer(ECSSystemReference system, Duration elapsed) {
-            system.getComponent(timerMs);
+          @Component() int timerValue = 0;
+
+          @ExecuteSystem()
+          void updateTimer(Duration elapsed) {
+            timerValue += elapsed.inMilliseconds;
           }
         '''),
         outputs: {
           _outputKey: decodedMatches(allOf([
-            contains('final class TickTimerExecuteSystem extends ECSExecuteSystem'),
+            contains('final class UpdateTimerExecuteSystem extends ECSExecuteSystem'),
             contains('void execute(Duration elapsed)'),
-            contains('getEntity<TimerMsComponent>()'),
+            contains('getEntity<TimerValueComponent>().value += elapsed.inMilliseconds'),
           ])),
         },
       );
     });
 
-    test('appends ExecuteSystem suffix to class name', () async {
+    test('reads are not included in interactsWith', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
-          @ECSExecuteSystemDefinition()
-          void tick(ECSSystemReference system, Duration elapsed) {}
-        '''),
-        outputs: {
-          _outputKey: decodedMatches(
-            contains('final class TickExecuteSystem extends ECSExecuteSystem'),
-          ),
-        },
-      );
-    });
+          @Component() int timerState = 0;
+          @Component() int timerValue = 0;
 
-    test('generates executesIf getter when executesIf is provided', () async {
-      await testBuilder(
-        ecsBuilder(BuilderOptions.empty),
-        buildSources('''
-          @ECSComponentDefinition() const bool isRunning = false;
-          bool shouldTick(ECSSystemReference system) {
-            return system.getComponent(isRunning).value;
+          @ExecuteSystem()
+          void updateTimer(Duration elapsed) {
+            if (timerState != 0) return;
+            timerValue += elapsed.inMilliseconds;
           }
-          @ECSExecuteSystemDefinition(executesIf: shouldTick)
-          void tickTimer(ECSSystemReference system, Duration elapsed) {}
         '''),
         outputs: {
           _outputKey: decodedMatches(allOf([
-            contains('bool get executesIf'),
-            contains('getEntity<IsRunningComponent>()'),
+            contains('TimerValueComponent'),
+            // TimerStateComponent is only read (not written), so it must not
+            // appear in the interactsWith getter.
+            isNot(contains('return const {TimerStateComponent')),
+            isNot(contains(', TimerStateComponent')),
           ])),
-        },
-      );
-    });
-
-    test('elapsed parameter is available in execute body', () async {
-      await testBuilder(
-        ecsBuilder(BuilderOptions.empty),
-        buildSources('''
-          @ECSExecuteSystemDefinition()
-          void tickTimer(ECSSystemReference system, Duration elapsed) {
-            final ms = elapsed.inMilliseconds;
-          }
-        '''),
-        outputs: {
-          _outputKey: decodedMatches(contains('elapsed.inMilliseconds')),
-        },
-      );
-    });
-
-    test('includes doc comment when description provided', () async {
-      await testBuilder(
-        ecsBuilder(BuilderOptions.empty),
-        buildSources('''
-          @ECSExecuteSystemDefinition(description: "Ticks the timer")
-          void tickTimer(ECSSystemReference system, Duration elapsed) {}
-        '''),
-        outputs: {
-          _outputKey: decodedMatches(contains('/// Ticks the timer')),
         },
       );
     });

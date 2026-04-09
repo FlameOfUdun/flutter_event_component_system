@@ -3,18 +3,19 @@ import 'package:build_test/build_test.dart';
 import 'package:test/test.dart';
 import 'package:flutter_event_component_system_generator/flutter_event_component_system_generator.dart';
 
-const _outputKey = 'flutter_event_component_system_generator|lib/input.ecs.dart';
-const _annotationAsset = 'flutter_event_component_system_annotations|lib/flutter_event_component_system_annotations.dart';
+const _outputKey =
+    'flutter_event_component_system_generator|lib/input.ecs.g.dart';
+const _annotationAsset =
+    'flutter_event_component_system_annotations|lib/flutter_event_component_system_annotations.dart';
 const _annotationSource = '''
-  class ECSComponentDefinition {
-    final String? description;
-    const ECSComponentDefinition({this.description});
-  }
-  class ECSCleanupSystemDefinition {
-    final String? description;
-    final bool Function(dynamic)? cleansIf;
-    const ECSCleanupSystemDefinition({this.description, this.cleansIf});
-  }
+  final class Component { final String? description; const Component({this.description}); }
+  final class Event { final String? description; const Event({this.description}); }
+  final class Dependency { final String? description; const Dependency({this.description}); }
+  final class ReactiveSystem { final String? description; const ReactiveSystem({this.description}); }
+  final class InitializeSystem { final String? description; const InitializeSystem({this.description}); }
+  final class TeardownSystem { final String? description; const TeardownSystem({this.description}); }
+  final class CleanupSystem { final String? description; const CleanupSystem({this.description}); }
+  final class ExecuteSystem { final String? description; const ExecuteSystem({this.description}); }
 ''';
 
 Map<String, String> buildSources(String body) {
@@ -22,7 +23,7 @@ Map<String, String> buildSources(String body) {
     _annotationAsset: _annotationSource,
     'flutter_event_component_system_generator|lib/input.dart': '''
         import 'package:flutter_event_component_system_annotations/flutter_event_component_system_annotations.dart';
-        part 'input.ecs.dart';
+        part 'input.ecs.g.dart';
         $body
       ''',
   };
@@ -30,71 +31,23 @@ Map<String, String> buildSources(String body) {
 
 void main() {
   group('CleanupSystemGenerator', () {
-    test('generates class extending ECSCleanupSystem', () async {
+    test('generates cleanup system class', () async {
       await testBuilder(
         ecsBuilder(BuilderOptions.empty),
         buildSources('''
-          @ECSComponentDefinition() const int health = 0;
-          @ECSCleanupSystemDefinition()
-          void cleanupPlayer(ECSSystemReference system) {
-            system.getComponent(health);
+          @Component() int loginProcess = 0;
+
+          @CleanupSystem()
+          void cleanupLogin() {
+            loginProcess = 0;
           }
         '''),
         outputs: {
           _outputKey: decodedMatches(allOf([
-            contains('final class CleanupPlayerCleanupSystem extends ECSCleanupSystem'),
+            contains('final class CleanupLoginCleanupSystem extends ECSCleanupSystem'),
             contains('void cleanup()'),
-            contains('getEntity<HealthComponent>()'),
+            contains('getEntity<LoginProcessComponent>().value = 0'),
           ])),
-        },
-      );
-    });
-
-    test('appends CleanupSystem suffix to class name', () async {
-      await testBuilder(
-        ecsBuilder(BuilderOptions.empty),
-        buildSources('''
-          @ECSCleanupSystemDefinition()
-          void clean(ECSSystemReference system) {}
-        '''),
-        outputs: {
-          _outputKey: decodedMatches(
-            contains('final class CleanCleanupSystem extends ECSCleanupSystem'),
-          ),
-        },
-      );
-    });
-
-    test('generates cleansIf getter when cleansIf is provided', () async {
-      await testBuilder(
-        ecsBuilder(BuilderOptions.empty),
-        buildSources('''
-          @ECSComponentDefinition() const int health = 0;
-          bool shouldClean(ECSSystemReference system) {
-            return system.getComponent(health).value <= 0;
-          }
-          @ECSCleanupSystemDefinition(cleansIf: shouldClean)
-          void cleanupPlayer(ECSSystemReference system) {}
-        '''),
-        outputs: {
-          _outputKey: decodedMatches(allOf([
-            contains('bool get cleansIf'),
-            contains('getEntity<HealthComponent>()'),
-            contains('<= 0'),
-          ])),
-        },
-      );
-    });
-
-    test('includes doc comment when description provided', () async {
-      await testBuilder(
-        ecsBuilder(BuilderOptions.empty),
-        buildSources('''
-          @ECSCleanupSystemDefinition(description: "Cleans up after player dies")
-          void cleanupPlayer(ECSSystemReference system) {}
-        '''),
-        outputs: {
-          _outputKey: decodedMatches(contains('/// Cleans up after player dies')),
         },
       );
     });
