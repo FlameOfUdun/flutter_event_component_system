@@ -1,9 +1,5 @@
 part of '../user_auth_feature.dart';
 
-final class LogoutProcessComponent extends ECSComponent<LogoutProcess> {
-  LogoutProcessComponent([super.value = const LogoutProcess.idle()]);
-}
-
 final class LogoutProcess {
   final bool isRunning;
   final bool isSuccessful;

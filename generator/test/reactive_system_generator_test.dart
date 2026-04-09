@@ -218,5 +218,28 @@ void main() {
         },
       );
     });
+
+    test('async private helpers preserve async modifier', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @Component() int loginProcess = 0;
+          @Event() void login(int id) { loginSystem(id); }
+
+          @ReactiveSystem()
+          void loginSystem(int id) {
+            _doLogin(id).ignore();
+          }
+
+          Future<void> _doLogin(int id) async {
+            await Future.delayed(const Duration(seconds: 1));
+            loginProcess = id;
+          }
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(contains('Future<void> _doLogin(int id) async {')),
+        },
+      );
+    });
   });
 }

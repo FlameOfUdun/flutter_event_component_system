@@ -295,8 +295,10 @@ String emitPrivateMethod(String name, CompilationUnit unit, DslContext ctx) {
       final body = func.body;
       if (body is BlockFunctionBody) {
         final transformed = transformDslStatements(body.block.statements, ctx);
+        final modifier = '${body.keyword?.lexeme ?? ''}${body.star?.lexeme ?? ''}';
+        final asyncStr = modifier.isNotEmpty ? ' $modifier' : '';
         final buffer = StringBuffer();
-        buffer.writeln('  $returnType $name$params {');
+        buffer.writeln('  $returnType $name$params$asyncStr {');
         buffer.write(transformed);
         buffer.writeln('  }');
         return buffer.toString();

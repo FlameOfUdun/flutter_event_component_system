@@ -120,29 +120,10 @@ final class EventGenerator extends GeneratorForAnnotation<Event> {
     } else {
       final param = params.first;
       final type = param.type.getDisplayString();
-      buffer.writeln('final class $className extends ECSDataEvent<$type> {');
-      buffer.writeln('  @override');
-      final primitiveDefault = _primitiveDefault(type);
-      if (primitiveDefault != null) {
-        buffer.writeln(
-            '  void trigger([$type data = $primitiveDefault]) => super.trigger(data);');
-      } else {
-        buffer.writeln('  void trigger($type data) => super.trigger(data);');
-      }
-      buffer.writeln('}');
+      buffer.writeln('final class $className extends ECSDataEvent<$type> {}');
     }
 
     return buffer.toString();
-  }
-
-  String? _primitiveDefault(String typeName) {
-    return switch (typeName) {
-      'int' => '0',
-      'double' => '0.0',
-      'String' => '""',
-      'bool' => 'false',
-      _ => null,
-    };
   }
 }
 

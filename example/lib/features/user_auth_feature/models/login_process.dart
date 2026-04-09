@@ -1,9 +1,5 @@
 part of '../user_auth_feature.dart';
 
-final class LoginProcessComponent extends ECSComponent<LoginProcess> {
-  LoginProcessComponent([super.value = const LoginProcess.idle()]);
-}
-
 final class LoginProcess {
   final bool isRunning;
   final String? token;

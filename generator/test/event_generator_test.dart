@@ -52,8 +52,8 @@ void main() {
         '''),
         outputs: {
           _outputKey: decodedMatches(allOf([
-            contains('final class LoginEvent extends ECSDataEvent<LoginCredentials>'),
-            contains('void trigger(LoginCredentials data)'),
+            contains('final class LoginEvent extends ECSDataEvent<LoginCredentials> {}'),
+            isNot(contains('void trigger')),
           ])),
         },
       );
@@ -65,8 +65,8 @@ void main() {
         buildSources('@Event() void addHealth(int amount) {}'),
         outputs: {
           _outputKey: decodedMatches(allOf([
-            contains('final class AddHealthEvent extends ECSDataEvent<int>'),
-            contains('void trigger([int data = 0])'),
+            contains('final class AddHealthEvent extends ECSDataEvent<int> {}'),
+            isNot(contains('void trigger')),
           ])),
         },
       );
