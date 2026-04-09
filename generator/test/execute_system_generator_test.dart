@@ -15,7 +15,7 @@ const _annotationSource = '''
   final class InitializeSystem { final String? description; const InitializeSystem({this.description}); }
   final class TeardownSystem { final String? description; const TeardownSystem({this.description}); }
   final class CleanupSystem { final String? description; const CleanupSystem({this.description}); }
-  final class ExecuteSystem { final String? description; const ExecuteSystem({this.description}); }
+  final class ExecuteSystem { final String? description; final Function? executesIf; const ExecuteSystem({this.description, this.executesIf}); }
 ''';
 
 Map<String, String> buildSources(String body) {
@@ -73,6 +73,48 @@ void main() {
             isNot(contains('return const {TimerStateComponent')),
             isNot(contains(', TimerStateComponent')),
           ])),
+        },
+      );
+    });
+
+    test('generates executesIf getter when executesIf is provided', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @Component() int timerValue = 0;
+
+          bool shouldUpdateTimer(Duration elapsed) {
+            return timerValue < 1000;
+          }
+
+          @ExecuteSystem(executesIf: shouldUpdateTimer)
+          void updateTimer(Duration elapsed) {
+            timerValue += elapsed.inMilliseconds;
+          }
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(allOf([
+            contains('bool get executesIf'),
+            contains('getEntity<TimerValueComponent>().value'),
+            contains('elapsed'),
+          ])),
+        },
+      );
+    });
+
+    test('does not generate executesIf getter when executesIf is not provided', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @Component() int timerValue = 0;
+
+          @ExecuteSystem()
+          void updateTimer(Duration elapsed) {
+            timerValue += elapsed.inMilliseconds;
+          }
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(isNot(contains('bool get executesIf'))),
         },
       );
     });
