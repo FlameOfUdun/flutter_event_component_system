@@ -82,7 +82,7 @@ final class ReactiveSystemGenerator
     final className =
         raw.endsWith('ReactiveSystem') ? raw : '${raw}ReactiveSystem';
 
-    final reactsToClasses = _detectReactsTo(funcName, unit, baseCtx);
+    final reactsToClasses = await _readReactsTo(annotation);
 
     final params = element.formalParameters;
     final paramReplacements = _buildParamReplacements(params, reactsToClasses);
@@ -141,44 +141,23 @@ final class ReactiveSystemGenerator
     return buffer.toString();
   }
 
-  List<String> _detectReactsTo(
-    String systemFuncName,
-    CompilationUnit unit,
-    DslContext ctx,
-  ) {
+  /// Reads the `reactsTo` list from [annotation], resolves each function reference,
+  /// and derives the generated event class name via toPascalCase + 'Event'.
+  /// Returns an empty list if `reactsTo` was not provided.
+  Future<List<String>> _readReactsTo(ConstantReader annotation) async {
+    final reactsToReader = annotation.peek('reactsTo');
+    if (reactsToReader == null || reactsToReader.isNull) return const [];
+
     final result = <String>[];
-    for (final decl in unit.declarations) {
-      if (decl is! FunctionDeclaration) continue;
-      final eventClassName = ctx.events[decl.name.lexeme];
-      if (eventClassName == null) continue;
-      final body = decl.functionExpression.body;
-      if (body is! BlockFunctionBody) continue;
-      for (final stmt in body.block.statements) {
-        if (_stmtCallsFunction(stmt, systemFuncName)) {
-          result.add(eventClassName);
-          break;
-        }
-      }
+    for (final item in reactsToReader.listValue) {
+      final funcElement = item.toFunctionValue();
+      if (funcElement == null) continue;
+      final name = funcElement.name;
+      if (name == null) continue;
+      final raw = toPascalCase(name);
+      result.add(raw.endsWith('Event') ? raw : '${raw}Event');
     }
     return result;
-  }
-
-  bool _stmtCallsFunction(Statement stmt, String funcName) {
-    bool found = false;
-    void visit(AstNode node) {
-      if (found) return;
-      if (node is MethodInvocation &&
-          node.target == null &&
-          node.methodName.name == funcName) {
-        found = true;
-        return;
-      }
-      for (final child in node.childEntities) {
-        if (child is AstNode) visit(child);
-      }
-    }
-    visit(stmt);
-    return found;
   }
 
   Map<String, String> _buildParamReplacements(
