@@ -461,6 +461,7 @@ final class ExecuteSystemGenerator
     final transformed = transformDslStatements(body.block.statements, ctx);
     final interactsWith = detectInteractsWith(body.block.statements, unit, ctx);
     final privateHelpers = collectPrivateHelpers(body.block.statements, unit);
+    final executesIfBody = await _resolveExecutesIfBody(annotation, buildStep, ctx);
 
     final buffer = StringBuffer();
     if (description != null) buffer.writeln('/// $description');
@@ -470,6 +471,14 @@ final class ExecuteSystemGenerator
       buffer.writeln('  @override');
       buffer.writeln('  Set<Type> get interactsWith {');
       buffer.writeln('    return const {${interactsWith.join(', ')}};');
+      buffer.writeln('  }');
+      buffer.writeln();
+    }
+
+    if (executesIfBody != null) {
+      buffer.writeln('  @override');
+      buffer.writeln('  bool get executesIf {');
+      buffer.write(executesIfBody);
       buffer.writeln('  }');
       buffer.writeln();
     }
@@ -484,5 +493,31 @@ final class ExecuteSystemGenerator
     }
     buffer.writeln('}');
     return buffer.toString();
+  }
+
+  /// Reads the `executesIf` function reference from [annotation], resolves its AST,
+  /// transforms its body using [ctx] with reads rewritten, and returns the indented
+  /// body string. Returns null if `executesIf` was not provided.
+  Future<String?> _resolveExecutesIfBody(
+    ConstantReader annotation,
+    BuildStep buildStep,
+    DslContext ctx,
+  ) async {
+    final executesIfReader = annotation.peek('executesIf');
+    if (executesIfReader == null || executesIfReader.isNull) return null;
+
+    final funcElement = executesIfReader.objectValue.toFunctionValue();
+    if (funcElement == null) return null;
+
+    final astNode = await buildStep.resolver.astNodeFor(
+      funcElement.firstFragment,
+      resolve: true,
+    );
+    if (astNode is! FunctionDeclaration) return null;
+
+    final body = astNode.functionExpression.body;
+    if (body is! BlockFunctionBody) return null;
+
+    return transformDslStatements(body.block.statements, ctx, rewriteReads: true);
   }
 }
