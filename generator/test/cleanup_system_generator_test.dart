@@ -14,7 +14,7 @@ const _annotationSource = '''
   final class ReactiveSystem { final String? description; const ReactiveSystem({this.description}); }
   final class InitializeSystem { final String? description; const InitializeSystem({this.description}); }
   final class TeardownSystem { final String? description; const TeardownSystem({this.description}); }
-  final class CleanupSystem { final String? description; const CleanupSystem({this.description}); }
+  final class CleanupSystem { final String? description; final Function? cleansIf; const CleanupSystem({this.description, this.cleansIf}); }
   final class ExecuteSystem { final String? description; const ExecuteSystem({this.description}); }
 ''';
 
@@ -48,6 +48,47 @@ void main() {
             contains('void cleanup()'),
             contains('getEntity<LoginProcessComponent>().value = 0'),
           ])),
+        },
+      );
+    });
+
+    test('generates cleansIf getter when cleansIf is provided', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @Component() int loginProcess = 0;
+
+          bool shouldCleanupLogin() {
+            return loginProcess != 0;
+          }
+
+          @CleanupSystem(cleansIf: shouldCleanupLogin)
+          void cleanupLogin() {
+            loginProcess = 0;
+          }
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(allOf([
+            contains('bool get cleansIf'),
+            contains('getEntity<LoginProcessComponent>().value'),
+          ])),
+        },
+      );
+    });
+
+    test('does not generate cleansIf getter when cleansIf is not provided', () async {
+      await testBuilder(
+        ecsBuilder(BuilderOptions.empty),
+        buildSources('''
+          @Component() int loginProcess = 0;
+
+          @CleanupSystem()
+          void cleanupLogin() {
+            loginProcess = 0;
+          }
+        '''),
+        outputs: {
+          _outputKey: decodedMatches(isNot(contains('bool get cleansIf'))),
         },
       );
     });
