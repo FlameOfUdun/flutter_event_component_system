@@ -1,0 +1,5 @@
+name: ecs_inspector
+version: 0.0.1
+issueTracker: https://github.com/FlameOfUdun/flutter_event_component_system/issues
+materialIconCodePoint: '0xe0b1'
+requiresConnection: true

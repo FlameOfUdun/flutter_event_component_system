@@ -9,8 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_event_component_system:
-    path: ../../
+  flutter_event_component_system: ^1.0.0-beta.1
 
 dev_dependencies:
   flutter_test:
