@@ -5,11 +5,12 @@
 * Added ECSDependancy class
 * Created abstraction for listenable entities
 * Minor improvements for entity lookup
-* updates for inspector related models
+* Updates for inspector related models
+* Added ecs builder library
 
 ### Breaking Changes
 
-* all systems renamed to have `ECS` prefix
+* All systems renamed to have `ECS` prefix
 
 ## 0.0.6
 

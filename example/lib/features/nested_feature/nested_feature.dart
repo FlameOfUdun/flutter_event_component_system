@@ -1,11 +1,25 @@
 import 'package:flutter_event_component_system/flutter_event_component_system.dart';
 
-part 'components/nested_component.dart';
-part 'events/data_event.dart';
-part 'systems/lint_test_system.dart';
+part 'nested_feature.ecs.g.dart';
 
-final class NestedFeature extends ECSFeature {
-  NestedFeature() {
-    addEntity(NestedComponent());
-  }
-}
+final nestedFeature = ECS.createFeature();
+
+final counter = nestedFeature.addComponent(0);
+
+final add = nestedFeature.addDataEvent<int>();
+
+final deduct = nestedFeature.addDataEvent<int>();
+
+final handleAdd = nestedFeature.addReactiveSystem(
+  reactsTo: {add},
+  react: () {
+    counter.value += add.data;
+  },
+);
+
+final handleDeduct = nestedFeature.addReactiveSystem(
+  reactsTo: {deduct},
+  react: () {
+    counter.value -= deduct.data;
+  },
+);

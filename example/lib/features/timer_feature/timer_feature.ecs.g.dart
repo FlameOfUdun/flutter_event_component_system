@@ -1,11 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// dart format width=80
 
 part of 'timer_feature.dart';
-
-// **************************************************************************
-// ComponentGenerator
-// **************************************************************************
 
 final class TimerStateComponent extends ECSComponent<TimerState> {
   TimerStateComponent() : super(TimerState.stopped);
@@ -15,19 +10,11 @@ final class TimerValueComponent extends ECSComponent<Duration> {
   TimerValueComponent() : super(Duration.zero);
 }
 
-// **************************************************************************
-// EventGenerator
-// **************************************************************************
-
 final class ResetTimerEvent extends ECSEvent {}
 
 final class StartTimerEvent extends ECSEvent {}
 
 final class StopTimerEvent extends ECSEvent {}
-
-// **************************************************************************
-// ReactiveSystemGenerator
-// **************************************************************************
 
 final class HandleStartTimerReactiveSystem extends ECSReactiveSystem {
   @override
@@ -85,19 +72,10 @@ final class HandleResetTimerReactiveSystem extends ECSReactiveSystem {
   }
 
   @override
-  bool get reactsIf {
-    return true;
-  }
-
-  @override
   void react() {
     getEntity<TimerValueComponent>().value = Duration.zero;
   }
 }
-
-// **************************************************************************
-// ExecuteSystemGenerator
-// **************************************************************************
 
 final class HandleUpdateTimerExecuteSystem extends ECSExecuteSystem {
   @override
@@ -115,10 +93,6 @@ final class HandleUpdateTimerExecuteSystem extends ECSExecuteSystem {
     getEntity<TimerValueComponent>().value += elapsed;
   }
 }
-
-// **************************************************************************
-// FeatureGenerator
-// **************************************************************************
 
 final class TimerFeature extends ECSFeature {
   TimerFeature() {

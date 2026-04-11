@@ -1,11 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// dart format width=80
 
 part of 'navigation_feature.dart';
-
-// **************************************************************************
-// ComponentGenerator
-// **************************************************************************
 
 final class AppRouteComponent extends ECSComponent<AppRoutes> {
   AppRouteComponent() : super(AppRoutes.home);
@@ -15,21 +10,11 @@ final class SelectedRouteComponent extends ECSComponent<AppRoutes> {
   SelectedRouteComponent() : super(AppRoutes.home);
 }
 
-// **************************************************************************
-// DependencyGenerator
-// **************************************************************************
-
-final class NavigatorKeyDependency
-    extends ECSDependency<GlobalKey<NavigatorState>> {
+final class NavigatorKeyDependency extends ECSDependency<GlobalKey<NavigatorState>> {
   NavigatorKeyDependency() : super(GlobalKey<NavigatorState>());
 }
 
-// **************************************************************************
-// ReactiveSystemGenerator
-// **************************************************************************
-
-final class HandleNavigateToDashboardWhenLoggedInReactiveSystem
-    extends ECSReactiveSystem {
+final class NavigateToDashboardWhenLoggedInReactiveSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
     return const {AuthStateComponent};
@@ -51,8 +36,7 @@ final class HandleNavigateToDashboardWhenLoggedInReactiveSystem
   }
 }
 
-final class HandleNavigateToLoginWhenLoggedOutReactiveSystem
-    extends ECSReactiveSystem {
+final class HandleNavigateToLoginWhenLoggedOutReactiveSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
     return const {AuthStateComponent};
@@ -74,8 +58,7 @@ final class HandleNavigateToLoginWhenLoggedOutReactiveSystem
   }
 }
 
-final class HandleNavigateToSelectedRouteReactiveSystem
-    extends ECSReactiveSystem {
+final class HandleNavigateToSelectedRouteReactiveSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
     return const {SelectedRouteComponent};
@@ -83,21 +66,18 @@ final class HandleNavigateToSelectedRouteReactiveSystem
 
   @override
   void react() {
+    final route = getEntity<SelectedRouteComponent>().value.path;
     final key = getEntity<NavigatorKeyDependency>().value.currentState!;
-    key.pushReplacementNamed(getEntity<SelectedRouteComponent>().value.path);
+    key.pushReplacementNamed(route);
   }
 }
-
-// **************************************************************************
-// FeatureGenerator
-// **************************************************************************
 
 final class NavigationFeature extends ECSFeature {
   NavigationFeature() {
     addEntity(AppRouteComponent());
     addEntity(SelectedRouteComponent());
     addEntity(NavigatorKeyDependency());
-    addSystem(HandleNavigateToDashboardWhenLoggedInReactiveSystem());
+    addSystem(NavigateToDashboardWhenLoggedInReactiveSystem());
     addSystem(HandleNavigateToLoginWhenLoggedOutReactiveSystem());
     addSystem(HandleNavigateToSelectedRouteReactiveSystem());
   }

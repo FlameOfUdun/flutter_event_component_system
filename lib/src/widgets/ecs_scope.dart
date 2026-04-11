@@ -1,4 +1,4 @@
-part of '../ecs_base.dart';
+part of 'ecs_widgets.dart';
 
 /// A widget that provides an ECSManager scope to its descendants.
 ///

@@ -1,43 +1,30 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// dart format width=80
 
 part of 'user_auth_feature.dart';
-
-// **************************************************************************
-// ComponentGenerator
-// **************************************************************************
 
 final class AuthStateComponent extends ECSComponent<AuthState> {
   AuthStateComponent() : super(AuthState.unknown);
 }
 
-final class LoginProcessComponent extends ECSComponent<AuthProcess<String>> {
+final class LoginProcessComponent extends ECSComponent<AuthProcess<dynamic>> {
   LoginProcessComponent() : super(const AuthProcess.idle());
 }
 
-final class LogoutProcessComponent extends ECSComponent<AuthProcess<void>> {
+final class LogoutProcessComponent extends ECSComponent<AuthProcess<dynamic>> {
   LogoutProcessComponent() : super(const AuthProcess.idle());
 }
 
-final class ReloadProcessComponent extends ECSComponent<AuthProcess<void>> {
+final class ReloadProcessComponent extends ECSComponent<AuthProcess<dynamic>> {
   ReloadProcessComponent() : super(const AuthProcess.idle());
 }
-
-// **************************************************************************
-// EventGenerator
-// **************************************************************************
-
-final class LoginEvent extends ECSDataEvent<AuthCredentials> {}
 
 final class LogoutEvent extends ECSEvent {}
 
 final class ReloadUserEvent extends ECSEvent {}
 
-// **************************************************************************
-// ReactiveSystemGenerator
-// **************************************************************************
+final class LoginEvent extends ECSDataEvent<AuthCredentials> {}
 
-final class HandleLoginReactiveSystem extends ECSReactiveSystem {
+final class LoginHandlerReactiveSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
     return const {LoginEvent};
@@ -65,16 +52,14 @@ final class HandleLoginReactiveSystem extends ECSReactiveSystem {
       await preferences.setString('auth_state', AuthState.loggedIn.name);
       await Future.delayed(const Duration(seconds: 2));
       getEntity<AuthStateComponent>().value = AuthState.loggedIn;
-      getEntity<LoginProcessComponent>().value =
-          const AuthProcess.success('mock_token');
+      getEntity<LoginProcessComponent>().value = const AuthProcess.success('mock_token');
     } catch (e) {
-      getEntity<LoginProcessComponent>().value =
-          AuthProcess.failure(e.toString());
+      getEntity<LoginProcessComponent>().value = AuthProcess.failure(e.toString());
     }
   }
 }
 
-final class HandleLogoutReactiveSystem extends ECSReactiveSystem {
+final class LogoutHandlerReactiveSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
     return const {LogoutEvent};
@@ -102,16 +87,14 @@ final class HandleLogoutReactiveSystem extends ECSReactiveSystem {
       await preferences.setString('auth_state', AuthState.loggedOut.name);
       await Future.delayed(const Duration(seconds: 1));
       getEntity<AuthStateComponent>().value = AuthState.loggedOut;
-      getEntity<LogoutProcessComponent>().value =
-          const AuthProcess.success(null);
+      getEntity<LogoutProcessComponent>().value = const AuthProcess.success(null);
     } catch (e) {
-      getEntity<LogoutProcessComponent>().value =
-          AuthProcess.failure(e.toString());
+      getEntity<LogoutProcessComponent>().value = AuthProcess.failure(e.toString());
     }
   }
 }
 
-final class HandleReloadReactiveSystem extends ECSReactiveSystem {
+final class ReloadHandlerReactiveSystem extends ECSReactiveSystem {
   @override
   Set<Type> get reactsTo {
     return const {ReloadUserEvent};
@@ -137,20 +120,13 @@ final class HandleReloadReactiveSystem extends ECSReactiveSystem {
     try {
       final preferences = await SharedPreferences.getInstance();
       final value = preferences.getString('auth_state');
-      getEntity<AuthStateComponent>().value =
-          value == null ? AuthState.loggedOut : AuthState.values.byName(value);
-      getEntity<ReloadProcessComponent>().value =
-          const AuthProcess.success(null);
+      getEntity<AuthStateComponent>().value = value == null ? AuthState.loggedOut : AuthState.values.byName(value);
+      getEntity<ReloadProcessComponent>().value = const AuthProcess.success(null);
     } catch (e) {
-      getEntity<ReloadProcessComponent>().value =
-          AuthProcess.failure(e.toString());
+      getEntity<ReloadProcessComponent>().value = AuthProcess.failure(e.toString());
     }
   }
 }
-
-// **************************************************************************
-// FeatureGenerator
-// **************************************************************************
 
 final class UserAuthFeature extends ECSFeature {
   UserAuthFeature() {
@@ -158,11 +134,11 @@ final class UserAuthFeature extends ECSFeature {
     addEntity(LoginProcessComponent());
     addEntity(LogoutProcessComponent());
     addEntity(ReloadProcessComponent());
-    addEntity(LoginEvent());
     addEntity(LogoutEvent());
     addEntity(ReloadUserEvent());
-    addSystem(HandleLoginReactiveSystem());
-    addSystem(HandleLogoutReactiveSystem());
-    addSystem(HandleReloadReactiveSystem());
+    addEntity(LoginEvent());
+    addSystem(LoginHandlerReactiveSystem());
+    addSystem(LogoutHandlerReactiveSystem());
+    addSystem(ReloadHandlerReactiveSystem());
   }
 }

@@ -1,5 +1,4 @@
 import 'package:flutter_event_component_system/flutter_event_component_system.dart';
-import 'package:flutter_event_component_system_annotations/flutter_event_component_system_annotations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 part 'models/auth_credentials.dart';
@@ -8,106 +7,81 @@ part 'models/auth_process.dart';
 
 part 'user_auth_feature.ecs.g.dart';
 
-@Component()
-var authState = AuthState.unknown;
+final userAuthFeature = ECS.createFeature();
 
-@Component()
-AuthProcess<String> loginProcess = const AuthProcess.idle();
+final authState = userAuthFeature.addComponent(AuthState.unknown);
+final loginProcess = userAuthFeature.addComponent(const AuthProcess.idle());
+final logoutProcess = userAuthFeature.addComponent(const AuthProcess.idle());
+final reloadProcess = userAuthFeature.addComponent(const AuthProcess.idle());
 
-@Component()
-AuthProcess<void> logoutProcess = const AuthProcess.idle();
+final login = userAuthFeature.addDataEvent<AuthCredentials>();
+final logout = userAuthFeature.addEvent();
+final reloadUser = userAuthFeature.addEvent();
 
-@Component()
-AuthProcess<void> reloadProcess = const AuthProcess.idle();
-
-@Event()
-void login(AuthCredentials credentials) {}
-
-@Event()
-void logout() {}
-
-@Event()
-void reloadUser() {}
-
-@ReactiveSystem()
-class HandleLogin {
-  List get reactsTo {
-    return [login];
-  }
-
-  bool get reactsIf {
-    return loginProcess.isRunning == false;
-  }
-
-  void react(AuthCredentials credentials) {
-    _performLogin(credentials);
-  }
-}
+final loginHandler = userAuthFeature.addReactiveSystem(
+  reactsTo: {login},
+  reactsIf: () {
+    return loginProcess.value.isRunning == false;
+  },
+  react: () {
+    _performLogin(login.data);
+  },
+);
 
 void _performLogin(AuthCredentials credentials) async {
   try {
-    loginProcess = const AuthProcess.running();
+    loginProcess.value = const AuthProcess.running();
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString('auth_state', AuthState.loggedIn.name);
     await Future.delayed(const Duration(seconds: 2));
-    authState = AuthState.loggedIn;
-    loginProcess = const AuthProcess.success('mock_token');
+    authState.value = AuthState.loggedIn;
+    loginProcess.value = const AuthProcess.success('mock_token');
   } catch (e) {
-    loginProcess = AuthProcess.failure(e.toString());
+    loginProcess.value = AuthProcess.failure(e.toString());
   }
 }
 
-@ReactiveSystem()
-class HandleLogout {
-  List get reactsTo {
-    return [logout];
-  }
-
-  bool get reactsIf {
-    return logoutProcess.isRunning == false;
-  }
-
-  void react() {
+final logoutHandler = userAuthFeature.addReactiveSystem(
+  reactsTo: {logout},
+  reactsIf: () {
+    return logoutProcess.value.isRunning == false;
+  },
+  react: () {
     _performLogout();
-  }
-}
+  },
+);
 
 void _performLogout() async {
-  logoutProcess = const AuthProcess.running();
+  logoutProcess.value = const AuthProcess.running();
   try {
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString('auth_state', AuthState.loggedOut.name);
     await Future.delayed(const Duration(seconds: 1));
-    authState = AuthState.loggedOut;
-    logoutProcess = const AuthProcess.success(null);
+    authState.value = AuthState.loggedOut;
+    logoutProcess.value = const AuthProcess.success(null);
   } catch (e) {
-    logoutProcess = AuthProcess.failure(e.toString());
+    logoutProcess.value = AuthProcess.failure(e.toString());
   }
 }
 
-@ReactiveSystem()
-class HandleReload {
-  List get reactsTo {
-    return [reloadUser];
-  }
-
-  bool get reactsIf {
-    return reloadProcess.isRunning == false;
-  }
-
-  void react() {
+final reloadHandler = userAuthFeature.addReactiveSystem(
+  reactsTo: {reloadUser},
+  reactsIf: () {
+    return reloadProcess.value.isRunning == false;
+  },
+  react: () {
     _performReload();
-  }
-}
+  },
+);
 
 void _performReload() async {
-  reloadProcess = const AuthProcess.running();
+  reloadProcess.value = const AuthProcess.running();
   try {
     final preferences = await SharedPreferences.getInstance();
     final value = preferences.getString('auth_state');
-    authState = value == null ? AuthState.loggedOut : AuthState.values.byName(value);
-    reloadProcess = const AuthProcess.success(null);
+    authState.value = value == null ? AuthState.loggedOut : AuthState.values.byName(value);
+    reloadProcess.value = const AuthProcess.success(null);
   } catch (e) {
-    reloadProcess = AuthProcess.failure(e.toString());
+    reloadProcess.value = AuthProcess.failure(e.toString());
   }
 }

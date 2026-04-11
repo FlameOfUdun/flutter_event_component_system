@@ -17,8 +17,8 @@ class DashboardPage extends StatelessWidget {
       },
       child: ECSBuilder(
         builder: (context, ecs) {
-          final component = ecs.get<NestedComponent>();
-          debugPrint('NestedComponent data: ${component.identifier}');
+          final component = ecs.get<CounterComponent>();
+          debugPrint('CounterComponent data: ${component.identifier}');
 
           return ECSScope(
             name: 'NestedScope2',
@@ -27,8 +27,8 @@ class DashboardPage extends StatelessWidget {
             },
             child: ECSBuilder(
               builder: (context, ecs) {
-                final component = ecs.get<NestedComponent>();
-                debugPrint('NestedComponent data: ${component.identifier}');
+                final component = ecs.get<CounterComponent>();
+                debugPrint('CounterComponent data: ${component.identifier}');
 
                 return Scaffold(
                   appBar: AppBar(

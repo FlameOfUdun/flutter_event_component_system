@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_event_component_system/src/base/ecs_base.dart';
+import 'package:flutter_event_component_system/src/widgets/ecs_widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_event_component_system/src/ecs_base.dart';
 
 // Test entities
 class TestCounterComponent extends ECSComponent<int> {

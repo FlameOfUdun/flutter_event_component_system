@@ -5,8 +5,7 @@ repository: https://github.com/FlameOfUdun/flutter_event_component_system
 version: 1.0.0-beta.1
 
 environment:
-  sdk: ^3.6.2
-  flutter: ">=1.17.0"
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:

@@ -1,4 +1,4 @@
-part of '../ecs_base.dart';
+part of 'ecs_widgets.dart';
 
 /// Base class for ECS widgets.
 abstract class ECSWidget extends StatefulWidget {

@@ -1,61 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_event_component_system/flutter_event_component_system.dart';
-import 'package:flutter_event_component_system_annotations/flutter_event_component_system_annotations.dart';
 
 import '../user_auth_feature/user_auth_feature.dart';
 
 part 'models/app_routes.dart';
 part 'navigation_feature.ecs.g.dart';
 
-@Component()
-AppRoutes appRoute = AppRoutes.home;
+final navigationFeature = ECS.createFeature();
 
-@Component()
-AppRoutes selectedRoute = AppRoutes.home;
+final appRoute = navigationFeature.addComponent(AppRoutes.home);
 
-@Dependency()
-GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+final selectedRoute = navigationFeature.addComponent(AppRoutes.home);
 
-@ReactiveSystem()
-class HandleNavigateToDashboardWhenLoggedIn {
-  List get reactsTo {
-    return [authState];
-  }
+final navigatorKey = navigationFeature.addDependency(GlobalKey<NavigatorState>());
 
-  bool get reactsIf {
-    return authState == AuthState.loggedIn;
-  }
+final navigateToDashboardWhenLoggedIn = navigationFeature.addReactiveSystem(
+  reactsTo: {authState},
+  reactsIf: () {
+    return authState.value == AuthState.loggedIn;
+  },
+  react: () {
+    selectedRoute.value = AppRoutes.dashboard;
+  },
+);
 
-  void react() {
-    selectedRoute = AppRoutes.dashboard;
-  }
-}
+final handleNavigateToLoginWhenLoggedOut = navigationFeature.addReactiveSystem(
+  reactsTo: {authState},
+  reactsIf: () {
+    return authState.value == AuthState.loggedOut;
+  },
+  react: () {
+    selectedRoute.value = AppRoutes.login;
+  },
+);
 
-@ReactiveSystem()
-class HandleNavigateToLoginWhenLoggedOut {
-  List get reactsTo {
-    return [authState];
-  }
-
-  bool get reactsIf {
-    return authState == AuthState.loggedOut;
-  }
-
-  void react() {
-    selectedRoute = AppRoutes.login;
-  }
-}
-
-@ReactiveSystem()
-class HandleNavigateToSelectedRoute {
-  List get reactsTo {
-    return [selectedRoute];
-  }
-
-  void react(AppRoutes route) {
-    final key = navigatorKey.currentState!;
-    key.pushReplacementNamed(route.path);
-  }
-}
-
+final handleNavigateToSelectedRoute = navigationFeature.addReactiveSystem(
+  reactsTo: {selectedRoute},
+  react: () {
+    final route = selectedRoute.value.path;
+    final key = navigatorKey.value.currentState!;
+    key.pushReplacementNamed(route);
+  },
+);
 

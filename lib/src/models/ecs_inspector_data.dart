@@ -1,4 +1,4 @@
-part of '../ecs_base.dart';
+part of 'ecs_models.dart';
 
 final class ECSInspectorData {
   final List<ECSManagerData> managers;

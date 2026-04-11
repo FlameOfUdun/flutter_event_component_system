@@ -1,5 +1,6 @@
+import 'package:flutter_event_component_system/src/base/ecs_base.dart';
+import 'package:flutter_event_component_system/src/models/ecs_models.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_event_component_system/src/ecs_base.dart';
 
 class TestComponent extends ECSComponent<int> {
   TestComponent([super.value = 0]);

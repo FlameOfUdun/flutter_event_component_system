@@ -1,8 +1,0 @@
-name: flutter_event_component_system_annotations
-description: Annotations for the Flutter Event-Component-System framework, enabling code generation for components,
-issue_tracker: https://github.com/FlameOfUdun/flutter_event_component_system/issues
-repository: https://github.com/FlameOfUdun/flutter_event_component_system
-version: 0.0.1
-
-environment:
-  sdk: ^3.6.2

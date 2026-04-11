@@ -1,6 +1,4 @@
-part of '../ecs_base.dart';
-
-mixin _ECSLogger {
+mixin ECSLogger {
   final List<ECSLog> _logs = [];
 
   /// Maximum number of log entries to keep.

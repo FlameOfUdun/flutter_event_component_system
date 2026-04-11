@@ -1,76 +1,52 @@
 import 'package:flutter_event_component_system/flutter_event_component_system.dart';
-import 'package:flutter_event_component_system_annotations/flutter_event_component_system_annotations.dart';
 
 part 'models/timer_state.dart';
 part 'timer_feature.ecs.g.dart';
 
-@Component()
-TimerState timerState = TimerState.stopped;
+final timerFeature = ECS.createFeature();
 
-@Component()
-Duration timerValue = Duration.zero;
+final timerState = timerFeature.addComponent(TimerState.stopped);
 
-@Event()
-void resetTimer() {}
+final timerValue = timerFeature.addComponent(Duration.zero);
 
-@Event()
-void startTimer() {}
+final resetTimer = timerFeature.addEvent();
 
-@Event()
-void stopTimer() {}
+final startTimer = timerFeature.addEvent();
 
-@ReactiveSystem()
-class HandleStartTimer {
-  List get reactsTo {
-    return [startTimer];
-  }
+final stopTimer = timerFeature.addEvent();
 
-  bool get reactsIf {
-    return timerState == TimerState.stopped;
-  }
+final handleStartTimer = timerFeature.addReactiveSystem(
+  reactsTo: {startTimer},
+  reactsIf: () {
+    return timerState.value == TimerState.stopped;
+  },
+  react: () {
+    timerState.value = TimerState.running;
+  },
+);
 
-  void react() {
-    timerState = TimerState.running;
-  }
-}
+final handleStopTimer = timerFeature.addReactiveSystem(
+  reactsTo: {stopTimer},
+  reactsIf: () {
+    return timerState.value == TimerState.running;
+  },
+  react: () {
+    timerState.value = TimerState.stopped;
+  },
+);
 
-@ReactiveSystem()
-class HandleStopTimer {
-  List get reactsTo {
-    return [stopTimer];
-  }
+final handleResetTimer = timerFeature.addReactiveSystem(
+  reactsTo: {resetTimer},
+  react: () {
+    timerValue.value = Duration.zero;
+  },
+);
 
-  bool get reactsIf {
-    return timerState == TimerState.running;
-  }
-
-  void react() {
-    timerState = TimerState.stopped;
-  }
-}
-
-@ReactiveSystem()
-class HandleResetTimer {
-  List get reactsTo {
-    return [resetTimer];
-  }
-
-  bool get reactsIf {
-    return true;
-  }
-
-  void react() {
-    timerValue = Duration.zero;
-  }
-}
-
-@ExecuteSystem()
-class HandleUpdateTimer {
-  bool get executesIf {
-    return timerState == TimerState.running;
-  }
-
-  void execute(Duration elapsed) {
-    timerValue += elapsed;
-  }
-}
+final handleUpdateTimer = timerFeature.addExecuteSystem(
+  executesIf: () {
+    return timerState.value == TimerState.running;
+  },
+  execute: (elapsed) {
+    timerValue.value += elapsed;
+  },
+);

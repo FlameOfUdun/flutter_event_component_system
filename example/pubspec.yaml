@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 0.1.0
 
 environment:
-  sdk: ^3.6.2
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -14,20 +14,14 @@ dependencies:
 
   flutter_event_component_system:
     path: ../
-  flutter_event_component_system_annotations:
-    path: ../annotations
-
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^5.0.0
-  custom_lint: ^0.8.1
-  build_runner: ^2.11.1
+  build_runner: 2.13.1
 
-  flutter_event_component_system_lints:
-    path: ../lints
   flutter_event_component_system_generator:
     path: ../generator
 
