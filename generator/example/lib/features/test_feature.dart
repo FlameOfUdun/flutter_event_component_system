@@ -19,11 +19,11 @@ final testReactiveSystem = testFeature.addReactiveSystem(
   },
   react: () {
     testComponent.update(10, notify: true, force: true);
-    final previous = testComponent.previous;
-    final current = testComponent.value;
-    final updatedAt = testComponent.updatedAt;
+    testComponent.previous;
+    testComponent.value;
+    testComponent.updatedAt;
     testComponent.value++;
-    final triggeredAt = testEvent.triggeredAt;
+    testEvent.triggeredAt;
     testEvent.trigger();
     testDataEvent.trigger('Hello');
     _react(testDataEvent.data);

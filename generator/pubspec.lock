@@ -201,9 +201,10 @@ packages:
   flutter_event_component_system:
     dependency: "direct main"
     description:
-      path: ".."
-      relative: true
-    source: path
+      name: flutter_event_component_system
+      sha256: bd5922c0e484099cb268df192740707cdbd3194fa18f6ab7252d1f698d1216a9
+      url: "https://pub.dev"
+    source: hosted
     version: "1.0.0-beta.1"
   frontend_server_client:
     dependency: transitive

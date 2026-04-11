@@ -81,7 +81,6 @@ final class ECSManager with ECSLogger {
   }
 
   /// Activates the ECS manager and all its features.
-  @visibleForTesting
   void activate() {
     if (_isActive) return;
     _managers.add(this);
@@ -92,7 +91,6 @@ final class ECSManager with ECSLogger {
   }
 
   /// Deactivates the ECS manager and all its features.
-  @visibleForTesting
   void deactivate() {
     if (!_isActive) return;
     for (final feature in _features) {
@@ -110,7 +108,6 @@ final class ECSManager with ECSLogger {
   }
 
   /// Calls teardown on all features.
-  @visibleForTesting
   void teardown() {
     for (final feature in _features) {
       feature.teardown();
@@ -118,7 +115,6 @@ final class ECSManager with ECSLogger {
   }
 
   /// Calls cleanup on all features.
-  @visibleForTesting
   void cleanup() {
     for (final feature in _features) {
       feature.cleanup();
@@ -126,7 +122,6 @@ final class ECSManager with ECSLogger {
   }
 
   /// Calls execute on all features with the given [elapsed] duration.
-  @visibleForTesting
   void execute(Duration elapsed) {
     for (final feature in _features) {
       feature.execute(elapsed);

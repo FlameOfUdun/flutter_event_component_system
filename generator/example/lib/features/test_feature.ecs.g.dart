@@ -23,11 +23,11 @@ final class TestReactiveSystem extends ECSReactiveSystem {
   @override
   void react() {
     getEntity<TestComponent>().update(10, notify: true, force: true);
-    final previous = getEntity<TestComponent>().previous;
-    final current = getEntity<TestComponent>().value;
-    final updatedAt = getEntity<TestComponent>().updatedAt;
+    getEntity<TestComponent>().previous;
+    getEntity<TestComponent>().value;
+    getEntity<TestComponent>().updatedAt;
     getEntity<TestComponent>().value++;
-    final triggeredAt = getEntity<TestEvent>().triggeredAt;
+    getEntity<TestEvent>().triggeredAt;
     getEntity<TestEvent>().trigger();
     getEntity<TestDataEvent>().trigger('Hello');
     _react(testDataEvent.data);

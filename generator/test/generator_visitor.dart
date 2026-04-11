@@ -20,9 +20,5 @@ void main() {
     resolved.unit.accept(FeatureVisitor(manager));
     resolved.unit.accept(EntityVisitor(manager));
     resolved.unit.accept(SystemVisitor(manager));
-
-    for (final feature in manager.features.values) {
-      print(feature.generate());
-    }
   });
 }
