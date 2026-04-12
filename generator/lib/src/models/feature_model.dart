@@ -22,7 +22,23 @@ final class FeatureModel {
     ecsType = capitalized.endsWith("Feature") ? capitalized : "${capitalized}Feature";
   }
 
-  EntityModel? getEntity(VariableElement element) => entities[element];
+  EntityModel? getEntity(VariableElement element) {
+    final direct = entities[element];
+    if (direct != null) return direct;
+
+    final path = element.firstFragment.libraryFragment?.source.fullName ?? '';
+    final name = element.name ?? '';
+    if (path.isEmpty || name.isEmpty) return null;
+
+    for (final entry in entities.entries) {
+      final k = entry.key;
+      if (k.name == name && k.firstFragment.libraryFragment?.source.fullName == path) {
+        return entry.value;
+      }
+    }
+
+    return null;
+  }
 
   void addEntity(EntityModel entity) {
     entities[entity.element] = entity;

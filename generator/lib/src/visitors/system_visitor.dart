@@ -290,4 +290,12 @@ final class _BareFunctionCallCollector extends RecursiveAstVisitor<void> {
     }
     super.visitMethodInvocation(node);
   }
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (!node.inDeclarationContext()) {
+      names.add(node.name);
+    }
+    super.visitSimpleIdentifier(node);
+  }
 }

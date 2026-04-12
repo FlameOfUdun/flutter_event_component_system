@@ -18,11 +18,9 @@ final testReactiveSystem = testFeature.addReactiveSystem(
     return testComponent.value > 0;
   },
   react: () {
-    testComponent.update(10, notify: true, force: true);
     testComponent.previous;
     testComponent.value;
     testComponent.updatedAt;
-    testComponent.value++;
     testEvent.triggeredAt;
     testEvent.trigger();
     testDataEvent.trigger('Hello');
@@ -31,6 +29,14 @@ final testReactiveSystem = testFeature.addReactiveSystem(
 );
 
 void _react(String data) {
+  _react2(_react3);
+}
+
+void _react2(void Function() method) {
+  method();
+}
+
+void _react3() {
   testComponent.value++;
 }
 

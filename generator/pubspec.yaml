@@ -1,8 +1,8 @@
 name: flutter_event_component_system_generator
 description: Code generator for Flutter Event-Component-System. Generates ECS features, components, events, and systems.
-version: 1.0.0-beta.1
 issue_tracker: https://github.com/FlameOfUdun/flutter_event_component_system/issues
 repository: https://github.com/FlameOfUdun/flutter_event_component_system
+version: 1.0.0-beta.2
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

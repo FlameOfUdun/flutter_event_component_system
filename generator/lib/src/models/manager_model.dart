@@ -11,7 +11,23 @@ final class ManagerModel {
     feature.manager = this;
   }
 
-  FeatureModel? getFeature(VariableElement element) => features[element];
+  FeatureModel? getFeature(VariableElement element) {
+    final direct = features[element];
+    if (direct != null) return direct;
+
+    final path = element.firstFragment.libraryFragment?.source.fullName ?? '';
+    final name = element.name ?? '';
+    if (path.isEmpty || name.isEmpty) return null;
+
+    for (final entry in features.entries) {
+      final k = entry.key;
+      if (k.name == name && k.firstFragment.libraryFragment?.source.fullName == path) {
+        return entry.value;
+      }
+    }
+
+    return null;
+  }
 
   EntityModel? getEntity(VariableElement element) {
     for (final feature in features.values) {

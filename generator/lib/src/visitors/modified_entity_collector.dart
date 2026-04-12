@@ -13,39 +13,50 @@ final class ModifiedEntityCollector extends RecursiveAstVisitor<void> {
 
   @override
   void visitAssignmentExpression(AssignmentExpression node) {
-    final lhs = node.leftHandSide;
-
-    VariableElement? variable;
-    if (lhs is PropertyAccess && lhs.propertyName.name == 'value') {
-      variable = extractVariable(lhs.target);
-    } else if (lhs is PrefixedIdentifier && lhs.identifier.name == 'value') {
-      variable = resolveToVariable(lhs.prefix.element);
-    }
-
-    if (variable != null && manager.getEntity(variable) != null) {
-      entities.add(variable);
-    }
+    _checkValueAccess(node.leftHandSide);
     super.visitAssignmentExpression(node);
+  }
+
+  @override
+  void visitPostfixExpression(PostfixExpression node) {
+    final op = node.operator.lexeme;
+    if (op == '++' || op == '--') _checkValueAccess(node.operand);
+    super.visitPostfixExpression(node);
+  }
+
+  @override
+  void visitPrefixExpression(PrefixExpression node) {
+    final op = node.operator.lexeme;
+    if (op == '++' || op == '--') _checkValueAccess(node.operand);
+    super.visitPrefixExpression(node);
   }
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
     final method = node.methodName.name;
-
     if (node.target != null) {
       if (method == 'trigger' || method == 'update') {
-        final variable = extractVariable(node.target);
-        if (variable != null && manager.getEntity(variable) != null) {
-          entities.add(variable);
-        }
+        _addIfEntity(extractVariable(node.target));
       }
     } else {
-      final variable = resolveToVariable(node.methodName.element);
-      if (variable != null && manager.getEntity(variable) != null) {
-        entities.add(variable);
-      }
+      _addIfEntity(resolveToVariable(node.methodName.element));
     }
-
     super.visitMethodInvocation(node);
+  }
+
+  void _checkValueAccess(Expression operand) {
+    VariableElement? variable;
+    if (operand is PropertyAccess && operand.propertyName.name == 'value') {
+      variable = extractVariable(operand.target);
+    } else if (operand is PrefixedIdentifier && operand.identifier.name == 'value') {
+      variable = resolveToVariable(operand.prefix.element);
+    }
+    _addIfEntity(variable);
+  }
+
+  void _addIfEntity(VariableElement? variable) {
+    if (variable != null && manager.getEntity(variable) != null) {
+      entities.add(variable);
+    }
   }
 }

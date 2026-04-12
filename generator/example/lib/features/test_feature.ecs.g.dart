@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+
 part of 'test_feature.dart';
 
 final class TestComponent extends ECSComponent<int> {
@@ -16,29 +17,45 @@ final class TestReactiveSystem extends ECSReactiveSystem {
   }
 
   @override
+  Set<Type> get interactsWith {
+    return const {TestEvent, TestDataEvent, TestComponent};
+  }
+
+  @override
   bool get reactsIf {
     return getEntity<TestComponent>().value > 0;
   }
 
   @override
   void react() {
-    getEntity<TestComponent>().update(10, notify: true, force: true);
     getEntity<TestComponent>().previous;
     getEntity<TestComponent>().value;
     getEntity<TestComponent>().updatedAt;
-    getEntity<TestComponent>().value++;
     getEntity<TestEvent>().triggeredAt;
     getEntity<TestEvent>().trigger();
     getEntity<TestDataEvent>().trigger('Hello');
-    _react(testDataEvent.data);
+    _react(getEntity<TestDataEvent>().data);
   }
 
   void _react(String data) {
+    _react2(_react3);
+  }
+
+  void _react2(void Function() method) {
+    method();
+  }
+
+  void _react3() {
     getEntity<TestComponent>().value++;
   }
 }
 
 final class TestExecuteSystem extends ECSExecuteSystem {
+  @override
+  Set<Type> get interactsWith {
+    return const {TestEvent};
+  }
+
   @override
   bool get executesIf {
     return _executesIf();
@@ -68,6 +85,11 @@ final class TestExecuteSystem extends ECSExecuteSystem {
 
 final class TestCleanupSystem extends ECSCleanupSystem {
   @override
+  Set<Type> get interactsWith {
+    return const {TestComponent};
+  }
+
+  @override
   bool get cleansIf {
     return _cleansIf();
   }
@@ -92,6 +114,11 @@ final class TestCleanupSystem extends ECSCleanupSystem {
 
 final class TestTeardownSystem extends ECSTeardownSystem {
   @override
+  Set<Type> get interactsWith {
+    return const {TestComponent};
+  }
+
+  @override
   void teardown() {
     _teardown();
   }
@@ -106,6 +133,11 @@ final class TestTeardownSystem extends ECSTeardownSystem {
 }
 
 final class TestInitializeSystem extends ECSInitializeSystem {
+  @override
+  Set<Type> get interactsWith {
+    return const {TestComponent};
+  }
+
   @override
   void initialize() {
     _initialize();
@@ -132,4 +164,3 @@ final class TestFeature extends ECSFeature {
     addSystem(TestInitializeSystem());
   }
 }
-
