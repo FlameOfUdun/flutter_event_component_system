@@ -1,0 +1,74 @@
+# Root .gitignore for a Flutter multi-package repository
+#
+# Notes:
+# - Libraries usually do NOT commit `pubspec.lock`; apps/examples SHOULD commit theirs.
+# - Per-package `.gitignore` files can refine or re-include files using negation rules.
+
+####################
+# OS / Editor files
+####################
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+####################
+# Dart / Flutter
+####################
+.dart_tool/
+.packages
+.pub/
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+**/build/
+flutter/ephemeral/
+
+####################
+# Generated docs
+####################
+**/doc/api/
+
+####################
+# Logs / temp
+####################
+*.log
+*.class
+*.pyc
+*.swp
+
+####################
+# Coverage
+####################
+coverage/
+.coverage
+
+####################
+# Android / iOS
+####################
+**/ios/Flutter/.last_build_id
+**/android/local.properties
+**/ios/Pods/
+
+####################
+# Windows / Visual Studio
+####################
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vcxproj.user
+x64/
+x86/
+
+####################
+# Misc
+####################
+*.keystore
+
+# Keep per-package decisions for `pubspec.lock` and any package-specific build outputs.
