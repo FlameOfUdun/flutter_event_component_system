@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 1.0.0-beta.5
+
+* Update for helpers
+* Update for builder to fast skip unrelated files
+
+## 1.0.0-beta.4
+
+* Update for helpers
+
 ## 1.0.0-beta.3
 
 * Update for helpers

@@ -20,7 +20,18 @@ final class FeatureBuilder implements Builder {
   @override
   Future<void> build(BuildStep buildStep) async {
     final inputId = buildStep.inputId;
+
+    final source = await buildStep.readAsString(inputId);
+    if (!source.contains('.ecs.g.dart')) return;
+
     if (!await buildStep.resolver.isLibrary(inputId)) return;
+
+    final fragmentUnit =
+        await buildStep.resolver.astNodeFor((await buildStep.resolver.libraryFor(inputId)).firstFragment, resolve: false) as CompilationUnit?;
+
+    final hasEcsPart = fragmentUnit?.directives.whereType<PartDirective>().any((d) => d.uri.stringValue?.endsWith('.ecs.g.dart') ?? false) ?? false;
+
+    if (!hasEcsPart) return;
 
     final library = await buildStep.resolver.libraryFor(inputId);
     final manager = ManagerModel();
@@ -59,15 +70,9 @@ final class FeatureBuilder implements Builder {
         ..writeln();
     }
 
-    final formatted = DartFormatter(
-      languageVersion: DartFormatter.latestLanguageVersion,
-      pageWidth: 120,
-    ).format(buffer.toString());
+    final formatted = DartFormatter(languageVersion: DartFormatter.latestLanguageVersion, pageWidth: 120).format(buffer.toString());
 
-    await buildStep.writeAsString(
-      inputId.changeExtension('.ecs.g.dart'),
-      formatted,
-    );
+    await buildStep.writeAsString(inputId.changeExtension('.ecs.g.dart'), formatted);
   }
 
   Future<void> _scanImports(LibraryElement root, ManagerModel manager, BuildStep buildStep) async {

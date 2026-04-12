@@ -101,9 +101,9 @@ String rewriteExpression(Expression expr, ManagerModel manager) {
 
   if (expr is PropertyAccess) {
     final target = rewriteExpression(expr.target!, manager);
+    final op = expr.operator.lexeme; // ← '?.' or '.' or '?'
     final property = expr.propertyName.name;
-
-    return '$target.$property';
+    return '$target$op$property';
   }
 
   if (expr is PrefixedIdentifier) {
@@ -139,7 +139,8 @@ String rewriteExpression(Expression expr, ManagerModel manager) {
 
     if (expr.target != null) {
       final target = rewriteExpression(expr.target as Expression, manager);
-      return '$target.${expr.methodName.name}$typeArgs($args)';
+      final op = expr.operator?.lexeme ?? '.'; // ← '?.' or '.'
+      return '$target$op${expr.methodName.name}$typeArgs($args)';
     }
 
     return '${expr.methodName.name}$typeArgs($args)';
@@ -171,20 +172,25 @@ String rewriteExpression(Expression expr, ManagerModel manager) {
 
   if (expr is FunctionExpression) {
     final params = expr.parameters?.toSource() ?? '()';
-    final body = rewriteFunctionBody(expr.body, manager);
+    final body = rewriteFunctionBody(expr.body, manager, asClosure: true);
     return '$params $body';
   }
 
   return expr.toSource();
 }
 
-String rewriteFunctionBody(FunctionBody body, ManagerModel manager) {
+String rewriteFunctionBody(
+  FunctionBody body,
+  ManagerModel manager, {
+  bool asClosure = false,
+}) {
   final keyword = body.keyword?.lexeme;
   final star = body.star?.lexeme ?? '';
   final prefix = keyword == null ? '' : '$keyword$star ';
 
   if (body is ExpressionFunctionBody) {
-    return '$prefix=> ${rewriteExpression(body.expression, manager)};';
+    final expr = rewriteExpression(body.expression, manager);
+    return '$prefix=> $expr${asClosure ? '' : ';'}';
   }
 
   if (body is BlockFunctionBody) {
