@@ -1,3 +1,3 @@
-# flutter_event_flow_example
+# Flutter Event Component System Example
 
-A new Flutter project.
+An example project for ECS
