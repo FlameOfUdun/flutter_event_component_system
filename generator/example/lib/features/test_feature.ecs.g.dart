@@ -38,15 +38,13 @@ final class TestReactiveSystem extends ECSReactiveSystem {
   }
 
   void _react(String data) {
-    _react2(_react3);
+    _react2(() {
+      getEntity<TestComponent>().value++;
+    });
   }
 
   void _react2(void Function() method) {
     method();
-  }
-
-  void _react3() {
-    getEntity<TestComponent>().value++;
   }
 }
 

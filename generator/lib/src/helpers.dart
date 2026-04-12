@@ -169,6 +169,12 @@ String rewriteExpression(Expression expr, ManagerModel manager) {
     return '(${rewriteExpression(expr.expression, manager)})';
   }
 
+  if (expr is FunctionExpression) {
+    final params = expr.parameters?.toSource() ?? '()';
+    final body = rewriteFunctionBody(expr.body, manager);
+    return '$params $body';
+  }
+
   return expr.toSource();
 }
 

@@ -29,15 +29,13 @@ final testReactiveSystem = testFeature.addReactiveSystem(
 );
 
 void _react(String data) {
-  _react2(_react3);
+  _react2(() {
+    testComponent.value++;
+  });
 }
 
 void _react2(void Function() method) {
   method();
-}
-
-void _react3() {
-  testComponent.value++;
 }
 
 final testExecuteSystem = testFeature.addExecuteSystem(
@@ -100,9 +98,11 @@ void _teardown2() {
   testComponent.value = 1;
 }
 
-final testInitializeSystem = testFeature.addInitializeSystem(initialize: () {
-  _initialize();
-});
+final testInitializeSystem = testFeature.addInitializeSystem(
+  initialize: () {
+    _initialize();
+  },
+);
 
 void _initialize() {
   _initialize2();
