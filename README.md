@@ -4,6 +4,17 @@ A collection of packages, tools, and examples for the Flutter Event-Component-Sy
 
 This repository contains the core ECS runtime, a build_runner generator, an inspector/devtools extension, and benchmark/example projects.
 
+## ⚠️ Discontinued
+
+This project has been discontinued and is no longer actively maintained.
+
+It has been superseded by [Orchestra](https://github.com/FlameOfUdun/orchestra), which resolves architectural ambiguity and improves developer experience.
+
+The main issue with this project was the use of the term "ECS" (Event Component System), which was frequently mistaken for "Entity Component System", a well-known but fundamentally different pattern.
+
+Please migrate to the new project for ongoing support and updates.
+
+
 ## Projects
 
 - [ecs](ecs/README.md): Core library implementing the Event-Component-System patterns for Flutter (components, events, systems, and widget integration).
